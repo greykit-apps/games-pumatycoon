@@ -1,0 +1,7 @@
+.claude/
+.DS_Store
+
+# Source material. Local only — never tracked, never pushed. Both spellings,
+# so neither one can slip past `git add -A`.
+source/
+sources/
