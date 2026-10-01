@@ -25,7 +25,7 @@ const STEPS = [
   { at: ".ticker", title: "The market",
     body: "Six commodities, each with today's price, how far it has moved since your last turn and who moved it, and where it sits on its track. Producing pushes prices up and selling pushes them down, for everyone: what a rival just sold is cheap, and what everyone has been producing is worth selling." },
   { at: ".hand", title: "Your hand",
-    body: "Price & Production cards. Producing with one takes three of the commodities in its red half, then every commodity in its blue half rises $1 per icon. Pick a card to see exactly what it would do, then press Produce. You draw back up to your hand limit afterwards. Your hand is secret." },
+    body: "Price & Production cards. Producing with one takes three of the commodities in its red half, then every commodity in its blue half rises $1 per icon. On your move the hand sits at the top of the question: pick a card to see exactly what it would do, then press Produce. You draw back up to your hand limit afterwards. Your hand is secret." },
   { at: "[data-tour=rails]", title: "Railroads",
     body: "Two lines are up for auction. Each row shows what the next card of that line is worth to you. Opening an auction is a bid of at least the minimum; bidding goes round the table and a pass is final. The strip is the VP for owning 1, 2, 3 or 4 cards of a line, in total. Open an auction and lose it, and you act again." },
   { at: "[data-tour=town]", title: "Towns",

@@ -88,12 +88,12 @@ h2 .dim{letter-spacing:.04em;text-transform:none;font-weight:400}
 @keyframes pt-tick-down{from{background:color-mix(in oklab,var(--down) 24%,transparent)}to{background:transparent}}
 
 /* ---- the order book ---- */
-.book{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:22px}
+.book{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px}
 .book-col{display:flex;flex-direction:column;gap:6px;min-width:0}
-.book-col h2+.ob{margin-bottom:14px}
+.book-col h2+.ob{margin-bottom:10px}
 .ob{border:1px solid var(--line);background:var(--panel)}
-.ob-row{display:grid;align-items:center;gap:4px 12px;padding:8px 12px;border:0;border-bottom:1px solid var(--hair);width:100%;
-  background:transparent;color:var(--ink);font-size:var(--fs-s);border-radius:0;min-height:44px}
+.ob-row{display:grid;align-items:center;gap:2px 10px;padding:6px 10px;border:0;border-bottom:1px solid var(--hair);width:100%;
+  background:transparent;color:var(--ink);font-size:var(--fs-xs);border-radius:0;min-height:36px}
 .ob-row:last-child{border-bottom:0}
 .ob-row.rail{grid-template-columns:minmax(0,1fr) auto auto;grid-template-areas:"name ladder cost" "you you you"}
 .ob-row.rail .ob-name{grid-area:name} .ob-row.rail .ob-ladder{grid-area:ladder} .ob-row.rail .ob-cost{grid-area:cost} .ob-row.rail .ob-you{grid-area:you}
@@ -101,7 +101,7 @@ h2 .dim{letter-spacing:.04em;text-transform:none;font-weight:400}
 .ob-row.town .ob-name{grid-area:name} .ob-row.town .ob-vp{grid-area:vp} .ob-row.town .ob-pay:nth-of-type(3){grid-area:pay1} .ob-row.town .ob-pay:nth-of-type(4){grid-area:pay2}
 .ob-row.bld{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"name cost" "fx fx"}
 .ob-row.bld .ob-name{grid-area:name} .ob-row.bld .ob-cost{grid-area:cost} .ob-row.bld .ob-fx{grid-area:fx}
-.ob-name{color:var(--text);font-weight:600;font-size:var(--fs-m)}
+.ob-name{color:var(--text);font-weight:600;font-size:var(--fs-s)}
 .ob-cost{color:var(--text);font-weight:700;text-align:right}
 .ob-ladder{color:var(--dim);letter-spacing:.02em}
 .ob-ladder b{color:var(--ink);font-weight:600;padding:0 1px}
@@ -109,7 +109,7 @@ h2 .dim{letter-spacing:.04em;text-transform:none;font-weight:400}
 .ob-ladder b.next{color:var(--text);border-bottom:2px solid var(--vp)}
 .ob-you{color:var(--vp)}
 .ob-vp{color:var(--vp)}
-.ob-fx{line-height:1.4}
+.ob-fx{line-height:1.35;color:var(--dim)}
 .ob-pay{display:inline-flex;align-items:center;gap:4px;color:var(--dim);white-space:nowrap}
 .ob-pay.ok{color:var(--text)}
 .ob-row.empty{color:var(--dim);justify-content:center;display:flex}
@@ -167,6 +167,7 @@ details.fulllog summary .dim{letter-spacing:.04em;text-transform:none;font-weigh
 .ask .sub b{color:var(--vp)}
 .ask .grp{display:flex;flex-direction:column;gap:5px}
 .ask .grp>b{font-size:var(--fs-s);color:var(--ink);font-weight:700}
+.ask .grp>b .dim{font-weight:400;margin-left:6px}
 .ask .grp>b kbd,.kbd{font:inherit;font-size:10px;color:var(--dim);border:1px solid var(--line);border-radius:2px;padding:0 4px;margin-left:6px}
 .ask .q:focus{outline:none}
 .ask.wait{border-color:var(--line);background:var(--panel);color:var(--dim);display:flex;flex-direction:row;align-items:center;gap:10px}
@@ -187,27 +188,26 @@ details.fulllog summary .dim{letter-spacing:.04em;text-transform:none;font-weigh
   0%,100%{box-shadow:0 0 0 0 rgba(84,242,255,0),0 0 0 1px rgba(84,242,255,0)}
   50%{box-shadow:0 0 18px 2px rgba(84,242,255,.22),0 0 0 1px rgba(84,242,255,.6)}}
 
-.mini{width:100%;border-collapse:collapse;font-size:var(--fs-s)}
-.mini td,.mini th{padding:4px 6px;border-bottom:1px solid var(--hair);text-align:left;font-weight:400}
-.mini th{color:var(--text)}
-.mini td.num{text-align:right}
-.mini td.vp{color:var(--vp);font-weight:700}
-.mini tr.active th::after{content:" ●";color:var(--accent);font-size:10px}
 #pt-announce{position:fixed;top:0;left:0}
 .linkish{background:none;border:0;padding:0;min-height:0;color:var(--accent);text-decoration:underline;cursor:pointer;font-size:inherit}
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
 
 /* ---- the hand ---- */
-.hand{display:flex;gap:8px;flex-wrap:wrap}
-.pp{flex:1 1 0;min-width:118px;max-width:190px;border:1px solid var(--lit);border-radius:2px;overflow:hidden;background:var(--panel);padding:0;display:flex;flex-direction:column;text-align:left;position:relative;min-height:0}
-.pp .half{padding:6px 8px;display:flex;flex-wrap:wrap;gap:3px;align-items:center;min-height:44px}
-.pp .half.price{background:#0f1d3a;border-bottom:1px solid var(--line)}
+/* The hand is what a player handles most, so it is the largest thing on the
+ * desk: one wide card per row, production (what you take) first. */
+.hand{display:flex;flex-direction:column;gap:8px}
+.pp{width:100%;border:1px solid var(--lit);border-radius:3px;overflow:hidden;background:var(--panel);padding:0;
+  display:grid;grid-template-columns:34px minmax(0,1.25fr) minmax(0,1fr);text-align:left;position:relative;min-height:84px}
+.pp .half{padding:8px 12px;display:flex;flex-direction:column;justify-content:center;gap:5px}
 .pp .half.prod{background:#2a1016}
-.pp .lab{width:100%;font-size:var(--fs-xs);color:var(--ink)}
-.pp .pp-warn{font-size:10px;color:var(--warn);padding:2px 7px;background:#1d1608}
-.pp .pp-key{position:absolute;top:4px;right:6px;font-size:10px;color:var(--dim);border:1px solid var(--line);border-radius:2px;padding:0 4px}
+.pp .half.price{background:#0f1d3a;border-left:1px solid var(--line)}
+.pp .icons{display:flex;flex-wrap:wrap;gap:4px;align-items:center}
+.pp .lab{font-size:var(--fs-xs);color:var(--ink)}
+.pp .pp-warn{grid-column:2/-1;font-size:var(--fs-xs);color:var(--warn);padding:4px 12px;background:#1d1608;border-top:1px solid var(--line)}
+.pp .pp-key{display:flex;align-items:center;justify-content:center;font-size:var(--fs-m);font-weight:700;color:var(--dim);border-right:1px solid var(--line);background:var(--panel2)}
+button.pp.live .pp-key{color:var(--accent)}
 button.pp{cursor:pointer}
-button.pp.live:hover{border-color:var(--accent)}
+button.pp.live:hover,button.pp.live:focus-visible{border-color:var(--accent);background:var(--panel2)}
 button.pp[aria-pressed=true]{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent);background:var(--panel)}
 .mission{font-size:var(--fs-s);color:var(--ink);margin:8px 0 0;line-height:1.5}
 .mission b{color:var(--text)}
@@ -259,7 +259,7 @@ table.score td.vp{color:var(--vp);font-weight:700}
 .setup .go button.primary{padding:10px 22px;font-size:var(--fs-l)}
 .boot{padding:24px}
 
-@media (hover:none){.ask kbd,.pp .pp-key{display:none}}
+@media (hover:none){.ask kbd{display:none}}
 @media (prefers-reduced-motion:reduce){
   .ask.attention.arrive{animation:none}
   .tk-scale i,.tk-to{transition:none}

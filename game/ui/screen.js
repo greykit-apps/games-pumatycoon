@@ -27,7 +27,7 @@ import { GOODS, TRACK } from "../data/commodities.js";
 import { SKIN } from "../data/skin.js";
 import { CARD, canon } from "../engine/machine.js";
 import {
-  RAIL, TOWN, lineOf, face, bType, tokens, storageLimit, handLimit, productionMax, scoreOf, publicScore,
+  RAIL, TOWN, lineOf, face, bType, tokens, storageLimit, handLimit, scoreOf, publicScore,
 } from "../engine/rules.js";
 import { icon } from "./art.js";
 import {
@@ -262,15 +262,6 @@ export function mountScreen(host, hooks) {
       <ul>${shown.map(l => `<li>${esc(l)}</li>`).join("")}</ul>${lines.length > shown.length ? `<p class="note">and ${lines.length - shown.length} earlier: <button class="linkish" data-openlog>open the log</button></p>` : ""}</section>`;
   }
 
-  function miniStandings() {
-    if (st.over) return "";
-    return `<section aria-label="Standings at a glance"><h2>Standings <span class="dim">public VP</span></h2>
-      <table class="mini"><tbody>${st.players.map((p, i) => `<tr class="${st.ask && st.ask.player === i ? "active" : ""}">
-        <th scope="row">${esc(p.name)}</th><td class="num vp">${publicScore(st, i)}</td>
-        <td class="num">${sees(i) ? money(p.cash) : '<span class="dim">—</span>'}</td>
-        <td class="num dim">${tokens(p)}/${storageLimit(p)}</td></tr>`).join("")}</tbody></table></section>`;
-  }
-
   function produceBlock(p, w, k, cardId) {
     const pv = cardPreview(st, w.player, cardId);
     const rises = pv.rises.map(r => `${icon(r.good, 15, GOOD_NAME[r.good])} ${money(r.from)}→${money(r.to)}${r.to - r.from < r.by ? ' <span class="dim">(top)</span>' : ""}`).join("  ");
@@ -335,8 +326,8 @@ export function mountScreen(host, hooks) {
           } else groups.other.push(btn(k, o.a === "declare" ? `Declare victory (${money(p.cash)})` : "Pass", o.a === "declare" ? ' class="primary"' : ""));
         });
         const canProduce = O.some(o => o.a === "produce");
-        const produce = canProduce ? (produceK >= 0 ? produceBlock(p, w, produceK, selected)
-          : `<div class="grp" data-group="p"><b>Produce<kbd>1–${p.hand.length}</kbd></b><p class="sub">Pick a card from your hand to see what it would do. You take up to ${productionMax(p)}.</p></div>`) : "";
+        const produce = canProduce ? `<div class="grp" data-group="p"><b>Produce<kbd>1–${p.hand.length}</kbd> <span class="dim">pick a card to see what it would do · hand limit ${handLimit(p)}</span></b>
+          ${handCards(w.player)}${produceK >= 0 ? produceBlock(p, w, produceK, selected) : ""}</div>` : "";
         return `<div class="ask">${q("Your move")}
           ${produce}${g("Sell", "s", groups.sell)}${g("Auction a railroad", "a", groups.auction)}${g("Buy a building", "b", groups.buy)}${g("Upgrade", "", groups.upgrade)}
           ${groups.town.length ? g(`Build ${esc(townName(st.townOffer))}`, "t", groups.town) : ""}${g("", "", groups.other)}</div>`;
@@ -406,27 +397,39 @@ export function mountScreen(host, hooks) {
     return `<div class="ask">${q(`Unknown request ${esc(w.kind)}`)}</div>`;
   }
 
-  function hand() {
-    const v = me();
-    if (v === null) return "";
+  /* The cards themselves, live (each previews on a click) when the question is
+   * the viewer's action. */
+  function handCards(v) {
     const p = st.players[v];
     const w = st.ask;
     const live = !!(w && w.kind === "action" && w.player === v && !curtain);
-    const cards = p.hand.map((id, n) => {
+    return `<div class="hand">${p.hand.map((id, n) => {
       const c = CARD[id];
       const k = live ? w.options.findIndex(o => o.a === "produce" && o.card === id) : -1;
       const pv = k >= 0 ? cardPreview(st, v, id) : null;
       const tag = k >= 0 ? "button" : "div";
       const hint = pv ? hintAttr({ g: Object.fromEntries(pv.rises.map(r => [r.good, r.to])) }) : "";
       return `<${tag} class="pp${k >= 0 ? " live" : ""}"${k >= 0 ? ` data-select="${id}" aria-pressed="${selected === id}" aria-label="Card ${n + 1}: preview producing with it"${hint}` : ""}>
-        <span class="half price"><span class="lab">price ▲</span>${goodsIcons(c.price, 20)}</span>
-        <span class="half prod"><span class="lab">${pv ? (pv.choose ? `take ${pv.take} of` : "take all") : "production"}</span>${goodsIcons(c.prod, 20)}</span>
-        ${pv && pv.over ? `<span class="pp-warn">⚠ discard ${pv.over}</span>` : ""}${k >= 0 ? `<span class="pp-key" aria-hidden="true">${n + 1}</span>` : ""}</${tag}>`;
-    }).join("");
+        <span class="pp-key" aria-hidden="true">${n + 1}</span>
+        <span class="half prod"><span class="lab">${pv ? (pv.choose ? `take ${pv.take} of` : "take all") : "production"}</span><span class="icons">${goodsIcons(c.prod, 28)}</span></span>
+        <span class="half price"><span class="lab">prices rise</span><span class="icons">${goodsIcons(c.price, 28)}</span></span>
+        ${pv && pv.over ? `<span class="pp-warn">⚠ discard ${pv.over}</span>` : ""}</${tag}>`;
+    }).join("")}</div>`;
+  }
+
+  /* While it is the viewer's move the hand lives inside the question, as the
+   * Produce choice; otherwise it sits below it, for reference. */
+  function hand() {
+    const v = me();
+    if (v === null) return "";
+    const p = st.players[v];
+    const w = st.ask;
+    const inAsk = !!(w && w.kind === "action" && w.player === v && !curtain && w.options.some(o => o.a === "produce"));
     const m = p.mission ? missionText(p.mission) : null;
+    const mission = m ? `<p class="mission"><b>Mission · ${esc(m.title)}</b> ${esc(m.body)}</p>` : "";
+    if (inAsk) return mission;
     return `<section aria-label="Your hand"><h2>${humans().length > 1 ? esc(p.name) + "'s" : "Your"} hand <span class="dim">limit ${handLimit(p)}</span></h2>
-      <div class="hand">${cards}</div>
-      ${m ? `<p class="mission"><b>Mission · ${esc(m.title)}</b> ${esc(m.body)}</p>` : ""}</section>`;
+      ${handCards(v)}${mission}</section>`;
   }
 
   /* ---------- the whole screen ---------- */
@@ -505,7 +508,6 @@ export function mountScreen(host, hooks) {
       ${recap()}
       ${askBox()}
       ${hand()}
-      ${miniStandings()}
     </aside>
   </div>
 </div>
