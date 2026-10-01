@@ -6,9 +6,10 @@ Written 2026-10-01, after reading the photographed rulebook and cards in
 **Status, 2026-10-01.** M0–M4 built on branch `scaffold`: the data
 transcribed and cross-checked against the photographs (four cards read off
 the physical cards by the author), the engine with 60 named rule tests, the
-bots and simulation, and the screen. Waiting on the author: sign-off of each
-data table, approval of the skin, the end-rule default, and creating the
-GitLab project. M5 (ship) not started.
+bots and simulation, and the screen. The author confirmed every data table and
+kept the designer's revised ending as a setup option (printed ending the
+default); the GitLab project was created. Waiting on the author: approval
+of the skin. M5 (ship) not started.
 
 ## Context
 

@@ -14,4 +14,4 @@ export const TRACK = {
   luxury: { min: 3, max: 14 },
 };
 
-export const TRACK_SOURCE = { photos: ["IMG_1490", "IMG_1491", "IMG_1492"], verified: false };
+export const TRACK_SOURCE = { photos: ["IMG_1490", "IMG_1491", "IMG_1492"], verified: "author, 2026-10-01" };

@@ -67,6 +67,6 @@ export const ADVANCED = [
 /* Rulebook p.3 Contents and p.13-14 headings: 6 basic, 21 advanced. */
 export const BASIC_PRINTED = 6;
 export const ADVANCED_PRINTED = 21;
-export const BUILDINGS_SOURCE = { photos: ["IMG_1508", "IMG_1509", "IMG_1510"], verified: false };
+export const BUILDINGS_SOURCE = { photos: ["IMG_1508", "IMG_1509", "IMG_1510"], verified: "author, 2026-10-01" };
 
 export const BUILDING_TYPES = Object.fromEntries([...BASIC, ...ADVANCED].map(t => [t.id, t]));

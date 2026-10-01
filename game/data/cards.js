@@ -14,8 +14,8 @@
  * Four cards the photographs do not fully show (#19 and #20 run out of
  * frame, #31 sits on the frame edge, #48 is under glare) were read off the
  * physical cards by the author on 2026-10-01; they carry `checked: AUTHOR`.
- * The rest are read from the photographs and wait on the author's check of
- * the whole table (CARDS_SOURCE.verified). */
+ * The rest were read from the photographs; the author confirmed the whole
+ * table on 2026-10-01 (CARDS_SOURCE.verified). */
 
 const AUTHOR = "author, from the physical card, 2026-10-01";
 const c = (n, photo, price, prod, checked) =>
@@ -80,4 +80,4 @@ export const CARDS = [
 
 /* Rulebook p.3 Contents: "54 Price & Production Cards". */
 export const CARDS_PRINTED = 54;
-export const CARDS_SOURCE = { verified: false };
+export const CARDS_SOURCE = { verified: "author, 2026-10-01" };

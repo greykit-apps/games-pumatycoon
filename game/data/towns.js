@@ -28,4 +28,4 @@ export const TOWNS = [
 
 /* Rulebook p.3 Contents: "16 Town Cards". */
 export const TOWNS_PRINTED = 16;
-export const TOWNS_SOURCE = { verified: false };
+export const TOWNS_SOURCE = { verified: "author, 2026-10-01" };

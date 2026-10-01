@@ -27,4 +27,4 @@ export const MISSIONS = [
 /* The rulebook's Contents does not list the missions; twelve is the count
  * in the photograph. */
 export const MISSIONS_PRINTED = 12;
-export const MISSIONS_SOURCE = { photos: ["IMG_1523", "IMG_1524", "IMG_1525", "IMG_1526"], verified: false };
+export const MISSIONS_SOURCE = { photos: ["IMG_1523", "IMG_1524", "IMG_1525", "IMG_1526"], verified: "author, 2026-10-01" };

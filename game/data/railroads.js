@@ -16,4 +16,4 @@ export const RAILROADS = [
 
 /* Rulebook p.3 Contents: "24 Railroad Cards". */
 export const RAILROADS_PRINTED = 24;
-export const RAILROADS_SOURCE = { photos: ["IMG_1518", "IMG_1519", "IMG_1520", "IMG_1521", "IMG_1522"], verified: false };
+export const RAILROADS_SOURCE = { photos: ["IMG_1518", "IMG_1519", "IMG_1520", "IMG_1521", "IMG_1522"], verified: "author, 2026-10-01" };
