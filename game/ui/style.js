@@ -111,6 +111,26 @@ button.pp.live:hover{box-shadow:0 0 0 1px var(--accent)}
 .ask .grp{display:flex;flex-direction:column;gap:4px}
 .ask .grp>b{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);font-weight:600}
 .ask.wait{border-color:var(--line);background:var(--panel);color:var(--dim)}
+/* Where your next move is: a slow breath on the one box waiting for you
+ * (after PumaTriage's .attention). Steady, not breathing, for reduced motion. */
+.ask.attention{animation:pt-attention 2.4s ease-in-out infinite}
+@keyframes pt-attention{
+  0%,100%{box-shadow:0 0 0 0 rgba(84,242,255,0),0 0 0 1px rgba(84,242,255,0)}
+  50%{box-shadow:0 0 18px 2px rgba(84,242,255,.26),0 0 0 1px rgba(84,242,255,.6)}}
+@media (prefers-reduced-motion:reduce){.ask.attention{animation:none;box-shadow:0 0 0 1px rgba(84,242,255,.6)}}
+
+/* the walkthrough */
+.tour{position:fixed;inset:0;z-index:30}
+.tour-spot{position:fixed;border-radius:6px;box-shadow:0 0 0 9999px rgba(3,5,10,.78);outline:2px solid var(--accent);
+  transition:all .25s ease;pointer-events:none}
+.tour-spot.none{outline:0}
+.tour-box{position:fixed;width:min(420px,calc(100vw - 32px));background:var(--panel);border:1px solid var(--accent);border-radius:6px;
+  padding:14px 16px;display:flex;flex-direction:column;gap:8px;box-shadow:0 8px 30px rgba(0,0,0,.6)}
+.tour-box h1{font-size:13px}
+.tour-box p{margin:0;color:var(--text);font-size:13px;line-height:1.55}
+.tour-box .tour-n{color:var(--dim);font-size:11px;letter-spacing:.1em;text-transform:uppercase}
+.tour-box .row{display:flex;gap:6px;align-items:center;margin-top:4px}
+@media (prefers-reduced-motion:reduce){.tour-spot{transition:none}}
 .bidrow input{width:90px}
 .combo{display:inline-flex;gap:2px;align-items:center}
 

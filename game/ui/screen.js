@@ -20,6 +20,7 @@ import {
   GOOD_NAME, railName, lineName, townName, bldName, effectText, upgradeText, missionText, railVPText, describeLog,
 } from "./text.js";
 import { HELP_TABS } from "./help.js";
+import { startTour } from "./tour.js";
 
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const goodsIcons = (arr, size = 16) => arr.map(g => icon(g, size, GOOD_NAME[g])).join("");
@@ -34,6 +35,8 @@ export function mountScreen(host, hooks) {
   let helpTab = null;         // open help tab index, or null
   let bidValue = null;
   let failure = null;
+  let tourQueued = false;     // show the walkthrough at the first human prompt
+  let touring = false;
 
   const humans = () => st.players.map((p, i) => (p.seat === "human" ? i : -1)).filter(i => i >= 0);
 
@@ -275,10 +278,10 @@ export function mountScreen(host, hooks) {
     <section class="stage" aria-label="The table">
       <div><h2>The market</h2>${market()}</div>
       <div class="offers">
-        <div class="offer-group"><h2>Railroads <span class="deckcount">${st.railDeck.length} in the deck</span></h2><div class="cards">${railBtn(0)}${railBtn(1)}</div></div>
-        <div class="offer-group"><h2>Town <span class="deckcount">${st.townDeck.length} more</span></h2><div class="cards">${townTile(st.townOffer)}</div></div>
+        <div class="offer-group" data-tour="rails"><h2>Railroads <span class="deckcount">${st.railDeck.length} in the deck</span></h2><div class="cards">${railBtn(0)}${railBtn(1)}</div></div>
+        <div class="offer-group" data-tour="town"><h2>Town <span class="deckcount">${st.townDeck.length} more</span></h2><div class="cards">${townTile(st.townOffer)}</div></div>
       </div>
-      <div class="offer-group"><h2>Buildings <span class="deckcount">${st.bldStack.length} in the stack</span></h2><div class="cards">${[0, 1, 2, 3].map(bldBtn).join("")}</div></div>
+      <div class="offer-group" data-tour="buildings"><h2>Buildings <span class="deckcount">${st.bldStack.length} in the stack</span></h2><div class="cards">${[0, 1, 2, 3].map(bldBtn).join("")}</div></div>
       <div><h2>Log</h2><div class="log" aria-live="polite">${logLines}</div></div>
     </section>
     <aside class="side" aria-label="Players and your move">
@@ -293,6 +296,16 @@ ${curtain ? curtainBox() : ""}${st.over ? resultsBox() : ""}${helpTab !== null ?
     const input = host.querySelector("[data-bid]");
     if (input && !curtain && helpTab === null) input.focus();
     flash = new Set();
+    // The one box waiting for a person breathes (style.js, .attention).
+    const mine = w && !st.over && !curtain && !failure && st.players[w.player].seat === "human";
+    if (mine) host.querySelector(".ask:not(.wait)")?.classList.add("attention");
+    if (mine && tourQueued && !touring && helpTab === null) runTour();
+  }
+
+  function runTour() {
+    tourQueued = false;
+    touring = true;
+    startTour().then(() => { touring = false; host.querySelector("[data-bid]")?.focus(); });
   }
 
   function curtainBox() {
@@ -316,7 +329,8 @@ ${curtain ? curtainBox() : ""}${st.over ? resultsBox() : ""}${helpTab !== null ?
     return `<div class="veil" role="dialog" aria-modal="true" aria-label="How to play"><div class="box help">
       <div class="row"><h1>How to play</h1><span class="grow" style="flex:1"></span><button data-helpclose aria-label="Close">✕</button></div>
       <div class="tabs" role="tablist">${HELP_TABS.map(([t], k) => `<button role="tab" aria-selected="${k === helpTab}" aria-pressed="${k === helpTab}" data-helptab="${k}">${t}</button>`).join("")}</div>
-      <div role="tabpanel">${HELP_TABS[helpTab][1]}</div></div></div>`;
+      <div role="tabpanel">${HELP_TABS[helpTab][1]}</div>
+      <div class="row"><button data-tourreplay>Replay the walkthrough</button></div></div></div>`;
   }
 
   /* ---------- input ---------- */
@@ -333,6 +347,7 @@ ${curtain ? curtainBox() : ""}${st.over ? resultsBox() : ""}${helpTab !== null ?
     if (!b) return;
     if (b.hasAttribute("data-help")) { helpTab = 0; return render(); }
     if (b.hasAttribute("data-helpclose")) { helpTab = null; return render(); }
+    if (b.hasAttribute("data-tourreplay")) { helpTab = null; render(); return runTour(); }
     if (b.dataset.helptab !== undefined) { helpTab = Number(b.dataset.helptab); return render(); }
     if (b.hasAttribute("data-newgame")) return hooks.newGame();
     if (b.hasAttribute("data-speed")) { hooks.cycleSpeed(); return render(); }
@@ -370,7 +385,7 @@ ${curtain ? curtainBox() : ""}${st.over ? resultsBox() : ""}${helpTab !== null ?
   }
 
   function onKey(e) {
-    if (!st) return;
+    if (!st || touring) return;
     if (e.key === "Escape" && helpTab !== null) { helpTab = null; return render(); }
     if (e.key === "?" ) { helpTab = helpTab === null ? 0 : null; return render(); }
     if (helpTab !== null) return;
@@ -399,6 +414,7 @@ ${curtain ? curtainBox() : ""}${st.over ? resultsBox() : ""}${helpTab !== null ?
       render();
     },
     help() { helpTab = 0; render(); },
+    queueTour() { tourQueued = true; },
     fail(e) { failure = e; render(); console.error(e); },
     stop() { document.removeEventListener("keydown", onKey); host.onclick = null; },
   };
