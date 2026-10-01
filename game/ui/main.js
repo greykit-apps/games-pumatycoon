@@ -107,6 +107,7 @@ function start(opts) {
   store.set(SAVE_KEY, st);
   store.set(TRACE_KEY, trace);
   openScreen();
+  if (opts.tour) screen.queueTour();
   advance();
 }
 

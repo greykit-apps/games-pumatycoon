@@ -3,18 +3,21 @@
  * per browser. */
 
 import { SKIN } from "../data/skin.js";
+import { tourSeen } from "./tour.js";
 
 const SETUP_KEY = "pumatycoon_setup_v1";
 const SKILLS = ["Easy", "Normal", "Hard"];
 const DEFAULT = {
   seats: [
-    { name: "You", seat: "human", skill: 1 },
-    { name: "Ocelot", seat: "bot", skill: 1 },
-    { name: "Lynx", seat: "bot", skill: 1 },
+    { name: "Fore", seat: "human", skill: 1 },
+    { name: "Jad", seat: "bot", skill: 1 },
+    { name: "Clinton", seat: "bot", skill: 1 },
   ],
   options: { missions: false, suddenDeath: false, beginner: false, basicSetup: false, endRule: "printed" },
 };
-const BOT_NAMES = ["Ocelot", "Lynx", "Margay", "Caracal", "Serval", "Kodkod", "Oncilla"];
+/* The seat names, in order: the first three seat a new game, Add a seat
+ * takes the next unused one. Five names for five seats. */
+const PLAYER_NAMES = ["Fore", "Jad", "Clinton", "Cal", "Noya"];
 
 function load() {
   try {
@@ -29,6 +32,8 @@ const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;",
 
 export function mountSetup(host, { onStart, onResume, onHelp }) {
   const s = load();
+  // On until this browser has seen the walkthrough once; the player's choice after that.
+  let tour = !tourSeen();
 
   function render() {
     host.innerHTML = `
@@ -56,6 +61,8 @@ export function mountSetup(host, { onStart, onResume, onHelp }) {
       <label class="opt"><input type="checkbox" data-opt="suddenDeath"${s.options.suddenDeath ? " checked" : ""}><span>Sudden death<small>A player holding $1,000 may end the game and win.</small></span></label>
       <label class="opt"><input type="checkbox" data-opt="beginner"${s.options.beginner ? " checked" : ""}><span>Beginners<small>No advanced buildings: only the six commodity buildings.</small></span></label>
       <label class="opt"><input type="checkbox" data-opt="basicSetup"${s.options.basicSetup ? " checked" : ""}><span>Basic buildings by player count<small>One commodity building per player (four at five) on offer; the rest of the row from the advanced stack.</small></span></label>
+      <h2>New to the game?</h2>
+      <label class="opt"><input type="checkbox" data-walk${tour ? " checked" : ""}><span>Walkthrough<small>A one-minute tour of the table at the first move. Replay it any time from the ? help.</small></span></label>
       <h2>Ending</h2>
       <label class="opt"><input type="radio" name="endRule" value="printed"${s.options.endRule !== "revised" ? " checked" : ""}><span>As printed<small>The last town bought or the last railroad auctioned ends the game, after the round.</small></span></label>
       <label class="opt"><input type="radio" name="endRule" value="revised"${s.options.endRule === "revised" ? " checked" : ""}><span>Designer's revision (2019)<small>The game ends when two of the three are all owned: towns, railroads, buildings. Longer games.</small></span></label>
@@ -77,6 +84,8 @@ export function mountSetup(host, { onStart, onResume, onHelp }) {
       s.seats[i].skill = Number(row.querySelector("[data-skill]").value);
     });
     host.querySelectorAll("[data-opt]").forEach(c => { s.options[c.dataset.opt] = c.checked; });
+    const t = host.querySelector("[data-walk]");
+    if (t) tour = t.checked;
     const r = host.querySelector("input[name=endRule]:checked");
     s.options.endRule = r ? r.value : "printed";
   }
@@ -88,12 +97,12 @@ export function mountSetup(host, { onStart, onResume, onHelp }) {
     read();
     if (b.hasAttribute("data-add")) {
       const used = new Set(s.seats.map(x => x.name));
-      s.seats.push({ name: BOT_NAMES.find(n => !used.has(n)) || `Player ${s.seats.length + 1}`, seat: "bot", skill: 1 });
+      s.seats.push({ name: PLAYER_NAMES.find(n => !used.has(n)) || `Player ${s.seats.length + 1}`, seat: "bot", skill: 1 });
     } else if (b.hasAttribute("data-del")) {
       s.seats.splice(Number(b.closest(".seat").dataset.i), 1);
     } else if (b.hasAttribute("data-start")) {
       save(s);
-      return onStart({ players: s.seats.map(x => ({ ...x })), options: { ...s.options } });
+      return onStart({ players: s.seats.map(x => ({ ...x })), options: { ...s.options }, tour });
     } else if (b.hasAttribute("data-resume")) {
       save(s);
       return onResume();

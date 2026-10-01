@@ -73,4 +73,6 @@ export const SCENARIOS = [
   { name: "screen: the hot-seat curtain hides money and hand between humans", layer: "screen", status: "pending" },
   { name: "screen: a saved game resumes mid-auction", layer: "screen", status: "pending" },
   { name: "screen: every request kind has a control", layer: "screen", status: "pending" },
+  { name: "screen: the box waiting for a human breathes, and only that one", layer: "screen", status: "pending" },
+  { name: "screen: the walkthrough shows at a new player's first move and blocks the game's keys", layer: "screen", status: "pending" },
 ];

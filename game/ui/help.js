@@ -34,6 +34,7 @@ export const HELP_TABS = [
 <li><b>1</b>–<b>5</b> — produce with that card from your hand</li>
 <li><b>Enter</b> — take the keyboard from the curtain; place the bid</li>
 <li><b>?</b> — this help; <b>Esc</b> closes it</li>
+<li>In the walkthrough: <b>Enter</b> or <b>→</b> next, <b>←</b> back, <b>Esc</b> to end it</li>
 </ul>`],
   ["About", `
 <p>${SKIN.game} is a port of <i>Raccoon Tycoon</i> by Glenn Drover (Forbidden Games, 2018), with original artwork and renamed places. Where the rulebook is silent, the game's choice is listed in the README under <i>What's approximated</i>, beside the designer's and publisher's own rulings that settled the rest.</p>`],
