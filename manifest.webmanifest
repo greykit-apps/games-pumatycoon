@@ -1,0 +1,14 @@
+{
+  "name": "PumaTycoon",
+  "short_name": "PumaTycoon",
+  "description": "Produce, sell into a moving market, and outbid your rivals for the railroads. A faithful port of the Raccoon Tycoon rules in original vector art.",
+  "start_url": ".",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#05070f",
+  "theme_color": "#05070f",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" },
+    { "src": "apple-touch-icon.png", "sizes": "180x180", "type": "image/png" }
+  ]
+}
