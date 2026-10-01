@@ -9,7 +9,7 @@ export const COLORS = {
   iron: "#a9b4d0",
   coal: "#7c8396",
   goods: "#ef6a4f",
-  luxury: "#52c98a",
+  luxury: "#3bb3a8",   // teal, not the green that means "price up"
   any: "#dbe4fb",
 };
 

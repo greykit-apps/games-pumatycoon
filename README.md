@@ -54,13 +54,18 @@ list is below.
 | Key | |
 |---|---|
 | `1`–`5` | preview producing with that card; `Enter` on **Produce** commits |
+| `S` `A` `B` `T` | jump to Sell, Auction, Buy or the Town (a jump never commits) |
+| `A` on a sale | sell all |
 | `Esc` | put the previewed card back |
 | `Enter` | take the keyboard from the curtain; place a bid |
 | `?` | how to play; `Esc` closes it |
 | `Enter` / `→`, `←`, `Esc` | next, back and end, in the walkthrough |
 
 Everything else is a button, and a button is live only when it answers the
-question the game is asking.
+question the game is asking. Hovering or focusing a choice lights the market
+rows it would move and marks the new price on each track. Focus survives
+every redraw, a new question takes focus itself, and moves are announced to
+screen readers, gathered while you wait and read when your turn comes.
 
 ## Names
 

@@ -56,8 +56,11 @@ export function startTour() {
     const steps = () => STEPS.filter(s => !s.at || document.querySelector(s.at));
 
     function place() {
+      // A frame or scroll queued before the tour ended can still arrive after.
+      if (!root.isConnected) return;
       const list = steps();
       const s = list[i];
+      if (!s) return;
       const el = s.at ? document.querySelector(s.at) : null;
       const spot = root.querySelector(".tour-spot");
       const box = root.querySelector(".tour-box");

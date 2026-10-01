@@ -32,6 +32,8 @@ export const HELP_TABS = [
   ["Keys", `
 <ul>
 <li><b>1</b>–<b>5</b> — preview producing with that card; <b>Enter</b> on Produce commits, <b>Esc</b> puts it back</li>
+<li><b>S</b>, <b>A</b>, <b>B</b>, <b>T</b> — jump to Sell, Auction, Buy or the Town; a jump never commits</li>
+<li><b>A</b> while selling — sell all</li>
 <li><b>Enter</b> — take the keyboard from the curtain; place the bid</li>
 <li><b>?</b> — this help; <b>Esc</b> closes it</li>
 <li>In the walkthrough: <b>Enter</b> or <b>→</b> next, <b>←</b> back, <b>Esc</b> to end it</li>
