@@ -1,0 +1,83 @@
+stages:
+  - validate
+  - deploy
+
+# The card data is transcribed by hand from photographs, so the likely
+# breakage is data-shaped and silent: a card that lost an icon, a town with
+# the wrong count, a railroad strip off by one. None of those throw -- they
+# play a game that is plausible and wrong. Catch it before it reaches the site.
+#
+# check-no-photos.js runs FIRST, against the fresh clone CI just made, which
+# is exactly what the public gets. source/ holds photographs of someone
+# else's rulebook and cards, and this repo is public.
+#
+# sim.js fails when no simulated game is ever WON. A sim that only reports
+# "no crashes" cannot tell a working engine from one whose end condition is
+# unreachable; the first all-bot run of this engine was exactly that (bots
+# hoarding cash for 4,000 rounds), and only the step cap caught it.
+validate:
+  stage: validate
+  image: node:20-alpine
+  # The alpine image has no git, and check-no-photos shells out to it.
+  # Without git it would have nothing to check; it refuses rather than pass.
+  before_script:
+    - apk add --no-cache git
+    - git --version
+  script:
+    - node tools/check-no-photos.js
+    - node tools/check-assets.js
+    - test -s index.html
+    - grep -q 'data-pumatycoon-game' index.html
+    - node game/tools/check-all.js
+    - node game/tools/sim.js 10
+    - node game/tools/sim.js --skill 200
+
+deploy:
+  stage: deploy
+  image: debian:bookworm-slim
+  only:
+    - main
+  before_script:
+    - apt-get update -qq && apt-get install -y -qq openssh-client rsync > /dev/null 2>&1
+    - mkdir -p ~/.ssh
+    - cp "$DREAMHOST_SSH_KEY" ~/.ssh/id_rsa
+    - echo "" >> ~/.ssh/id_rsa
+    - chmod 600 ~/.ssh/id_rsa
+    # Host key is PINNED rather than scanned. A bare `ssh-keyscan` opens a burst
+    # of parallel connections (one per host-key type), which trips an SSH-scan
+    # detector on the self-hosted runner's network path; outbound port 22 to the
+    # target is then blackholed for minutes -- long enough for the rsync below
+    # to time out (exit 255 after 133s). Pinning costs zero connections and is
+    # also strictly safer than trusting whatever key answers at deploy time.
+    # If DreamHost rebuilds the VPS this must be re-pinned: the job will then
+    # fail loudly on a host key mismatch rather than silently trust a new key.
+    - echo "$DREAMHOST_HOST ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEtxw582rJAeTpXMTRJeGJ6GHis19hHmWWBwEL1bCbYd" > ~/.ssh/known_hosts
+    - chmod 644 ~/.ssh/known_hosts
+    # ConnectTimeout turns a blocked port into a 15s failure instead of a 133s
+    # one, for rsync's own ssh too.
+    - printf 'Host *\n  ConnectTimeout 15\n  BatchMode yes\n' > ~/.ssh/config
+    - chmod 600 ~/.ssh/config
+    # Outbound port 22 to this host gets blackholed for minutes once too many
+    # SSH connections go to it in a short window. Retry with long gaps so a
+    # queued deploy rides the block out; probing harder re-arms it.
+    - |
+      puma_rsync() {
+        attempt=1
+        until rsync "$@"; do
+          if [ "$attempt" -ge 3 ]; then
+            echo "rsync failed after $attempt attempts" >&2
+            return 1
+          fi
+          echo "attempt $attempt failed; waiting 200s for any port-22 block to clear"
+          attempt=$((attempt + 1))
+          sleep 200
+        done
+      }
+  script:
+    # One destination, one SSH connection.
+    #
+    # --delete-excluded is load-bearing: plain --delete PROTECTS excluded
+    # paths on the destination, so excluding something already published
+    # would pin it there. With --delete-excluded, "do not publish" also means
+    # "remove from the live site". `tools` (no slash) also strips game/tools.
+    - puma_rsync -avz --delete --delete-excluded --exclude='.git' --exclude='.claude' --exclude='.gitlab-ci.yml' --exclude='.gitignore' --exclude='tools' --exclude='source' --exclude='sources' ./ ${DREAMHOST_USERNAME}@${DREAMHOST_HOST}:/home/${DREAMHOST_USERNAME}/greykit.com/games/pumatycoon/

@@ -1,0 +1,9 @@
+# The game is ES modules loaded by relative path, and the host's default for
+# .js is thirty days with no revalidation. A returning visitor would pick up
+# a fresh index.html and keep running last month's engine. So every script
+# and data file revalidates like the page does. (Copied from PumaRally.)
+<IfModule mod_headers.c>
+  <FilesMatch "\.(js|json|svg)$">
+    Header set Cache-Control "max-age=60, must-revalidate"
+  </FilesMatch>
+</IfModule>
