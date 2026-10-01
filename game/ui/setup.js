@@ -8,13 +8,15 @@ const SETUP_KEY = "pumatycoon_setup_v1";
 const SKILLS = ["Easy", "Normal", "Hard"];
 const DEFAULT = {
   seats: [
-    { name: "You", seat: "human", skill: 1 },
-    { name: "Ocelot", seat: "bot", skill: 1 },
-    { name: "Lynx", seat: "bot", skill: 1 },
+    { name: "Fore", seat: "human", skill: 1 },
+    { name: "Jad", seat: "bot", skill: 1 },
+    { name: "Clinton", seat: "bot", skill: 1 },
   ],
   options: { missions: false, suddenDeath: false, beginner: false, basicSetup: false, endRule: "printed" },
 };
-const BOT_NAMES = ["Ocelot", "Lynx", "Margay", "Caracal", "Serval", "Kodkod", "Oncilla"];
+/* The seat names, in order: the first three seat a new game, Add a seat
+ * takes the next unused one. Five names for five seats. */
+const PLAYER_NAMES = ["Fore", "Jad", "Clinton", "Cal", "Noya"];
 
 function load() {
   try {
@@ -88,7 +90,7 @@ export function mountSetup(host, { onStart, onResume, onHelp }) {
     read();
     if (b.hasAttribute("data-add")) {
       const used = new Set(s.seats.map(x => x.name));
-      s.seats.push({ name: BOT_NAMES.find(n => !used.has(n)) || `Player ${s.seats.length + 1}`, seat: "bot", skill: 1 });
+      s.seats.push({ name: PLAYER_NAMES.find(n => !used.has(n)) || `Player ${s.seats.length + 1}`, seat: "bot", skill: 1 });
     } else if (b.hasAttribute("data-del")) {
       s.seats.splice(Number(b.closest(".seat").dataset.i), 1);
     } else if (b.hasAttribute("data-start")) {
