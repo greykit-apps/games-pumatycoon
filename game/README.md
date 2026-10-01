@@ -24,7 +24,9 @@ step(state, answer?) -> { state, events, waiting, refused }
 
 - `state` is plain JSON and is the whole save: no globals, no DOM, no
   timers, nothing derived stored. It is mutated in place and returned.
-- `events` are the log entries this step produced, for the screen.
+- `events` are the log entries this step produced, for the screen. Every log
+  entry carries `n`, numbered for the whole game, so "since your last turn"
+  survives the log's trimming.
 - `waiting` is `null` once the game is over, or exactly one request:
 
 ```
@@ -54,12 +56,12 @@ seat through the same door, so the human path is exercised by every sim.
 | `discard` | a player over the storage limit after producing | one commodity, asked again until within the limit |
 | `sellQty` | a selling player | `{q}`, or `{q, exp: true}` with the Export Company |
 | `moreSell` | a Freight Company owner after one sale | `{a: "sell", good}` or `{a: "done"}` |
-| `bid` | each bidder in turn | a whole number in `[lo, hi]`, or `"pass"` when `canPass` |
+| `bid` | each bidder in turn | a whole number in `[lo, hi]`, `"pass"` when `canPass`, or `"back"` when `canBack` (the opener, before the opening bid: no auction has been held yet) |
 | `moreBuy` | a Construction Company owner after one purchase | `{a: "buy", slot}`, `{a: "upgrade", bld}` or `{a: "done"}` |
 | `payAny` | a player paying a town's any-mix cost | one commodity, asked again until paid |
 
 `bid` is the one request whose legal answers are a range rather than a list:
-`{ lo, hi, canPass, rail, high, bidder, opener }`. Requests before anything has
+`{ lo, hi, canPass, canBack, rail, high, bidder, opener }`. Requests before anything has
 changed in an action also carry `{ back: true }`, which returns to `action`.
 
 ### State

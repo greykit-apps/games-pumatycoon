@@ -93,6 +93,22 @@ export const TESTS = [
     eq(step(st, min - 1).refused !== null, true, "below the minimum is refused");
   }],
 
+  ["auction: the opener may go back before the opening bid", () => {
+    const st = table();
+    offer(st);
+    give(st, 0, { cash: 20 });
+    const logged = st.log.length;
+    act(st, { a: "auction", slot: 0 });
+    eq(waiting(st, "bid").canBack, true);
+    act(st, "back");
+    eq(waiting(st, "action").player, 0, "back at the action choice");
+    eq(st.railOffer[0], "fatcat.1", "nothing sold");
+    eq(st.log.length, logged, "and nothing logged: no auction was held");
+    act(st, { a: "auction", slot: 0 });
+    act(st, 4);
+    eq(st.ask.canBack, undefined, "after the opening bid there is no way back");
+  }],
+
   ["auction: everyone passes, the opener wins at the opening bid", () => {
     const st = table();
     const min = offer(st);

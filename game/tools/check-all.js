@@ -24,6 +24,7 @@ import { TESTS as SETUP } from "./scenarios/setup.js";
 import { TESTS as PRODUCTION } from "./scenarios/production.js";
 import { TESTS as MARKET } from "./scenarios/market.js";
 import { TESTS as END } from "./scenarios/end.js";
+import { TESTS as PREVIEW } from "./scenarios/preview.js";
 
 let failed = 0;
 const fail = msg => { console.error(`  error:   ${msg}`); failed++; };
@@ -78,7 +79,7 @@ if (!SKIN.approved) console.log("  note:    the skin (data/skin.js) is a draft a
 /* ---------- 2. the rule tests ---------- */
 
 console.log("rule tests");
-const ALL = [...SETUP, ...PRODUCTION, ...MARKET, ...END];
+const ALL = [...SETUP, ...PRODUCTION, ...MARKET, ...END, ...PREVIEW];
 if (ALL.length === 0) fail("no rule tests found");
 unique(ALL.map(([n]) => n), "test names");
 let passed = 0;

@@ -46,6 +46,7 @@ export function isLegal(ask, answer) {
   if (!ask) return false;
   if (ask.kind === "bid") {
     if (answer === "pass") return !!ask.canPass;
+    if (answer === "back") return !!ask.canBack;
     return Number.isInteger(answer) && answer >= ask.lo && answer <= ask.hi;
   }
   const a = canon(answer);
@@ -77,7 +78,11 @@ export function step(st, answer) {
 /* ---------- bookkeeping ---------- */
 
 function log(st, ev, entry) {
-  const e = { r: st.round, ...entry };
+  // `n` numbers every entry for the whole game, so the screen can ask "what
+  // happened since this player's last turn" though the log keeps only the
+  // last few hundred lines.
+  st.logSeq = (st.logSeq || 0) + 1;
+  const e = { n: st.logSeq, r: st.round, ...entry };
   st.log.push(e);
   if (st.log.length > LOG_KEEP) st.log.splice(0, st.log.length - LOG_KEEP);
   ev.push(e);
@@ -466,7 +471,7 @@ function produce(st, ev) {
     st.prices[g] = clampPrice(g, before + 1);
     if (st.prices[g] !== before) moved[g] = (moved[g] || 0) + 1;
   }
-  log(st, ev, { k: "prices", card: card.id, up: card.price, moved, prices: { ...st.prices } });
+  log(st, ev, { k: "prices", p: i, card: card.id, up: card.price, moved, prices: { ...st.prices } });
 
   st.discard.push(card.id);
   draw(st, ev, i);
@@ -495,6 +500,7 @@ function discardOne(st, ev, i, g) {
 
 function sell(st, ev, i, g, q, exp) {
   const p = st.players[i];
+  const before = st.prices[g];
   if (exp) {
     // Export Company: raise the price $3 first, never past the track's top.
     const bump = Math.max(...fxValues(p, "exportBump"));
@@ -504,7 +510,7 @@ function sell(st, ev, i, g, q, exp) {
   p.goods[g] -= q;
   p.cash += q * price;
   st.prices[g] = clampPrice(g, price - q);
-  log(st, ev, { k: "sell", p: i, good: g, q, price, exp, after: st.prices[g] });
+  log(st, ev, { k: "sell", p: i, good: g, q, price, exp, before, after: st.prices[g] });
   // Trading Firms: $1 per unit, from the bank, to every owner.
   st.players.forEach((o, j) => {
     if (!FIRM_ON_OWN_SALE && j === i) return;
@@ -522,7 +528,7 @@ function startAuction(st, ev, slot) {
   const rail = st.railOffer[slot];
   tc.auc = { slot, rail, opener: tc.p, high: null, bidder: null, out: [], last: tc.p, answered: 0 };
   tc.stage = "bid";
-  log(st, ev, { k: "auction", p: tc.p, rail });
+  void ev; // logged at the opening bid: choosing a railroad is not yet an auction
 }
 
 function runAuction(st, ev) {
@@ -531,7 +537,9 @@ function runAuction(st, ev) {
   if (a.high === null) {
     // Opening the auction is a bid of at least the minimum.
     const o = st.players[a.opener];
-    return ask(st, a.opener, "bid", null, { lo: min, hi: o.cash, canPass: false, rail: a.rail, high: null, bidder: null, opener: a.opener });
+    // Until the opening bid is placed nothing has happened, so the opener may
+    // still go back and choose another action.
+    return ask(st, a.opener, "bid", null, { lo: min, hi: o.cash, canPass: false, canBack: true, rail: a.rail, high: null, bidder: null, opener: a.opener });
   }
   // Two players (p.10): the opener bids once; the other bids more or passes.
   if (st.n === 2 && a.answered >= 2) return resolveAuction(st, ev);
@@ -553,6 +561,15 @@ function runAuction(st, ev) {
 
 function answerBid(st, ev, who, ans) {
   const a = st.tc.auc;
+  if (ans === "back") {
+    st.tc.auc = null;
+    st.tc.stage = "action";
+    return;
+  }
+  if (a.high === null) {
+    log(st, ev, { k: "auction", p: who, rail: a.rail });
+    a.seq = st.logSeq;
+  }
   a.last = who;
   a.answered++;
   if (ans === "pass") {

@@ -151,7 +151,7 @@ export function newGame(setup) {
     start: 0, turn: 0, round: 1,
     phase: "setup", ctx: null, tc: null, ask: null,
     endTrigger: null, over: false, result: null,
-    log: [],
+    log: [], logSeq: 0,
   };
 
   // A, B: shuffle the Price & Production deck and deal three to each player.

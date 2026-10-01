@@ -34,6 +34,12 @@ at play time.
 - **Two endings**: the printed one (last town or last railroad) and the
   designer's 2019 revision (two of towns, railroads and buildings all owned).
 - **Autosave and resume**, mid-auction included.
+- **A trading-terminal screen**: a market ticker with each price's move since
+  your last turn and who made it, an order book of railroads, the town and
+  buildings showing what each is worth to you, live public standings, an
+  auction ladder, and a "since your turn" recap. Every choice previews what it
+  would do (proceeds, price moves, storage overflow, VP) before you commit,
+  and producing takes a deliberate second click.
 - **Guidance for new players**: a one-minute walkthrough that spotlights each
   part of the table at the first move (on until a browser has seen it once,
   replayable from the help), and the box waiting for your answer breathes
@@ -47,13 +53,19 @@ list is below.
 
 | Key | |
 |---|---|
-| `1`–`5` | produce with that card from your hand |
+| `1`–`5` | preview producing with that card; `Enter` on **Produce** commits |
+| `S` `A` `B` `T` | jump to Sell, Auction, Buy or the Town (a jump never commits) |
+| `A` on a sale | sell all |
+| `Esc` | put the previewed card back |
 | `Enter` | take the keyboard from the curtain; place a bid |
 | `?` | how to play; `Esc` closes it |
 | `Enter` / `→`, `←`, `Esc` | next, back and end, in the walkthrough |
 
 Everything else is a button, and a button is live only when it answers the
-question the game is asking.
+question the game is asking. Hovering or focusing a choice lights the market
+rows it would move and marks the new price on each track. Focus survives
+every redraw, a new question takes focus itself, and moves are announced to
+screen readers, gathered while you wait and read when your turn comes.
 
 ## Names
 

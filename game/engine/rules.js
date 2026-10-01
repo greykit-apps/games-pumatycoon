@@ -93,6 +93,19 @@ export function scoreOf(st, i) {
   return { towns, rails, buildings, pairs, bonus, mission, total: towns + rails + buildings + pairs + bonus + mission };
 }
 
+/** The score anyone at the table can count: everything but the Bank's
+ * cash bonus and the hidden mission (money and missions are secret, p.11). */
+export function publicScore(st, i) {
+  const s = scoreOf(st, i);
+  const p = st.players[i];
+  let cashBonus = 0;
+  for (const b of p.blds) {
+    const fx = face(b.id, b.side).fx;
+    if (fx.vpPerCash) cashBonus += fx.vpPerCash[0] * Math.floor(p.cash / fx.vpPerCash[1]);
+  }
+  return s.total - s.mission - cashBonus;
+}
+
 const MEASURE = {
   money: p => p.cash,
   railroads: p => p.rails.length,
