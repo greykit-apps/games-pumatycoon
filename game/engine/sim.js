@@ -21,6 +21,7 @@ export function randomHuman(seed) {
   const r = () => { s = (Math.imul(s, 1103515245) + 12345) | 0; return ((s >>> 8) & 0xffffff) / 0x1000000; };
   return (st, ask) => {
     if (ask.kind === "bid") {
+      if (ask.canBack && r() < 0.1) return "back";
       if (ask.canPass && r() < 0.55) return "pass";
       return Math.min(ask.hi, ask.lo + Math.floor(r() * 4));
     }
