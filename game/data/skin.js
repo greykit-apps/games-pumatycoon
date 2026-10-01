@@ -2,9 +2,8 @@
  * the data never use these; they key on the ids in the other tables, so
  * the skin can change without touching a rule.
  *
- * DRAFT. Every name below is Claude's proposal and is awaiting the
- * author's approval; `approved: false` is printed by check-all.js until it
- * is flipped.
+ * Proposed by Claude and approved by the author on 2026-10-01, with one
+ * change: Bridgewater became Pounce Bridge (no "cub" in any name).
  *
  * Railroads keep the box's ladder (cheapest line first) as big cats from
  * small to large. Towns keep their commodity flavour where the printed
@@ -12,7 +11,7 @@
  * tile does (Bank, Factory, Warehouse) and are not the box's characters. */
 
 export const SKIN = {
-  approved: false,
+  approved: "author, 2026-10-01",
   game: "PumaTycoon",
   setting: "Cougar Country",
   railroad: "Line",

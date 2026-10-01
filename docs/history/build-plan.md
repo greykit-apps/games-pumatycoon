@@ -8,8 +8,8 @@ transcribed and cross-checked against the photographs (four cards read off
 the physical cards by the author), the engine with 60 named rule tests, the
 bots and simulation, and the screen. The author confirmed every data table and
 kept the designer's revised ending as a setup option (printed ending the
-default); the GitLab project was created. Waiting on the author: approval
-of the skin. M5 (ship) not started.
+default); the GitLab project was created and the skin approved (Bridgewater
+renamed Pounce Bridge). M5 (ship) not started.
 
 ## Context
 

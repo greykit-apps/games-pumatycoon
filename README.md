@@ -52,9 +52,9 @@ question the game is asking.
 
 ## Names
 
-The skin is a draft awaiting the author's approval (`game/data/skin.js`,
-`approved: false`). Commodity and building names are the box's own: they
-describe what a thing is or does.
+The skin lives in `game/data/skin.js` alone; the rules never read it.
+Commodity and building names are the box's own: they describe what a thing
+is or does.
 
 | Printed | PumaTycoon | | Printed | PumaTycoon |
 |---|---|---|---|---|
