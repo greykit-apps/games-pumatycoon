@@ -26,7 +26,7 @@ export const SKIN = {
   },
   towns: {
     molehill:        "Pebble Creek",
-    bridgewater:     "Cub Crossing",
+    bridgewater:     "Pounce Bridge",
     beaverford:      "Fern Hollow",
     blackfriar:      "Cinder Gap",
     newgate:         "Pawford",

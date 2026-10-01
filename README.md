@@ -59,7 +59,7 @@ describe what a thing is or does.
 | Printed | PumaTycoon | | Printed | PumaTycoon |
 |---|---|---|---|---|
 | Skunk Works Railroad | Bobcat Line | | Molehill | Pebble Creek |
-| Sly Fox Railroad | Lynx Line | | Bridgewater | Cub Crossing |
+| Sly Fox Railroad | Lynx Line | | Bridgewater | Pounce Bridge |
 | Fat Cat Railroad | Ocelot Line | | Beaver Ford | Fern Hollow |
 | Big Bear Railroad | Jaguar Line | | Black Friar | Cinder Gap |
 | Top Dog Railroad | Panther Line | | Newgate | Pawford |
