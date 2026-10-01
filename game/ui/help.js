@@ -31,7 +31,7 @@ export const HELP_TABS = [
 <p>The game ends when the last town is built or the last railroad auctioned (or, under the designer's revision, when two of towns, railroads and buildings are all owned). The round is played out so everyone has had the same number of turns.</p>`],
   ["Keys", `
 <ul>
-<li><b>1</b>–<b>5</b> — produce with that card from your hand</li>
+<li><b>1</b>–<b>5</b> — preview producing with that card; <b>Enter</b> on Produce commits, <b>Esc</b> puts it back</li>
 <li><b>Enter</b> — take the keyboard from the curtain; place the bid</li>
 <li><b>?</b> — this help; <b>Esc</b> closes it</li>
 <li>In the walkthrough: <b>Enter</b> or <b>→</b> next, <b>←</b> back, <b>Esc</b> to end it</li>

@@ -83,3 +83,49 @@ export function describeLog(e, players) {
   }
   return null;
 }
+
+/** Log lines, newest first, with runs of one player's storage discards
+ * folded into a single line. Returns [{ r, text }]. */
+export function logLines(entries, players) {
+  const out = [];
+  for (let k = 0; k < entries.length; k++) {
+    const e = entries[k];
+    if (e.k === "discard") {
+      const goods = [e.good];
+      while (k + 1 < entries.length && entries[k + 1].k === "discard" && entries[k + 1].p === e.p) goods.push(entries[++k].good);
+      const counts = {};
+      for (const g of goods) counts[g] = (counts[g] || 0) + 1;
+      const list = Object.entries(counts).map(([g, c]) => `${GOOD_NAME[g]}${c > 1 ? ` ×${c}` : ""}`).join(", ");
+      out.push({ r: e.r, text: `${players[e.p].name} discards ${goods.length} for storage: ${list}` });
+      continue;
+    }
+    const t = describeLog(e, players);
+    if (t) out.push({ r: e.r, text: t });
+  }
+  return out.reverse();
+}
+
+/** What happened since a baseline, for the "since your turn" strip: the
+ * moves that change the table, not the bookkeeping. Oldest first. */
+const RECAP = new Set(["produce", "sell", "won", "town", "buy", "upgrade", "tradingFloor", "endTriggered", "reshuffle", "suddenDeath"]);
+export function recapLines(st, sinceN, viewer) {
+  const name = i => (i === viewer ? "You" : st.players[i].name);
+  const out = [];
+  for (const e of st.log) {
+    if (!(e.n > sinceN) || !RECAP.has(e.k)) continue;
+    const gl = arr => arr.map(g => GOOD_NAME[g]).join(", ");
+    switch (e.k) {
+      case "produce": out.push(`${name(e.p)} produced ${gl([...e.take, ...(e.bonus ? e.bonus.goods : [])])}`); break;
+      case "sell": out.push(`${name(e.p)} sold ${e.q} ${GOOD_NAME[e.good]} at $${e.price}: now $${e.after}`); break;
+      case "won": out.push(`${name(e.p)} won the ${railName(e.rail)} for $${e.paid}`); break;
+      case "town": out.push(`${name(e.p)} built ${townName(e.town)}`); break;
+      case "buy": out.push(`${name(e.p)} bought ${bldName(e.bld)} for $${e.cost}`); break;
+      case "upgrade": out.push(`${name(e.p)} upgraded to ${bldName(e.bld, 1)}`); break;
+      case "tradingFloor": out.push(`${name(e.p)} bought ${e.qty} ${GOOD_NAME[e.good]} from ${name(e.from)}`); break;
+      case "endTriggered": out.push("The end is triggered: this is the final round"); break;
+      case "reshuffle": out.push("The card discards were reshuffled"); break;
+      case "suddenDeath": out.push(`${name(e.p)} declared victory`); break;
+    }
+  }
+  return out;
+}
