@@ -32,7 +32,7 @@ export const HELP_TABS = [
   ["Keys", `
 <ul>
 <li><b>1</b>–<b>5</b> — preview producing with that card; <b>Enter</b> on Produce commits, <b>Esc</b> puts it back</li>
-<li><b>S</b>, <b>A</b>, <b>B</b>, <b>T</b> — jump to Sell, Auction, Buy or the Town; a jump never commits; the arrow keys then walk that group</li>
+<li><b>S</b> — jump to Sell; <b>A</b>, <b>B</b>, <b>T</b> — jump to the railroads, buildings or town in the table, where those moves are made. A jump never commits; the arrow keys then walk the list</li>
 <li>Buying a building or a town paid in its own commodity is two presses: the first shows what it costs and brings, the second spends; <b>Esc</b> cancels</li>
 <li><b>A</b> while selling — sell all</li>
 <li><b>Enter</b> — take the keyboard when it is passed to you (hot seat)</li>

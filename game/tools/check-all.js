@@ -11,6 +11,8 @@
  * A check that finds nothing to check fails: an empty table, an empty test
  * list or an empty ledger is an error, never a pass. */
 
+import { readdirSync, readFileSync } from "node:fs";
+import { spawnSync } from "node:child_process";
 import { GOODS, TRACK } from "../data/commodities.js";
 import { CARDS, CARDS_PRINTED, CARDS_SOURCE } from "../data/cards.js";
 import { RAILROADS, RAILROADS_PRINTED, RAILROADS_SOURCE } from "../data/railroads.js";
@@ -99,6 +101,23 @@ for (const n of ported) if (!tested.has(n)) fail(`scenario "${n}" is marked port
 unique(SCENARIOS.map(s => s.name), "scenario names");
 const pending = SCENARIOS.filter(s => s.status === "pending");
 console.log(`  ${ported.size} ported, ${pending.length} pending, ${SCENARIOS.filter(s => s.status === "dropped").length} dropped`);
+
+// The screen's modules run only in a browser, so nothing above loads them; a
+// syntax error in one would pass every rule test and break the page. Load each.
+console.log("screen modules");
+const uiDir = new URL("../ui/", import.meta.url);
+const uiFiles = readdirSync(uiDir).filter(f => f.endsWith(".js"));
+if (!uiFiles.length) fail("no screen modules found");
+for (const f of uiFiles) {
+  if (f === "main.js") {
+    // main.js boots the game as it loads, which needs a page; parse it instead.
+    const r = spawnSync(process.execPath, ["--input-type=module", "--check"], { input: readFileSync(new URL(f, uiDir)) });
+    if (r.status !== 0) fail(`game/ui/${f} does not parse: ${String(r.stderr).split("\n").slice(0, 3).join(" ")}`);
+    continue;
+  }
+  try { await import(new URL(f, uiDir)); } catch (e) { fail(`game/ui/${f} does not load: ${e.message}`); }
+}
+console.log(`  ${uiFiles.length} load`);
 
 if (failed) {
   console.error(`\n${failed} problem(s)`);

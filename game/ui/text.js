@@ -54,6 +54,9 @@ export const ACTION_LABEL = { produce: "Produce", sell: "Sell", auction: "Auctio
 
 /** A player may be called "You" (the default name of a lone human seat);
  * then the log's verbs drop their -s: "You bid $5", "You pass". */
+/** "Bot 1's turn", but "Your turn". */
+export const possessive = name => (name === "You" ? "Your" : `${name}'s`);
+
 export function agree(name, verb) {
   if (name !== "You") return verb;
   return /(ss|sh|ch|x)es$/.test(verb) ? verb.slice(0, -2) : verb.replace(/s$/, "");

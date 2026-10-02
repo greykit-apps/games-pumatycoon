@@ -16,6 +16,15 @@ export const TOKENS = {
 
 const T = TOKENS;
 
+/* The width at which the table goes to three columns (a 1150px stage beside
+ * the 460px desk) and the hand moves under the market. screen.js switches the
+ * hand's markup on the same query. */
+export const HAND_STRIP = "(min-width: 1650px)";
+/* When the desk must hold the hand as well (a window short, or too narrow
+ * for the hand row), it tightens (below) and screen.js folds the recap. The
+ * framed board is never taller than 820px, so this is most desktops. */
+export const SHORT = "(min-width: 901px) and (max-height: 800px), (min-width: 901px) and (max-width: 1649px)";
+
 export const CSS = `
 :root{--bg:${T.bg};--panel:${T.panel};--panel2:${T.panelAlt};--line:${T.border};--hair:${T.line};--lit:${T.borderLit};
   --text:${T.text};--ink:${T.ink};--dim:${T.dim};--accent:${T.accent};--warn:${T.warn};--danger:${T.danger};
@@ -63,7 +72,37 @@ h2 .dim{letter-spacing:.04em;text-transform:none;font-weight:400}
 .row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
 
 .pt{min-height:100dvh;display:flex;flex-direction:column}
-@media (min-width:901px){.pt.game{height:100dvh;min-height:0}.pt.game .main{min-height:0;overflow:hidden}}
+/* ---- the backdrop, and the board floating over it (after PumaCity) ----
+ * The margin round the board grows only with height to spare: a short
+ * laptop window keeps every pixel for the game, a taller one gets the frame. */
+.scene{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;
+  background:linear-gradient(#05070f 0%,#070b17 40%,#0b1020 70%,#131627 90%,#1a1a20 100%)}
+.scene svg{display:block;width:100%;height:100%}
+.scene .s-star{fill:#8b96b8;opacity:.45}
+.scene .s-moon{fill:#ffb000;opacity:.16}
+.scene .s-far{fill:#090d19;stroke:#1d2948;stroke-width:1.5}
+.scene .s-mid{fill:#070b15;stroke:#1d2948;stroke-width:1.5}
+.scene .s-line{fill:none;stroke:#2a3960;stroke-width:2;opacity:.8}
+.scene .s-body{fill:#0d1424;stroke:#2a3960;stroke-width:1.5}
+.scene .s-win{fill:#ffb000;opacity:.32}
+.scene .s-lamp{fill:#54f2ff;opacity:.7}
+.scene .s-beam{fill:url(#pt-beam)}
+.scene .s-near{fill:#0a0f1d;stroke:#2a3960;stroke-width:1.5}
+.scene .s-smoke{fill:none;stroke:#1d2948;stroke-width:6;stroke-linecap:round;opacity:.7}
+.scene .s-haze{fill:url(#pt-haze)}
+.scene .s-ground{fill:#05070f}
+[data-pumatycoon-game]{position:relative;z-index:1}
+@media (min-width:901px){
+  :root{--gut:clamp(0px,calc((100dvh - 740px) / 3),32px);--gutx:clamp(0px,calc((100vw - 1500px) / 4),64px)}
+  [data-pumatycoon-game]{min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:var(--gut) var(--gutx)}
+  .pt{min-height:0;background:var(--bg);border:1px solid var(--line);border-radius:4px;
+    box-shadow:0 0 0 1px rgba(5,7,15,.6),0 30px 90px rgba(0,0,0,.65)}
+  /* 820px holds the densest turn (the hand row, five players, a full desk);
+   * a taller window shows the scenery above and below instead of empty board. */
+  .pt.game{height:min(calc(100dvh - 2 * var(--gut)),820px);width:min(100%,1800px);overflow:hidden}
+  .pt:not(.game){width:min(100%,1240px)}
+  .pt.game .main{min-height:0;overflow:hidden}
+}
 .top{display:flex;align-items:center;gap:12px;padding:8px 16px;border-bottom:1px solid var(--line);flex-wrap:wrap;background:var(--panel)}
 .top .grow{flex:1}
 .top .turn{color:var(--text)}
@@ -72,14 +111,16 @@ h2 .dim{letter-spacing:.04em;text-transform:none;font-weight:400}
 .top .clock.near{color:var(--warn);border-color:color-mix(in oklab,var(--warn) 55%,transparent);background:#1d1608}
 .top .endflag{color:var(--warn);border:1px solid var(--warn);border-radius:2px;padding:1px 8px;font-size:var(--fs-s);text-transform:uppercase;letter-spacing:.1em}
 .main{display:grid;grid-template-columns:minmax(0,1fr) 460px;flex:1;min-height:0}
-.stage{position:relative;padding:16px 18px;overflow-y:auto;display:flex;flex-direction:column;gap:22px;min-width:0}
+.stage{position:relative;padding:12px 18px;overflow-y:auto;display:flex;flex-direction:column;gap:16px;min-width:0}
 .side{position:relative;border-left:1px solid var(--line);padding:16px;overflow-y:auto;display:flex;flex-direction:column;gap:16px;min-width:0;background:#070a14}
 
 /* ---- the market ticker ---- */
-.ticker{border:1px solid var(--line);background:var(--panel)}
-.tk-head,.tk-row{display:grid;grid-template-columns:150px 76px 80px minmax(0,1fr) 200px 92px 104px;align-items:center;gap:0 14px;padding:0 14px}
+.ticker{border:1px solid var(--line);background:var(--panel);container:ticker/inline-size;min-width:0}
+.tk-by2{display:none}
+.tk-head .h-short{display:none}
+.tk-head,.tk-row{display:grid;grid-template-columns:150px 76px 80px minmax(110px,200px) minmax(200px,1fr) 92px 104px;align-items:center;gap:0 14px;padding:0 14px}
 .tk-head{font-size:var(--fs-xs);color:var(--dim);padding-top:7px;padding-bottom:7px;border-bottom:1px solid var(--line);white-space:nowrap}
-.tk-row{min-height:46px;border-bottom:1px solid var(--hair);position:relative}
+.tk-row{min-height:39px;border-bottom:1px solid var(--hair);position:relative}
 .tk-row:last-child{border-bottom:0}
 .tk-name{display:flex;align-items:center;gap:9px;color:var(--text);font-weight:600;font-size:var(--fs-m)}
 .tk-name .chip{display:inline-flex;width:30px;height:30px;align-items:center;justify-content:center;border-radius:3px;background:color-mix(in oklab,var(--c) 16%,transparent)}
@@ -115,9 +156,32 @@ h2 .dim{letter-spacing:.04em;text-transform:none;font-weight:400}
 @keyframes pt-tick-down{from{background:color-mix(in oklab,var(--down) 24%,transparent)}to{background:transparent}}
 
 /* ---- the order book ---- */
-.book{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px}
+/* The table, dense enough for a laptop-height window: the market and the
+ * standings share the top band, the railroads, the town and the buildings
+ * share the band below, and on a wide window the hand runs between them.
+ * Each band stacks when the stage is narrow. Measured on the stage. */
+.stage{container:stage/inline-size}
+.band1{display:grid;grid-template-columns:minmax(0,1fr);gap:16px;align-items:stretch}
+/* Tiles side by side line up: same top, same height. */
+.st-box{border:1px solid var(--line);background:var(--panel);min-width:0}
+.vp-q{color:var(--dim);font-weight:400;margin-left:1px}
+@container stage (min-width:900px){
+  .band1{grid-template-columns:minmax(0,1fr) minmax(380px,40%)}
+}
+.board{display:grid;grid-template-columns:minmax(0,1fr);gap:16px;align-items:stretch;grid-template-areas:"rails" "town" "blds"}
+.bc-rails{grid-area:rails}.bc-town{grid-area:town}.bc-blds{grid-area:blds}.bc-stand{min-width:0}
+@container stage (min-width:640px){
+  .board{grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-areas:"rails town" "blds blds"}
+}
+@container stage (min-width:900px){
+  /* The same right-hand column as the band above, so the tiles' edges line up:
+   * the buildings under the standings, the railroads and town under the market. */
+  .board{grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(380px,40%);grid-template-areas:"rails town blds"}
+  /* In three columns each building is one line; its upgrade is on hover. */
+  .ob-fx .upg{display:none}
+}
 .book-col{display:flex;flex-direction:column;gap:6px;min-width:0}
-.book-col h2+.ob{margin-bottom:10px}
+.book-col h2+.ob{flex:1}
 .ob{border:1px solid var(--line);background:var(--panel)}
 .ob-row{display:grid;align-items:center;gap:2px 10px;padding:6px 10px;border:0;border-bottom:1px solid var(--hair);width:100%;
   background:transparent;color:var(--ink);font-size:var(--fs-xs);border-radius:0;min-height:36px}
@@ -142,18 +206,18 @@ h2 .dim{letter-spacing:.04em;text-transform:none;font-weight:400}
 .ob-row.empty{color:var(--dim);justify-content:center;display:flex}
 .ob-row.short .ob-cost{color:var(--dim)}
 .ob-row .badge{display:inline-block;font-size:10px;border:1px solid var(--accent);color:var(--accent);border-radius:2px;padding:0 4px;margin-right:6px;vertical-align:1px}
-.ob-row .flag.end{background:transparent;color:var(--warn);border:1px solid var(--warn)}
+.ob-row .flag.end{background:transparent;color:var(--warn);border:1px solid var(--warn);white-space:nowrap;display:inline-block;margin:2px 0 0}
 .ob-row .flag{font-style:normal;font-size:var(--fs-xs);color:var(--bg);background:var(--warn);padding:1px 6px;margin-left:6px;letter-spacing:.06em;text-transform:uppercase}
 button.ob-row{cursor:pointer;text-align:left}
 button.ob-row.live .ob-name::before{content:"▸ ";color:var(--accent)}
 button.ob-row.live:hover,button.ob-row.live:focus-visible,.ob-row.hint{background:#0d2028}
 .ob-pay button{min-height:28px;padding:2px 8px;display:inline-flex;align-items:center;gap:4px}
-.ob-legend{font-size:var(--fs-xs);color:var(--dim);margin:-2px 0 4px}
+.ob-legend{font-size:var(--fs-xs);color:var(--dim);margin:0;padding:5px 10px}
 .ob-legend .badge{margin-right:3px}
 .ob-row.onauction{background:color-mix(in oklab,var(--warn) 9%,transparent)}
 
 /* ---- standings ---- */
-table.standings{border-collapse:collapse;width:100%;font-size:var(--fs-s);border:1px solid var(--line);background:var(--panel)}
+table.standings{border-collapse:collapse;width:100%;font-size:var(--fs-s)}
 table.standings th,table.standings td{padding:7px 10px;border-bottom:1px solid var(--hair);text-align:left;vertical-align:middle}
 table.standings thead th{color:var(--dim);font-weight:400;font-size:var(--fs-xs);letter-spacing:.12em;text-transform:uppercase;border-bottom:1px solid var(--line)}
 table.standings tbody th{color:var(--text);font-weight:600;white-space:nowrap}
@@ -165,6 +229,27 @@ table.standings tr.active th .st-name::after{content:" ●";color:var(--accent);
 table.standings td.goods{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 table.standings td.goods span{display:inline-flex;align-items:center;gap:2px;color:var(--text)}
 table.standings td.goods span.zero{opacity:.3}
+table.standings .goods-line{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+table.standings .goods-line span{display:inline-flex;align-items:center;gap:2px;color:var(--text)}
+table.standings .goods-line span.zero{opacity:.3}
+table.standings .goods-line span.dim{color:var(--dim)}
+/* Beside the market (or on a phone), the standings keep every player's
+ * commodities, on a line of their own under the player's row instead of in a
+ * column. */
+table.standings tr.st-goodsrow{display:none}
+@container stage (min-width:900px) or (max-width:559px){
+  table.standings .st-goods,table.standings td.g-inline{display:none}
+  table.standings tr.st-goodsrow{display:table-row}
+  table.standings tbody tr:has(+ tr.st-goodsrow) > *{border-bottom:0;padding-top:4px;padding-bottom:0}
+  table.standings tr.st-goodsrow td{padding-top:0;padding-bottom:4px}
+  table.standings .goods-line{font-size:11.5px;gap:7px}
+  table.standings .goods-line .ico{width:13px;height:13px}
+  table.standings th,table.standings td{padding-left:5px;padding-right:5px}
+  table.standings thead th{letter-spacing:.04em}
+  table.standings .st-toggle{padding:0 4px;margin-right:0}
+  table.standings .st-name{display:inline-block;max-width:9ch;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:bottom}
+  table.standings .tg-bot{display:none}
+}
 table.standings .tag{font-size:10px;color:var(--dim);border:1px solid var(--line);border-radius:2px;padding:0 4px;font-weight:400}
 table.standings .tag.first{color:var(--text);border-color:var(--lit)}
 .st-toggle{min-height:24px;padding:0 6px;margin-right:2px}
@@ -246,8 +331,15 @@ table.standings tr.just{animation:pt-just 2.2s cubic-bezier(.16,1,.3,1) 1}
 .ask .sub b{color:var(--vp)}
 .ask .grp{display:flex;flex-direction:column;gap:5px}
 .ask .grp>b{font-size:var(--fs-s);color:var(--ink);font-weight:700}
-.ask .grp[data-group=s] button{white-space:nowrap}
+.ask .grp[data-group=s] .row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}
+.ask .grp[data-group=s] button{white-space:nowrap;overflow:hidden;padding:4px 6px;font-size:12.5px}
 .ask .endwarn{margin:0;font-size:var(--fs-s);color:var(--warn)}
+.ask .grp.jumps{flex-direction:row;flex-wrap:wrap;align-items:center;gap:6px}
+.ask .grp.jumps>b{margin-right:4px}
+.ask .jump{color:var(--ink)}
+.ask .jump .arr{color:var(--accent)}
+.ask .jump .warn{color:var(--warn)}
+.ask .jump kbd{font:inherit;font-size:10px;color:var(--dim);border:1px solid var(--line);border-radius:2px;padding:0 4px;margin-left:6px}
 .preview kbd{font:inherit;font-size:10px;color:var(--dim);border:1px solid var(--line);border-radius:2px;padding:0 4px;margin-left:6px}
 .ask .grp>b .dim{font-weight:400;margin-left:6px}
 .ask .grp>b kbd,.kbd{font:inherit;font-size:10px;color:var(--dim);border:1px solid var(--line);border-radius:2px;padding:0 4px;margin-left:6px}
@@ -256,6 +348,11 @@ table.standings tr.just{animation:pt-just 2.2s cubic-bezier(.16,1,.3,1) 1}
 .ask .dot,.ask.wait .dot{width:8px;height:8px;border-radius:50%;background:var(--dim);animation:pt-wait 1.2s ease-in-out infinite}
 @keyframes pt-wait{0%,100%{opacity:.25}50%{opacity:1}}
 .combo{display:inline-flex;gap:2px;align-items:center}
+table.tf{border-collapse:collapse;font-size:var(--fs-s)}
+table.tf th,table.tf td{padding:2px 4px;text-align:center}
+table.tf tbody th{text-align:left;color:var(--text);font-weight:600;padding-right:10px;white-space:nowrap}
+table.tf thead th{font-weight:400;white-space:nowrap}
+table.tf td button{min-width:40px;min-height:28px;text-align:center;padding:2px 8px}
 .preview{border:1px solid var(--accentDim,#2b7f92);background:#08131c;padding:10px;display:flex;flex-direction:column;gap:6px}
 .preview .pv-title{color:var(--accent);font-weight:700}
 .preview .pv-row{font-size:var(--fs-s);color:var(--text);display:flex;gap:6px;align-items:center;flex-wrap:wrap}
@@ -274,6 +371,17 @@ table.standings tr.just{animation:pt-just 2.2s cubic-bezier(.16,1,.3,1) 1}
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
 
 /* ---- the hand ---- */
+/* On a wide window: one row of cards under the market, as many columns as
+ * the hand holds (three at least, so a short hand keeps the card shape). */
+.hand.strip{display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));gap:8px}
+.hand.strip .pp{min-height:66px}
+.hand.strip .pp .half{padding:4px 12px;gap:2px}
+.hand.strip .pp .ico{width:24px;height:24px}
+.hand.strip .pp .pp-warn{position:absolute;right:6px;top:5px;padding:0 6px;border:1px solid color-mix(in oklab,var(--warn) 45%,transparent);border-radius:2px}
+.ask .sub kbd{font:inherit;font-size:10px;color:var(--dim);border:1px solid var(--line);border-radius:2px;padding:0 4px}
+.hand.strip.hidden{display:flex;align-items:center;min-height:72px;border:1px dashed var(--line);padding:0 14px}
+.hand.strip.hidden p{margin:0;font-size:var(--fs-s)}
+.hand-strip h2 .dim{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 /* The hand is what a player handles most, so it is the largest thing on the
  * desk: one wide card per row, production (what you take) first. */
 .hand{display:flex;flex-direction:column;gap:8px}
@@ -354,6 +462,21 @@ table.score td.vp{color:var(--vp);font-weight:700}
 .setup .go button.primary{padding:10px 22px;font-size:var(--fs-l)}
 .boot{padding:24px}
 
+/* A short window (a 1080p laptop at 125%, say): the desk tightens so a turn
+ * fits without scrolling. */
+@media ${SHORT}{
+  /* The hand cannot be played during an auction: let the bidding have the room. */
+  .side .auction ~ section{display:none}
+  .side{gap:10px}
+  .wallet{padding:6px 16px}
+  .w-cash b{font-size:30px}
+  .recap h2{display:none}
+  .hand:not(.strip){gap:5px}
+  .hand:not(.strip) .pp{min-height:56px}
+  .hand:not(.strip) .pp .half{padding:3px 12px;gap:1px}
+  .hand:not(.strip) .pp .ico{width:24px;height:24px}
+  .ask{gap:8px;padding:8px 12px}
+}
 @media (hover:none){.ask kbd,.auction kbd{display:none}}
 @media (prefers-reduced-motion:reduce){
   .ask.attention.arrive{animation:none}
@@ -362,17 +485,24 @@ table.score td.vp{color:var(--vp);font-weight:700}
   .w-delta{animation:none;opacity:1}
   .tour-spot{transition:none}
 }
-@media (max-width:1280px){
-  .tk-head,.tk-row{grid-template-columns:130px 70px 80px minmax(0,1fr) 150px 84px 96px;gap:0 10px}
+/* The market sized to its own width: beside the standings it drops the
+ * "moved by" column for a line under each commodity's name. */
+@container ticker (max-width:1000px){
+  .tk-head,.tk-row{grid-template-columns:130px 66px 56px minmax(0,1fr) minmax(90px,150px) 80px 90px;gap:0 10px}
 }
-@media (max-width:1100px){
-  .book{grid-template-columns:1fr}
+@container ticker (max-width:760px){
   .tk-by{display:none}
-  .tk-head,.tk-row{grid-template-columns:130px 70px 80px minmax(0,1fr) 84px 96px}
+  .tk-head .h-long{display:none}.tk-head .h-short{display:inline}
+  .tk-head,.tk-row{grid-template-columns:minmax(0,128px) 62px 46px minmax(80px,1fr) 70px 78px;gap:0 10px;padding:0 10px}
+  .tk-by2{display:block;font-size:10.5px;line-height:1.2;color:var(--dim);font-weight:400;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .tk-nm{min-width:0;display:flex;flex-direction:column;line-height:1.2}
+  .tk-scale .lo,.tk-scale .hi{display:none}
+  .tk-row{min-height:41px}
 }
 @media (max-width:900px){
   .main{grid-template-columns:1fr}
   .side{order:-1;border-left:0;border-bottom:1px solid var(--line)}
+  .ask .jump .arr{display:none}
   .wallet{top:0}
   .setup{grid-template-columns:1fr;padding:18px 16px 32px}
 }
@@ -384,9 +514,8 @@ table.score td.vp{color:var(--vp);font-weight:700}
   .tk-hold,.tk-others,.tk-head{display:none}
   .tk-name span{display:none}
   .tk-price{font-size:var(--fs-l)}
-  table.standings th,table.standings td{padding:6px}
-  table.standings td.goods{display:none}
-  table.standings thead th:nth-child(4){display:none}
+  /* No room for the hand-size column; your own is in the cash bar. */
+  table.standings thead th:last-child,table.standings tbody tr:not(.st-goodsrow):not(.st-detail) > td:last-child{display:none}
 }
 `;
 
