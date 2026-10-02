@@ -43,7 +43,8 @@ at play time.
   commodity and who holds most, an order book of railroads, the town and
   buildings showing what each is worth to you, live public standings, your
   cash pinned at the top of your desk, and a "since your turn" recap, laid
-  out as aligned tiles that fit a laptop-height window without scrolling
+  out as aligned tiles, floating over a night scene of Cougar Country, that
+  fit a laptop-height window without scrolling
   (the market beside the standings, the railroads, town and buildings
   beneath; on a wide window the hand runs under the market). Auctions,
   buildings and the town are pressed in the table, where each row says what
