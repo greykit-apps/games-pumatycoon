@@ -3,7 +3,8 @@
  * and checks the preview made beforehand against what happened. */
 
 import { table, give, act, eq, assert } from "./harness.js";
-import { sellPreview, cardPreview, railPreview, townPreview, marketMoves, cheapest, lastTurnEntries, auctionSeats, quickBids, buyPreview, endClock, standing } from "../../ui/preview.js";
+import { sellPreview, cardPreview, railPreview, townPreview, marketMoves, cheapest, lastTurnEntries, auctionSeats, quickBids, buyPreview, endClock, standing,
+  secretsShown, holders, missionProgress } from "../../ui/preview.js";
 import { lastMoveLine } from "../../ui/text.js";
 import { tokens, storageLimit, publicScore } from "../../engine/rules.js";
 
@@ -165,5 +166,46 @@ export const TESTS = [
     eq([me.place, me.tied, me.gap, me.rival], [2, true, publicScore(st, 0) - lead, 1], "tied second, behind P1");
     const top = standing(st, 1);
     eq([top.place, top.gap > 0, top.rival], [1, true, 0], "leading, and by how much");
+  }],
+
+  ["screen: in hot seat a human's secrets hide the moment their move hands over to a bot", () => {
+    const st = table({ seats: ["human", "bot", "human"] });
+    eq(secretsShown(st, 0), 0, "P0 asked, at the keyboard: theirs");
+    eq(secretsShown(st, 2), null, "P0 asked, P2 last at the keyboard: nobody's (the curtain is for P0)");
+    give(st, 0, { hand: ["pp52"] });
+    act(st, { a: "produce", card: "pp52" });
+    act(st, ["wood", "wood", "goods"]);
+    eq(st.players[st.ask.player].seat, "bot", "the bot's turn");
+    eq(secretsShown(st, 0), null, "P0's move is over: hidden while the bot plays");
+    const solo = table({ seats: ["human", "bot", "bot"] });
+    give(solo, 0, { hand: ["pp52"] });
+    act(solo, { a: "produce", card: "pp52" });
+    act(solo, ["wood", "wood", "goods"]);
+    eq(secretsShown(solo, 0), 0, "one human: nobody to hide from");
+    eq(secretsShown(table({ seats: ["bot", "bot"], n: 2 }), null), "all", "all bots: a spectator sees everything");
+  }],
+
+  ["screen: the market shows what the others hold and who holds most", () => {
+    const st = table();
+    give(st, 0, { goods: { wheat: 5 } });
+    give(st, 1, { goods: { wheat: 2 } });
+    give(st, 2, { goods: { wheat: 4 } });
+    eq(holders(st, "wheat", 0), { total: 6, top: 2, topQty: 4 }, "P0's view: the others");
+    eq(holders(st, "wheat"), { total: 11, top: 0, topQty: 5 }, "a spectator's: everyone");
+    eq(holders(st, "coal", 0), { total: 0, top: null, topQty: 0 });
+  }],
+
+  ["screen: a mission's progress counts only what is public", () => {
+    const st = table();
+    give(st, 0, { goods: { wheat: 3 }, towns: ["molehill"] });
+    give(st, 1, { towns: ["molehill", "bridgewater"] });
+    st.players[0].mission = "wheat";
+    eq(missionProgress(st, 0), { kind: "per", held: 3, vp: 3 });
+    st.players[0].mission = "towns";
+    eq(missionProgress(st, 0), { kind: "most", mine: 1, rival: 1, theirs: 2, state: "behind", vp: 0 });
+    give(st, 0, { towns: ["molehill", "newgate"] });
+    eq(missionProgress(st, 0).state, "tied", "a tie scores nothing");
+    st.players[0].mission = "money1";
+    eq(missionProgress(st, 0), { kind: "secret" }, "Most Money never compares secret cash");
   }],
 ];

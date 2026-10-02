@@ -26,8 +26,12 @@ at play time.
   advanced ones, with the 2-player rules (railroad and town removal, the
   one-bid auction) when two sit down.
 - **Any mix of humans and bots**, bots at three skill levels, hot seat
-  between humans behind a curtain that keeps each player's money and hand
-  secret, as the rulebook requires.
+  between humans that keeps each player's money, hand and mission secret, as
+  the rulebook requires: they show only while that player is being asked,
+  never while bots play, and a curtain covers the desk (only the desk: the
+  table is public and stays readable) when the keyboard changes hands. In an
+  auction the handover is a line in the auction box, so a bidding war between
+  two people is Enter, Enter.
 - **Every optional rule in the box**, chosen at setup: Mission cards, Sudden
   Death at $1,000, the beginners' game without advanced buildings, and the
   basic-buildings-by-player-count setup.
@@ -35,7 +39,8 @@ at play time.
   designer's 2019 revision (two of towns, railroads and buildings all owned).
 - **Autosave and resume**, mid-auction included.
 - **A trading-terminal screen**: a market ticker with each price's move since
-  your last turn and who made it, an order book of railroads, the town and
+  your last turn and who made it, what the others hold of each
+  commodity and who holds most, an order book of railroads, the town and
   buildings showing what each is worth to you, live public standings, your
   cash pinned at the top of your desk, and a "since your turn" recap. An
   auction is one box that never grows (the high bid, each seat's last bid,
@@ -46,13 +51,16 @@ at play time.
   commodity takes a deliberate second press. The header counts down the
   end (what is left of the towns and railroads, amber when one purchase
   would finish it), your place and gap to the leader sit beside your cash,
-  and the final screen says where you finished, with a one-press rematch. Paying a town's any-mix or
+  your mission says what it is worth now (a Most Money mission says it
+  cannot be known: money is secret), and the final screen says where you
+  finished, with a one-press rematch. Paying a town's any-mix or
   discarding for storage is one click ("pay with my cheapest"), your own
   last move is echoed back with what it earned and moved, and at the storage
   limit the screen says the way out and puts it first.
 - **Guidance for new players**: a one-minute walkthrough that spotlights each
   part of the table at the first move (on until a browser has seen it once,
-  replayable from the help), and the box waiting for your answer breathes
+  replayable from the help; in hot seat each further human gets a short tour
+  of their own desk at their first move), and the box waiting for your answer breathes
   gently so it is never lost on a busy screen.
 
 Where the rulebook is silent and the game has had to decide, the decision is

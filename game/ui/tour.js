@@ -6,6 +6,10 @@
  * Nothing in the game moves while the tour is up: it only ever starts when a
  * human is being asked something, and the game waits for that answer.
  *
+ * In hot seat every new human gets it at their own first move: the whole
+ * tour for the first, and the short one (the steps marked `short`: your
+ * desk, which is what changes hands) for each one after.
+ *
  * Keys: Enter or Right for next, Left for back, Esc to end. */
 
 import { SKIN } from "../data/skin.js";
@@ -24,7 +28,9 @@ const STEPS = [
     body: "You are a tycoon in a market everyone shares. Produce commodities, sell them while the price is good, and turn the money into railroads, buildings and towns. The most victory points at the end wins. This tour takes a minute; you can replay it from the ? help at any time." },
   { at: ".ticker", title: "The market",
     body: "Six commodities, each with today's price, how far it has moved since your last turn and who moved it, and where it sits on its track. Producing pushes prices up and selling pushes them down, for everyone: what a rival just sold is cheap, and what everyone has been producing is worth selling." },
-  { at: ".hand", title: "Your hand",
+  { at: ".wallet", short: true, title: "Your cash and your place",
+    body: "Your money is secret, and it sits at the top of your desk, where you decide what to spend: the largest number here, with a flash and the change whenever it moves. Beside it are your points, your place and the gap to the leader, how full your storage is and how many cards you hold." },
+  { at: ".hand", short: true, title: "Your hand",
     body: "Price & Production cards. Producing with one takes three of the commodities in its red half, then every commodity in its blue half rises $1 per icon. On your move the hand sits at the top of the question: pick a card to see exactly what it would do, then press Produce. You draw back up to your hand limit afterwards. Your hand is secret." },
   { at: "[data-tour=rails]", title: "Railroads",
     body: "Two lines are up for auction. Each row shows what the next card of that line is worth to you. Opening an auction is a bid of at least the minimum; bidding goes round the table and a pass is final. The strip is the VP for owning 1, 2, 3 or 4 cards of a line, in total. Open an auction and lose it, and you act again." },
@@ -34,16 +40,16 @@ const STEPS = [
     body: "Bought with money, and they last all game. B tiles add a bonus commodity each time you produce (one B a production), P tiles let you take more from a card. Every building is 1 VP and one more space in your storage." },
   { at: ".standings", title: "The standings",
     body: "The points anyone can count, and what everyone owns: open a row to see it. Money is secret, so you see only your own, and the Bank's cash bonus and missions are added at the end. You can hold ten commodities, plus one per building; over that after producing, you discard." },
-  { at: ".ask", title: "Your move",
+  { at: ".ask", short: true, title: "Your move",
     body: "When the game is waiting for you, this box breathes. Every button in it is a legal move and says what it would do, and anything that spends shows you the result before a second press makes it. Above it, \"Since your turn\" lists what the others did while you waited, and at the very top of the desk is your cash. In an auction this box becomes the bidding: Enter bids the minimum, the arrow keys change it, P passes." },
-  { at: null, title: "The end",
-    body: "When the last town is built or the last railroad is sold (or under the designer's revision, two of towns, railroads and buildings are all gone), the round is finished and the points are counted. Good luck." },
+  { at: ".clock", title: "The end",
+    body: "When the last town is built or the last railroad is sold (or under the designer's revision, two of towns, railroads and buildings are all gone), the round is finished and the points are counted. This count in the header shows what is left, and turns amber when one more purchase would end it. Good luck." },
 ];
 
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
 /** Run the tour. Resolves when it ends, by finishing or by Esc / Skip. */
-export function startTour() {
+export function startTour({ short = false, name = "" } = {}) {
   return new Promise(resolve => {
     let i = 0;
     const root = document.createElement("div");
@@ -53,7 +59,9 @@ export function startTour() {
     root.setAttribute("aria-label", "Walkthrough");
     document.body.appendChild(root);
 
-    const steps = () => STEPS.filter(s => !s.at || document.querySelector(s.at));
+    const intro = { at: null, title: `${name ? `${name}, this` : "This"} is your desk`,
+      body: "The others have seen the table already; this is the part that is yours alone, and changes hands with the keyboard. Replay the whole tour from the ? help at any time." };
+    const steps = () => (short ? [intro, ...STEPS.filter(s => s.short)] : STEPS).filter(s => !s.at || document.querySelector(s.at));
 
     function place() {
       // A frame or scroll queued before the tour ended can still arrive after.

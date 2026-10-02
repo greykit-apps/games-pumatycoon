@@ -35,7 +35,7 @@ export const HELP_TABS = [
 <li><b>S</b>, <b>A</b>, <b>B</b>, <b>T</b> — jump to Sell, Auction, Buy or the Town; a jump never commits; the arrow keys then walk that group</li>
 <li>Buying a building or a town paid in its own commodity is two presses: the first shows what it costs and brings, the second spends; <b>Esc</b> cancels</li>
 <li><b>A</b> while selling — sell all</li>
-<li><b>Enter</b> — take the keyboard from the curtain</li>
+<li><b>Enter</b> — take the keyboard when it is passed to you (hot seat)</li>
 <li>Bidding: <b>Enter</b> bids the amount on the Bid button (the minimum, unless you change it); <b>↑</b> <b>↓</b> walk it $1, with <b>Shift</b> $5; <b>P</b> passes; <b>Esc</b> takes back an auction you have not opened yet</li>
 <li><b>?</b> — this help; <b>Esc</b> closes it</li>
 <li>In the walkthrough: <b>Enter</b> or <b>→</b> next, <b>←</b> back, <b>Esc</b> to end it</li>

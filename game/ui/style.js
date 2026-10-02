@@ -62,7 +62,7 @@ h2 .dim{letter-spacing:.04em;text-transform:none;font-weight:400}
 
 /* ---- the market ticker ---- */
 .ticker{border:1px solid var(--line);background:var(--panel)}
-.tk-head,.tk-row{display:grid;grid-template-columns:150px 76px 80px minmax(0,1fr) 250px 112px;align-items:center;gap:0 14px;padding:0 14px}
+.tk-head,.tk-row{display:grid;grid-template-columns:150px 76px 80px minmax(0,1fr) 200px 92px 104px;align-items:center;gap:0 14px;padding:0 14px}
 .tk-head{font-size:var(--fs-xs);color:var(--dim);padding-top:7px;padding-bottom:7px;border-bottom:1px solid var(--line);white-space:nowrap}
 .tk-row{min-height:46px;border-bottom:1px solid var(--hair);position:relative}
 .tk-row:last-child{border-bottom:0}
@@ -89,6 +89,11 @@ h2 .dim{letter-spacing:.04em;text-transform:none;font-weight:400}
 .tk-hold b{font-size:var(--fs-xl);font-weight:700;color:var(--text)}
 .tk-hold .tk-worth{font-size:var(--fs-xs);color:var(--dim)}
 .tk-hold.none b{color:var(--dim);font-weight:400}
+/* What the rivals hold: public, and quieter than your own. */
+.tk-others{display:flex;flex-direction:column;align-items:flex-end;line-height:1.1}
+.tk-others b{font-size:var(--fs-l);font-weight:600;color:var(--ink)}
+.tk-others .tk-worth{font-size:var(--fs-xs);color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.tk-others.none b{color:var(--dim);font-weight:400}
 .tk-row.tick-up{animation:pt-tick-up 1.1s cubic-bezier(.16,1,.3,1)}
 .tk-row.tick-down{animation:pt-tick-down 1.1s cubic-bezier(.16,1,.3,1)}
 @keyframes pt-tick-up{from{background:color-mix(in oklab,var(--up) 24%,transparent)}to{background:transparent}}
@@ -116,7 +121,7 @@ h2 .dim{letter-spacing:.04em;text-transform:none;font-weight:400}
 .ob-ladder b.next{color:var(--text);border-bottom:2px solid var(--vp)}
 .ob-you{color:var(--vp)}
 .ob-vp{color:var(--vp)}
-.ob-fx{line-height:1.35;color:var(--dim)}
+.ob-fx{line-height:1.4;color:var(--ink);font-size:var(--fs-s)}
 .ob-pay{display:inline-flex;align-items:center;gap:4px;color:var(--dim);white-space:nowrap}
 .ob-pay.ok{color:var(--text)}
 .ob-row.empty{color:var(--dim);justify-content:center;display:flex}
@@ -175,7 +180,7 @@ details.fulllog summary .dim{letter-spacing:.04em;text-transform:none;font-weigh
 .w-delta{font-size:var(--fs-m);font-weight:700;animation:pt-fade 2.6s ease-in forwards}   /* 2.6s: CASH_FADE in screen.js */
 .w-delta.up{color:var(--up)} .w-delta.down{color:var(--down)}
 @keyframes pt-fade{0%,55%{opacity:1}100%{opacity:0}}
-.w-stat{display:flex;flex-direction:column;align-items:flex-end}
+.w-stat{display:flex;flex-direction:column;align-items:flex-start}
 .w-stat b{font-size:var(--fs-l)}
 .w-stat b.full{color:var(--warn)}
 .w-vp .w-sub{font-size:var(--fs-xs);color:var(--ink);white-space:nowrap;margin-top:2px}
@@ -276,6 +281,14 @@ button.pp.live:hover,button.pp.live:focus-visible{border-color:var(--accent);bac
 button.pp[aria-pressed=true]{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent);background:var(--panel)}
 .mission{font-size:var(--fs-s);color:var(--ink);margin:8px 0 0;line-height:1.5}
 .mission b{color:var(--text)}
+.mission .m-now{display:block;color:var(--dim);margin-top:2px}
+.mission .m-now.on{color:var(--vp)}
+/* The hot-seat curtain: the desk alone, so the public table stays readable. */
+.curtain{border:1px solid var(--lit);background:var(--panel);padding:18px 16px;display:flex;flex-direction:column;gap:10px}
+.curtain h1{font-size:var(--fs-l);letter-spacing:.08em}
+.curtain p{margin:0;color:var(--ink);font-size:var(--fs-s);line-height:1.5}
+.curtain kbd,.au-wait kbd{font:inherit;font-size:10px;color:var(--dim);border:1px solid var(--line);border-radius:2px;padding:0 4px;margin-left:6px}
+.au-wait.pass{color:var(--text);gap:12px;flex-wrap:wrap}
 
 /* ---- curtain, help, results ---- */
 .veil{position:fixed;inset:0;background:rgba(3,5,10,.94);display:flex;align-items:center;justify-content:center;z-index:20;padding:16px}
@@ -335,12 +348,12 @@ table.score td.vp{color:var(--vp);font-weight:700}
   .tour-spot{transition:none}
 }
 @media (max-width:1280px){
-  .tk-head,.tk-row{grid-template-columns:130px 70px 80px minmax(0,1fr) 180px 96px;gap:0 10px}
+  .tk-head,.tk-row{grid-template-columns:130px 70px 80px minmax(0,1fr) 150px 84px 96px;gap:0 10px}
 }
 @media (max-width:1100px){
   .book{grid-template-columns:1fr}
   .tk-by{display:none}
-  .tk-head,.tk-row{grid-template-columns:130px 70px 80px minmax(0,1fr) 96px}
+  .tk-head,.tk-row{grid-template-columns:130px 70px 80px minmax(0,1fr) 84px 96px}
 }
 @media (max-width:900px){
   .main{grid-template-columns:1fr}
@@ -353,7 +366,7 @@ table.score td.vp{color:var(--vp);font-weight:700}
   .wallet{top:0;margin:-12px -12px 0;padding:8px 12px;gap:14px}
   .w-cash b{font-size:28px}
   .tk-head,.tk-row{grid-template-columns:40px 58px 44px minmax(0,1fr);gap:0 8px;padding:0 10px}
-  .tk-hold,.tk-head{display:none}
+  .tk-hold,.tk-others,.tk-head{display:none}
   .tk-name span{display:none}
   .tk-price{font-size:var(--fs-l)}
   table.standings th,table.standings td{padding:6px}

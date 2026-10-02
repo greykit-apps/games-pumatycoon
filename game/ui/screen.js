@@ -21,10 +21,12 @@
  * region that outlives the redraws.
  *
  * Hot seat: money, hands and missions are secret (rulebook p.11). With two
- * or more human seats a curtain goes up whenever the keyboard passes to a
- * different human, and only the human holding it sees their own secrets.
- * With one human that human is the viewer throughout; with none, the screen
- * is a spectator's and shows everything. */
+ * or more human seats only the human being asked sees their own secrets
+ * (preview.js secretsShown): while bots play the desk is public, and when the
+ * keyboard passes to a different human a curtain covers the desk -- only the
+ * desk, where the secrets are; the table stays readable behind it. With one
+ * human that human is the viewer throughout; with none, the screen is a
+ * spectator's and shows everything. */
 
 import { GOODS, TRACK } from "../data/commodities.js";
 import { SKIN } from "../data/skin.js";
@@ -40,6 +42,7 @@ import { HELP_TABS } from "./help.js";
 import { startTour } from "./tour.js";
 import {
   sellPreview, cardPreview, railPreview, townPreview, buyPreview, marketMoves, cheapest, lastTurnEntries, auctionSeats, quickBids, endClock, standing,
+  secretsShown, holders, missionProgress,
 } from "./preview.js";
 
 const VIEW_KEY = "pumatycoon_view_v1";
@@ -62,7 +65,8 @@ export function mountScreen(host, hooks) {
   let helpTab = null;
   let bidValue = null;
   let failure = null;
-  let tourQueued = false;
+  let tourFor = new Set();    // human seats still to be shown the walkthrough at their first move
+  let tourGiven = 0;
   let touring = false;
   let selected = null;        // the hand card being previewed before producing
   let staged = null;          // canon() of the purchase being previewed before it is made
@@ -92,7 +96,11 @@ export function mountScreen(host, hooks) {
   }
 
   const humans = () => st.players.map((p, i) => (p.seat === "human" ? i : -1)).filter(i => i >= 0);
-  const sees = i => !curtain && (st.over || viewer === null || viewer === i);
+  const sees = i => { if (curtain) return false; const s = secretsShown(st, viewer); return s === "all" || s === i; };
+  /* Whose public view the table takes (their holdings, their "since your
+   * turn"): the viewer while they hold the keyboard, and the last human to
+   * hold it while bots play, named rather than called "you". */
+  const tableView = () => (me() !== null ? me() : humans().length >= 2 && viewer !== null ? viewer : null);
   const me = () => (viewer !== null && sees(viewer) ? viewer : null);
   const nm = i => (i === me() ? "you" : st.players[i].name);
   const mine = () => !!(st.ask && !st.over && !curtain && !failure && st.players[st.ask.player].seat === "human");
@@ -139,10 +147,12 @@ export function mountScreen(host, hooks) {
   /* ---------- the table ---------- */
 
   function ticker() {
-    const v = me();
+    const v = tableView();
+    const yours = v !== null && v === me();
     const base = baselineFor(v === null && humans().length ? null : v);
     const moves = marketMoves(st, base);
     const ownTurn = v !== null;
+    const whose = yours ? "You" : v !== null ? esc(st.players[v].name) : "";
     let rows = "";
     for (const g of GOODS) {
       const t = TRACK[g];
@@ -154,17 +164,18 @@ export function mountScreen(host, hooks) {
       for (let x = t.min; x <= t.max; x++) scale += `<i data-v="${x}" class="${x < price ? "f" : x === price ? "at" : ""}"></i>`;
       const held = v !== null ? st.players[v].goods[g] : null;
       const said = m.delta ? `${dir === "up" ? "up" : "down"} ${Math.abs(m.delta)}` : "unchanged";
-      rows += `<div class="tk-row${ticks[g] ? ` tick-${ticks[g]}` : ""}" role="row" data-g="${g}" style="--c:var(--c-${g})">
+      rows += `<div class="tk-row${ticks[g] ? ` tick-${ticks[g]}` : ""}${v !== null ? " held" : ""}" role="row" data-g="${g}" style="--c:var(--c-${g})">
         <span class="tk-name" role="rowheader"><span class="chip">${icon(g, 22, GOOD_NAME[g])}</span><span>${GOOD_NAME[g]}</span></span>
         <span class="tk-price" role="cell">${money(price)}<span class="tk-to" aria-hidden="true"></span></span>
         <span class="tk-delta ${dir}" role="cell"><span aria-hidden="true">${dir === "up" ? "▲" : dir === "down" ? "▼" : "·"}${m.delta ? Math.abs(m.delta) : ""}</span><span class="sr-only">${said}</span></span>
         <span class="tk-by" role="cell">${by}</span>
         <span class="tk-scale" role="cell" aria-label="$${price} on a $${t.min} to $${t.max} track"><span class="lo" aria-hidden="true">${t.min}</span>${scale}<span class="hi" aria-hidden="true">${t.max}</span></span>
+        ${(() => { const h = holders(st, g, v); return `<span class="tk-others${h.total ? "" : " none"}" role="cell" aria-label="${v !== null ? "the others hold" : "held"} ${h.total}${h.top !== null ? `, most by ${esc(st.players[h.top].name)} with ${h.topQty}` : ""}"><b>${h.total}</b>${h.top !== null ? `<span class="tk-worth">${esc(st.players[h.top].name)} ${h.topQty}</span>` : ""}</span>`; })()}
         ${held !== null ? `<span class="tk-hold${held ? "" : " none"}" role="cell">${held ? `<b>${held}</b><span class="tk-worth">${money(held * price)}</span>` : "<b>0</b>"}</span>` : ""}
       </div>`;
     }
-    return `<section class="ticker" role="table" aria-label="The market">
-      <div class="tk-head" role="row"><span role="columnheader">Commodity</span><span role="columnheader" style="text-align:right">Price</span><span role="columnheader" style="text-align:right">${ownTurn ? "Since you" : "This round"}</span><span role="columnheader" class="tk-by">Moved by</span><span role="columnheader">Track</span>${v !== null ? '<span role="columnheader" class="tk-hold" style="text-align:right">You hold</span>' : ""}</div>
+    return `<section class="ticker${v !== null ? " with-hold" : ""}" role="table" aria-label="The market">
+      <div class="tk-head" role="row"><span role="columnheader">Commodity</span><span role="columnheader" style="text-align:right">Price</span><span role="columnheader" style="text-align:right">${ownTurn ? (yours ? "Since you" : `Since ${whose}`) : "This round"}</span><span role="columnheader" class="tk-by">Moved by</span><span role="columnheader">Track</span><span role="columnheader" class="tk-others" style="text-align:right">${v !== null ? "Others hold" : "Held"}</span>${v !== null ? `<span role="columnheader" class="tk-hold" style="text-align:right">${whose} hold${yours ? "" : "s"}</span>` : ""}</div>
       ${rows}</section>`;
   }
 
@@ -309,10 +320,10 @@ export function mountScreen(host, hooks) {
         <p class="sub">${w.canPass ? "A pass is final." : "Opening is a bid of at least the minimum."}${st.n === 2 ? " Two players: the opener bids once, the other once." : ""}</p>`;
     } else {
       const who = w && w.kind === "bid" ? st.players[w.player] : null;
-      const msg = !who ? "…" : curtain ? `Waiting for ${esc(who.name)} to take the keyboard.`
+      const msg = !who ? "…" : curtain ? `${esc(who.name)} to bid: pass the keyboard. <button class="primary" data-lift>I'm ${esc(who.name)}<kbd>⏎</kbd></button>`
         : `${esc(who.name)} is bidding…`;
       const outNote = v !== null && a.out.includes(v) ? '<p class="sub">You are out of this auction.</p>' : "";
-      act = `<div class="au-wait"><span class="dot"></span>${msg}</div>${outNote}`;
+      act = `<div class="au-wait${curtain ? " pass" : ""}">${curtain ? "" : '<span class="dot"></span>'}${msg}</div>${outNote}`;
     }
     return `<section class="auction${ours ? " live" : ""}" aria-label="Auction">
       <h2>Auction · ${esc(railName(a.rail))}${pv ? `<span class="grow"></span><span class="vpc">+${pv.total} VP to you</span>` : ""}</h2>
@@ -356,10 +367,18 @@ export function mountScreen(host, hooks) {
     </div>`;
   }
 
+  /* What makes a mission easy or hard to judge, for the choice of one. */
+  function missionHint(id) {
+    const per = GOODS.find(g => id === g);
+    if (per) return `${GOOD_NAME[per]} is ${money(st.prices[per])} today: each one kept to the end is a VP instead of a sale.`;
+    if (id.startsWith("money")) return "Money is secret, so you will not know whether you lead.";
+    return "It is counted in public: you will see where you stand.";
+  }
+
   /* The end, counted down in the header: what is left of the supplies whose
    * running out ends the game, amber when one purchase would do it. */
   function clock() {
-    if (st.over || st.phase !== "turn" || st.endTrigger) return "";
+    if (st.over || st.endTrigger) return "";
     const c = endClock(st);
     const parts = [`${c.towns} town${c.towns === 1 ? "" : "s"}`, `${c.rails} railroad${c.rails === 1 ? "" : "s"}`];
     if (c.revised) parts.push(`${c.blds} building${c.blds === 1 ? "" : "s"}`);
@@ -400,8 +419,11 @@ export function mountScreen(host, hooks) {
     const w = st.ask;
     if (!w) return '<div class="ask wait">…</div>';
     const p = st.players[w.player];
-    if (p.seat === "bot") return `<div class="ask wait"><span class="dot"></span>${esc(p.name)} is ${w.kind === "bid" ? "bidding" : "thinking"}…</div>`;
-    if (curtain) return `<div class="ask wait">Waiting for ${esc(p.name)} to take the keyboard.</div>`;
+    if (p.seat === "bot") {
+      const hid = humans().length >= 2 && viewer !== null && me() === null
+        ? `<p class="note">${esc(st.players[viewer].name)}'s move is over: their cash, cards and mission stay hidden while the bots play.</p>` : "";
+      return `<div class="ask wait"><span class="dot"></span>${esc(p.name)} is ${w.kind === "bid" ? "bidding" : "thinking"}…</div>${hid}`;
+    }
     const O = w.options || [];
     const btn = (idx, label, extra = "") => `<button data-answer="${idx}"${extra}>${label}</button>`;
     const back = () => { const k = O.findIndex(o => o && o.back); return k >= 0 ? btn(k, "Back", ' class="ghost"') : ""; };
@@ -415,7 +437,7 @@ export function mountScreen(host, hooks) {
     switch (w.kind) {
       case "keepMission":
         return `<div class="ask">${q("Keep one mission")}<p class="sub">Face down; the other leaves the game. It scores at the end.</p>
-          <div class="row">${O.map((id, k) => { const m = missionText(id); return btn(k, `<b>${esc(m.title)}</b><br><small>${esc(m.body)}</small>`, ' class="tall"'); }).join("")}</div></div>`;
+          <div class="row">${O.map((id, k) => { const m = missionText(id); return btn(k, `<b>${esc(m.title)}</b><br><small>${esc(m.body)}</small><br><small class="dim">${esc(missionHint(id))}</small>`, ' class="tall"'); }).join("")}</div></div>`;
 
       case "startGoods": {
         const ok = pick.length === w.count && O.findIndex(o => o.join() === pick.join()) >= 0;
@@ -556,7 +578,11 @@ export function mountScreen(host, hooks) {
     const w = st.ask;
     const inAsk = !!(w && w.kind === "action" && w.player === v && !curtain && w.options.some(o => o.a === "produce"));
     const m = p.mission ? missionText(p.mission) : null;
-    const mission = m ? `<p class="mission"><b>Mission · ${esc(m.title)}</b> ${esc(m.body)}</p>` : "";
+    const pr = m ? missionProgress(st, v) : null;
+    const now = !pr ? "" : pr.kind === "per" ? `You hold ${pr.held}: worth ${pr.vp} VP now.`
+      : pr.kind === "secret" ? "Money is secret: nobody can tell who leads."
+      : `You ${pr.mine}, ${st.players[pr.rival].name} ${pr.theirs}: ${pr.state === "ahead" ? `ahead, ${pr.vp} VP if it ended now` : pr.state === "tied" ? "tied, and a tie scores nothing" : "behind"}.`;
+    const mission = m ? `<p class="mission"><b>Mission · ${esc(m.title)}</b> ${esc(m.body)}<span class="m-now${pr && pr.vp ? " on" : ""}">${esc(now)}</span></p>` : "";
     if (inAsk) return mission;
     return `<section aria-label="Your hand"><h2>${humans().length > 1 ? esc(p.name) + "'s" : "Your"} hand <span class="dim">limit ${handLimit(p)}</span></h2>
       ${handCards(v)}${mission}</section>`;
@@ -613,7 +639,6 @@ export function mountScreen(host, hooks) {
     <span class="turn">${st.phase === "turn" || st.over ? `Round ${st.round} · ` : ""}${turnName}</span>${end}${clock()}<span class="grow"></span>
     <button data-help aria-label="How to play">?</button>
     <button data-speed title="how long bots take over each move">Bots: ${hooks.speedName()}</button>
-    <button data-debug title="Save this game, and every answer that led to it, as a file">Debug</button>
     <button data-newgame>New game</button></header>
   <div class="main">
     <section class="stage" aria-label="The table">
@@ -636,13 +661,11 @@ export function mountScreen(host, hooks) {
         <div class="log">${lines.map(l => `<div><span class="r">${l.r}</span>${esc(l.text)}</div>`).join("")}</div></details>
     </section>
     <aside class="side" aria-label="Your desk">
-      ${wallet()}
-      ${st.tc && st.tc.auc && !failure && !st.over ? auctionBox() : `${recap()}${askBox()}`}
-      ${hand()}
+      ${st.tc && st.tc.auc && !failure && !st.over ? `${wallet()}${auctionBox()}${hand()}` : curtain && !failure ? curtainBox() : `${wallet()}${recap()}${askBox()}${hand()}`}
     </aside>
   </div>
 </div>
-${curtain ? curtainBox() : ""}${st.over && !resultsHidden ? resultsBox() : ""}${helpTab !== null ? helpBox() : ""}`;
+${st.over && !resultsHidden ? resultsBox() : ""}${helpTab !== null ? helpBox() : ""}`;
 
     ticks = {};
     highMoved = false;
@@ -654,7 +677,7 @@ ${curtain ? curtainBox() : ""}${st.over && !resultsHidden ? resultsBox() : ""}${
     host.querySelector(".fulllog")?.addEventListener("toggle", e => { logOpen = e.target.open; });
 
     if (touring) return;
-    if (mine() && tourQueued && helpTab === null) return runTour();
+    if (mine() && tourFor.has(st.ask.player) && helpTab === null) return runTour(st.ask.player);
     // Focus: a modal first; then a new question for a person; then wherever it was.
     let target = null;
     if (helpTab !== null) target = host.querySelector("[data-helpclose]");
@@ -687,17 +710,22 @@ ${curtain ? curtainBox() : ""}${st.over && !resultsHidden ? resultsBox() : ""}${
     }
   }
 
-  function runTour() {
-    tourQueued = false;
+  function runTour(seat = null) {
+    if (seat !== null) tourFor.delete(seat);
     touring = true;
-    startTour().then(() => { touring = false; (host.querySelector("[data-bidgo]") || host.querySelector(".ask .q"))?.focus(); });
+    const short = seat !== null && tourGiven > 0;
+    tourGiven++;
+    startTour({ short, name: humans().length > 1 && seat !== null ? st.players[seat].name : "" }).then(() => { touring = false; (host.querySelector("[data-bidgo]") || host.querySelector(".ask .q"))?.focus(); });
   }
 
+  /* The hot-seat curtain covers the desk alone: everything on the table is
+   * public, and the next player may read it before taking the keyboard. */
   function curtainBox() {
     const p = st.players[st.ask.player];
-    return `<div class="veil" role="dialog" aria-modal="true" aria-label="Pass the keyboard"><div class="box" style="max-width:380px;text-align:center">
-      <h1>Pass the keyboard to ${esc(p.name)}</h1><p class="note">Their money, cards and mission are hidden until they take it.</p>
-      <div class="row" style="justify-content:center"><button class="primary" data-lift>I'm ${esc(p.name)}</button></div></div></div>`;
+    return `<section class="curtain" aria-label="Pass the keyboard">
+      <h1>Pass the keyboard to ${esc(p.name)}</h1>
+      <p>Their money, cards and mission are hidden until they take it. The table is public: read it while you wait.</p>
+      <div class="row"><button class="primary" data-lift>I'm ${esc(p.name)}<kbd>⏎</kbd></button></div></section>`;
   }
 
   function resultsBox() {
@@ -740,7 +768,7 @@ ${curtain ? curtainBox() : ""}${st.over && !resultsHidden ? resultsBox() : ""}${
       <div class="row"><h1>How to play</h1><span style="flex:1"></span><button data-helpclose aria-label="Close">✕</button></div>
       <div class="tabs" role="tablist">${HELP_TABS.map(([t], k) => `<button role="tab" aria-selected="${k === helpTab}" aria-pressed="${k === helpTab}" data-helptab="${k}">${t}</button>`).join("")}</div>
       <div role="tabpanel">${HELP_TABS[helpTab][1]}</div>
-      <div class="row"><button data-tourreplay>Replay the walkthrough</button></div></div></div>`;
+      <div class="row"><button data-tourreplay>Replay the walkthrough</button><span style="flex:1"></span><button class="ghost" data-debug title="Save this game, and every answer that led to it, as a file for a bug report">Save a debug file</button></div></div></div>`;
   }
 
   /* ---------- the market hint: what a choice would move, shown before it is made ---------- */
@@ -960,7 +988,7 @@ ${curtain ? curtainBox() : ""}${st.over && !resultsHidden ? resultsBox() : ""}${
       announce(events);
     },
     help() { helpTab = 0; render(); },
-    queueTour() { tourQueued = true; },
+    queueTour() { tourFor = new Set(humans()); },
     fail(e) { failure = e; render(); console.error(e); },
     stop() {
       document.removeEventListener("keydown", onKey);
