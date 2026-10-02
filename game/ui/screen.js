@@ -10,7 +10,8 @@
  *
  * A control is live exactly when it answers the pending request: every
  * clickable thing carries the index of the option it submits, so nothing can
- * be pressed that the engine will not accept. Every choice shows what it
+ * be pressed that the engine will not accept. Spending is two presses, like
+ * producing: the first shows what the purchase would do, the second makes it. Every choice shows what it
  * would do (ui/preview.js) before it is made, on the button and, while the
  * choice is hovered or focused, on the market rows it would move.
  *
@@ -33,17 +34,20 @@ import {
 } from "../engine/rules.js";
 import { icon } from "./art.js";
 import {
-  GOOD_NAME, railName, lineName, townName, bldName, effectText, upgradeText, missionText, logLines, recapLines, describeLog, lastMoveLine,
+  GOOD_NAME, railName, lineName, townName, bldName, effectText, upgradeText, missionText, logLines, recapEntries, RECAP_BIG, describeLog, lastMoveLine,
 } from "./text.js";
 import { HELP_TABS } from "./help.js";
 import { startTour } from "./tour.js";
-import { sellPreview, cardPreview, railPreview, townPreview, marketMoves, cheapest, lastTurnEntries, auctionSeats, quickBids } from "./preview.js";
+import {
+  sellPreview, cardPreview, railPreview, townPreview, buyPreview, marketMoves, cheapest, lastTurnEntries, auctionSeats, quickBids, endClock, standing,
+} from "./preview.js";
 
 const VIEW_KEY = "pumatycoon_view_v1";
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const goodsIcons = (arr, size = 16) => arr.map(g => icon(g, size, GOOD_NAME[g])).join("");
 const signed = d => (d > 0 ? `+${d}` : d < 0 ? `−${-d}` : "0");
 const money = v => `$${v}`;
+const ordinal = n => `${n}${n % 100 >= 11 && n % 100 <= 13 ? "th" : ["th", "st", "nd", "rd"][n % 10] || "th"}`;
 const hintAttr = h => ` data-hint="${esc(JSON.stringify(h))}"`;
 const CASH_FADE = 2600;      // ms the change in your cash stays beside it; matches .w-delta in style.js
 const ANNOUNCE = new Set(["sell", "auction", "bid", "won", "town", "buy", "upgrade", "endTriggered", "tradingFloor", "suddenDeath", "over"]);
@@ -61,6 +65,8 @@ export function mountScreen(host, hooks) {
   let tourQueued = false;
   let touring = false;
   let selected = null;        // the hand card being previewed before producing
+  let staged = null;          // canon() of the purchase being previewed before it is made
+  let recapOpen = false;      // the routine lines of "since your turn" are shown, not folded
   let prevTurn = null;
   let logOpen = false;
   let lastSig = null;         // the question last drawn, to tell a new one from a redraw
@@ -173,7 +179,7 @@ export function mountScreen(host, hooks) {
     const auc = st.tc && st.tc.auc && slots.includes(st.tc.auc.slot) && st.tc.auc.high !== null;
     const tag = live !== undefined ? "button" : "div";
     return `<${tag} class="ob-row rail${live !== undefined ? " live" : ""}${auc ? " onauction" : ""}" data-row="rail-${slots[0]}"${live !== undefined ? ` data-answer="${live}"${hintAttr({ rows: [`rail-${slots[0]}`] })}` : ""}>
-      <span class="ob-name">${esc(lineName(line))}${both ? ' <span class="dim">×2 on offer</span>' : ""}${auc ? ' <em class="flag">on auction</em>' : ""}</span>
+      <span class="ob-name">${esc(lineName(line))}${both ? ' <span class="dim">×2 on offer</span>' : ""}${auc ? ' <em class="flag">on auction</em>' : ""}${endClock(st).ends.rail ? ' <em class="flag end">the last: ends the game</em>' : ""}</span>
       <span class="ob-ladder" aria-label="${esc(said)}">VP ${ladder}</span>
       <span class="ob-cost">from ${money(RAIL[line].min)}</span>
       <span class="ob-you">${pv ? `+${pv.marginal} VP to you${pv.pair ? `, +${pv.pair} pair` : ""}${pv.baron ? `, +${pv.baron} baron` : ""}` : ""}</span>
@@ -188,14 +194,14 @@ export function mountScreen(host, hooks) {
     const need = pv ? pv.need : t.need, any = pv ? pv.any : t.any;
     const kS = st.ask && st.ask.kind === "action" ? liveIndex(o => o.a === "town" && o.pay === "specific") : -1;
     const kA = st.ask && st.ask.kind === "action" ? liveIndex(o => o.a === "town" && o.pay === "any") : -1;
-    const pay = (k, inner, ok, label, hint) => (k >= 0
-      ? `<span class="ob-pay ok"><button data-answer="${k}" aria-label="${esc(label)}"${hintAttr(hint)}>${inner}</button></span>`
+    const pay = (k, inner, ok, label, hint, attr = "answer") => (k >= 0
+      ? `<span class="ob-pay ok"><button data-${attr}="${k}" aria-label="${esc(label)}"${hintAttr(hint)}>${inner}</button></span>`
       : `<span class="ob-pay${ok ? " ok" : ""}">${inner}</span>`);
     const name = townName(st.townOffer);
     return `<div class="ob-row town" data-row="town">
-      <span class="ob-name">${esc(name)}</span>
+      <span class="ob-name">${esc(name)}${endClock(st).ends.town ? ' <em class="flag end">the last: ends the game</em>' : ""}</span>
       <span class="ob-vp">${t.vp} VP <span class="dim">+2 paired with a railroad</span></span>
-      ${pay(kS, `${icon(t.good, 16, GOOD_NAME[t.good])}×${need}${pv ? ` <span class="dim">you ${pv.have}</span>` : ""}`, pv && pv.canSpecific, `Build ${name}, paying ${need} ${GOOD_NAME[t.good]}`, { rows: ["town"], g: {} })}
+      ${pay(kS, `${icon(t.good, 16, GOOD_NAME[t.good])}×${need}${pv ? ` <span class="dim">you ${pv.have}</span>` : ""}`, pv && pv.canSpecific, `Build ${name}, paying ${need} ${GOOD_NAME[t.good]}`, { rows: ["town"], g: {} }, "stage")}
       ${pay(kA, `${icon("any", 16, "any commodity")}×${any}${pv ? ` <span class="dim">you ${pv.tokens}</span>` : ""}`, pv && pv.canAny, `Build ${name}, paying any ${any} commodities`, { rows: ["town"] })}
     </div>`;
   }
@@ -209,7 +215,8 @@ export function mountScreen(host, hooks) {
     const short = v !== null && st.players[v].cash < f.cost;
     const up = upgradeText(inst);
     const tag = live !== undefined ? "button" : "div";
-    return `<${tag} class="ob-row bld${live !== undefined ? " live" : ""}${short ? " short" : ""}" data-row="bld-${slot}"${live !== undefined ? ` data-answer="${live}"${hintAttr({ rows: [`bld-${slot}`] })}` : ""}>
+    const on = live !== undefined && staged === canon(st.ask.options[live]);
+    return `<${tag} class="ob-row bld${live !== undefined ? " live" : ""}${short ? " short" : ""}" data-row="bld-${slot}"${live !== undefined ? ` data-stage="${live}" aria-pressed="${on}"${hintAttr({ rows: [`bld-${slot}`] })}` : ""}>
       <span class="ob-name">${t.tag ? `<span class="badge">${t.tag}</span>` : ""}${esc(f.printed)}</span>
       <span class="ob-fx">${esc(effectText(inst, 0))}${up ? `<span class="dim"> · ${esc(up)}</span>` : ""}</span>
       <span class="ob-cost">${money(f.cost)}</span>
@@ -259,11 +266,19 @@ export function mountScreen(host, hooks) {
     const whose = humans().length > 1 ? `${esc(p.name)}'s cash` : "Cash";
     return `<section class="wallet" aria-label="${whose}: ${money(p.cash)}">
       <span class="w-cash"><span class="lab">${whose}</span><b${d ? ` class="moved ${d > 0 ? "up" : "down"}"${late}` : ""}>${money(p.cash)}</b>${d ? `<span class="w-delta ${d > 0 ? "up" : "down"}"${late} aria-hidden="true">${d > 0 ? "+" : "−"}${money(Math.abs(d))}</span>` : ""}</span>
-      <span class="w-stat"><span class="lab">VP</span><b class="vpc">${publicScore(st, v)}</b></span>
+      ${(() => {
+        const sd = standing(st, v);
+        const rival = esc(st.players[sd.rival].name);
+        const gap = sd.gap > 0 ? `${sd.gap} ahead` : sd.gap < 0 ? `${-sd.gap} behind` : "level";
+        const said = `${sd.tied ? "tied " : ""}${ordinal(sd.place)} of ${sd.of}, ${sd.gap > 0 ? `${sd.gap} ahead of` : sd.gap < 0 ? `${-sd.gap} behind` : "level with"} ${rival}`;
+        return `<span class="w-stat w-vp" title="${said} (the points anyone can count)"><span class="lab">VP</span><b class="vpc">${sd.vp}</b><span class="w-sub"><span aria-hidden="true">${sd.tied ? "tied " : ""}${ordinal(sd.place)} · ${gap}</span><span class="sr-only">${said}</span></span></span>`;
+      })()}
       <span class="w-stat"><span class="lab">Storage</span><b${tokens(p) >= storageLimit(p) ? ' class="full"' : ""}>${tokens(p)}/${storageLimit(p)}</b></span>
       <span class="w-stat"><span class="lab">Cards</span><b>${p.hand.length}/${handLimit(p)}</b></span>
     </section>`;
   }
+
+  const perVP = (x, vp) => money(String(Math.round((x / vp) * 10) / 10));
 
   /* The auction, as one box that holds still: the high bid, every seat's
    * latest bid, and the bid itself. However long the bidding runs nothing in
@@ -290,6 +305,7 @@ export function mountScreen(host, hooks) {
         <div class="row au-quick"><button class="primary au-go" data-bidgo aria-label="Bid ${money(bidValue)}">Bid <span data-bidlabel>${money(bidValue)}</span><kbd>⏎</kbd></button>${quick}${w.canPass ? '<button data-bidpass>Pass<kbd>P</kbd></button>' : ""}${w.canBack ? '<button class="ghost" data-bidback>Back<kbd>Esc</kbd></button>' : ""}</div>
         <div class="row au-custom"><label class="dim" for="pt-bid">Or bid</label><input id="pt-bid" type="number" data-bid min="${w.lo}" max="${w.hi}" value="${bidValue}" aria-label="Bid amount, ${money(w.lo)} to ${money(w.hi)}">
           <span class="dim"><kbd>↑</kbd><kbd>↓</kbd> ±$1 · <kbd>⇧</kbd> ±$5 · up to ${money(w.hi)}</span></div>
+        ${pv && pv.total ? `<p class="sub">At <span data-bidlabel2>${money(bidValue)}</span> that is <b data-bidrate>${perVP(bidValue, pv.total)}</b> a VP.</p>` : ""}
         <p class="sub">${w.canPass ? "A pass is final." : "Opening is a bid of at least the minimum."}${st.n === 2 ? " Two players: the opener bids once, the other once." : ""}</p>`;
     } else {
       const who = w && w.kind === "bid" ? st.players[w.player] : null;
@@ -311,13 +327,20 @@ export function mountScreen(host, hooks) {
     const base = view.base[v];
     if (!base) return "";
     const last = lastMoveLine(lastTurnEntries(st, v), v, st.players);
-    const lines = recapLines(st, base.n, v);
-    if (!lines.length && !last) return "";
-    const shown = lines.slice(-5);
+    const all = recapEntries(st, base.n, v);
+    if (!all.length && !last) return "";
+    // Folded, the strip keeps what scored (railroads won, towns built, the end) and counts the rest:
+    // the market above already shows every price that moved and who moved it.
+    const shown = recapOpen ? all.slice(-5) : all.filter(e => RECAP_BIG.has(e.k)).slice(-3);
+    const hidden = all.length - shown.length;
     const gain = base.gain > 0 ? ` <span class="vpc">+${base.gain} VP</span>` : "";
+    const toggle = recapOpen
+      ? `<button class="linkish" data-recap aria-expanded="true">fewer</button>${all.length > 5 ? ` · <button class="linkish" data-openlog>the full log</button>` : ""}`
+      : hidden ? `<button class="linkish" data-recap aria-expanded="false">${hidden} other move${hidden > 1 ? "s" : ""}</button> <span class="dim">(prices above)</span>` : "";
     return `<section class="recap" aria-label="Since your last turn"><h2>Since your turn</h2>
       ${last ? `<p class="lastmove${last.big ? " big" : ""}">${last.big ? "✓ " : ""}${esc(last.text)}.${gain}</p>` : ""}
-      ${shown.length ? `<ul>${shown.map(l => `<li>${esc(l)}</li>`).join("")}</ul>` : '<p class="note">Nobody else has moved yet.</p>'}${lines.length > shown.length ? `<p class="note">and ${lines.length - shown.length} earlier: <button class="linkish" data-openlog>open the log</button></p>` : ""}</section>`;
+      ${shown.length ? `<ul>${shown.map(e => `<li${RECAP_BIG.has(e.k) ? ' class="big"' : ""}>${esc(e.text)}</li>`).join("")}</ul>` : ""}
+      ${!all.length ? '<p class="note">Nobody else has moved yet.</p>' : toggle ? `<p class="note">${toggle}</p>` : ""}</section>`;
   }
 
   function produceBlock(p, w, k, cardId) {
@@ -333,6 +356,44 @@ export function mountScreen(host, hooks) {
     </div>`;
   }
 
+  /* The end, counted down in the header: what is left of the supplies whose
+   * running out ends the game, amber when one purchase would do it. */
+  function clock() {
+    if (st.over || st.phase !== "turn" || st.endTrigger) return "";
+    const c = endClock(st);
+    const parts = [`${c.towns} town${c.towns === 1 ? "" : "s"}`, `${c.rails} railroad${c.rails === 1 ? "" : "s"}`];
+    if (c.revised) parts.push(`${c.blds} building${c.blds === 1 ? "" : "s"}`);
+    const rule = c.revised ? "Ends when two of these are all owned" : "Ends when the towns or the railroads run out";
+    const next = [c.ends.town && "the next town built", c.ends.rail && "the next railroad won", c.ends.bld && "the next building bought"].filter(Boolean).join(" or ");
+    return `<span class="clock${c.near ? " near" : ""}" title="${rule}; the round is then played out">${c.revised ? "End: two of" : "End:"} ${parts.join(" · ")} left${next ? ` <b>· ${next} ends it</b>` : ""}</span>`;
+  }
+
+  /* A purchase, previewed under the choice that staged it; the second press
+   * makes it. Money spent cannot be taken back, so nothing spends on one. */
+  function stagedBlock(w, k) {
+    const o = w.options[k];
+    const v = w.player;
+    const warn = t => `<div class="pv-row warn">⚠ ${t}</div>`;
+    if (o.a === "town") {
+      const pv = townPreview(st, v);
+      return `<div class="preview">
+        <p class="pv-title">Build ${esc(townName(st.townOffer))}</p>
+        <div class="pv-row"><span class="dim">You pay</span> ${pv.need} ${icon(pv.good, 16)} ${GOOD_NAME[pv.good]} <span class="dim">of your ${pv.have}, worth ${money(pv.need * st.prices[pv.good])} today</span></div>
+        <div class="pv-row"><span class="dim">Scores</span> <span class="vpc">+${pv.vp} VP${pv.pair ? `, +${pv.pair} for a pair` : ""}</span></div>
+        ${endClock(st).ends.town ? warn("The last town: building it ends the game after this round.") : ""}
+        <div class="row"><button class="primary" data-answer="${k}"${hintAttr({ rows: ["town"] })}>Build it</button><button class="ghost" data-unstage>Cancel<kbd>Esc</kbd></button></div></div>`;
+    }
+    const pv = buyPreview(st, v, o);
+    const hint = o.a === "buy" ? hintAttr({ rows: [`bld-${o.slot}`] }) : "";
+    return `<div class="preview">
+      <p class="pv-title">${pv.up ? "Upgrade to" : "Buy"} ${esc(bldName(pv.id, pv.side))}</p>
+      <div class="pv-row"><span class="dim">It does</span> <span>${esc(effectText(pv.id, pv.side))}</span></div>
+      <div class="pv-row"><span class="dim">Costs</span> ${money(pv.cost)} <span class="dim">· leaves you</span> <b>${money(pv.left)}</b></div>
+      <div class="pv-row"><span class="dim">Scores</span> ${pv.vp ? `<span class="vpc">+${pv.vp} VP</span>` : '<span class="dim">no more VP</span>'}${pv.storage[1] !== pv.storage[0] ? ` <span class="dim">· storage ${pv.storage[0]} → ${pv.storage[1]}</span>` : ""}</div>
+      ${pv.ends ? warn("The last building: buying it ends the game after this round.") : ""}
+      <div class="row"><button class="primary" data-answer="${k}"${hint}>${pv.up ? "Upgrade" : "Buy"} for ${money(pv.cost)}</button><button class="ghost" data-unstage>Cancel<kbd>Esc</kbd></button></div></div>`;
+  }
+
   function askBox() {
     if (failure) return `<div class="ask"><p class="q" tabindex="-1">Something went wrong: ${esc(failure.message)}</p><div class="row"><button data-debug>Save a debug file</button></div></div>`;
     if (st.over) return "";
@@ -346,7 +407,10 @@ export function mountScreen(host, hooks) {
     const back = () => { const k = O.findIndex(o => o && o.back); return k >= 0 ? btn(k, "Back", ' class="ghost"') : ""; };
     const who = humans().length > 1 ? `${esc(p.name)} · ` : "";
     const q = text => `<p class="q" tabindex="-1">${who}${text}</p>`;
-    const g = (title, key, items) => (items.length ? `<div class="grp" data-group="${key || ""}"><b>${title}${key ? `<kbd>${key.toUpperCase()}</kbd>` : ""}</b><div class="row">${items.join("")}</div></div>` : "");
+    const g = (title, key, items, note = "") => (items.length ? `<div class="grp" data-group="${key || ""}"><b>${title}${key ? `<kbd>${key.toUpperCase()}</kbd>` : ""}</b>${note ? `<p class="endwarn">⚠ ${note}</p>` : ""}<div class="row">${items.join("")}</div></div>` : "");
+    const stageBtn = (idx, label, extra = "") => `<button data-stage="${idx}" aria-pressed="${staged === canon(O[idx])}"${extra}>${label}</button>`;
+    const stagedK = staged ? O.findIndex(o => o && canon(o) === staged) : -1;
+    const under = kinds => (stagedK >= 0 && kinds.includes(O[stagedK].a) && !(O[stagedK].a === "town" && O[stagedK].pay !== "specific") ? stagedBlock(w, stagedK) : "");
 
     switch (w.kind) {
       case "keepMission":
@@ -369,18 +433,18 @@ export function mountScreen(host, hooks) {
           else if (o.a === "sell") {
             const n = p.goods[o.good];
             const pv = sellPreview(st, w.player, o.good, n);
-            groups.sell.push(btn(k, `${icon(o.good, 16)} ${n} at ${money(st.prices[o.good])} <span class="dim">→ ${money(pv.proceeds)}${n > 1 ? " for all" : ""}</span>`, ` aria-label="Sell ${GOOD_NAME[o.good]}: ${n} at ${money(st.prices[o.good])}"${hintAttr({ g: { [o.good]: pv.after } })}`));
+            groups.sell.push(btn(k, `${icon(o.good, 16)} ${n} × ${money(st.prices[o.good])} <span class="dim">= ${money(pv.proceeds)}</span>`, ` aria-label="Sell ${GOOD_NAME[o.good]}: ${n} at ${money(st.prices[o.good])}, ${money(pv.proceeds)}${n > 1 ? " for all" : ""}"${hintAttr({ g: { [o.good]: pv.after } })}`));
           } else if (o.a === "auction") {
             const r = st.railOffer[o.slot];
             if (seenLines.has(lineOf(r))) return;
             seenLines.add(lineOf(r));
             const pv = railPreview(st, w.player, r);
             groups.auction.push(btn(k, `${esc(railName(r))} <span class="dim">from ${money(pv.min)} · </span><span class="vpc">+${pv.total} VP</span>`, hintAttr({ rows: [`rail-${railSlots().find(x => x.slots.includes(o.slot)).slots[0]}`] })));
-          } else if (o.a === "buy") groups.buy.push(btn(k, `${esc(bldName(st.bldOffer[o.slot]))} <span class="dim">${money(face(st.bldOffer[o.slot], 0).cost)}</span>`, hintAttr({ rows: [`bld-${o.slot}`] })));
-          else if (o.a === "upgrade") groups.upgrade.push(btn(k, `${esc(bType(o.bld).sides[1].printed)} <span class="dim">${money(bType(o.bld).sides[1].cost)}</span>`));
+          } else if (o.a === "buy") groups.buy.push(stageBtn(k, `${esc(bldName(st.bldOffer[o.slot]))} <span class="dim">${money(face(st.bldOffer[o.slot], 0).cost)}</span>`, hintAttr({ rows: [`bld-${o.slot}`] })));
+          else if (o.a === "upgrade") groups.upgrade.push(stageBtn(k, `${esc(bType(o.bld).sides[1].printed)} <span class="dim">${money(bType(o.bld).sides[1].cost)}</span>`));
           else if (o.a === "town") {
             const pv = townPreview(st, w.player);
-            groups.town.push(btn(k, o.pay === "specific" ? `Pay ${pv.need} ${icon(pv.good, 16)} ${GOOD_NAME[pv.good]}` : `Pay any ${pv.any}`, ` aria-label="Build ${esc(townName(st.townOffer))}, paying ${o.pay === "specific" ? `${pv.need} ${GOOD_NAME[pv.good]}` : `any ${pv.any} commodities`}"${hintAttr({ rows: ["town"] })}`));
+            groups.town.push((o.pay === "specific" ? stageBtn : btn)(k, o.pay === "specific" ? `Pay ${pv.need} ${icon(pv.good, 16)} ${GOOD_NAME[pv.good]}` : `Pay any ${pv.any}`, ` aria-label="Build ${esc(townName(st.townOffer))}, paying ${o.pay === "specific" ? `${pv.need} ${GOOD_NAME[pv.good]}` : `any ${pv.any} commodities`}"${hintAttr({ rows: ["town"] })}`));
           } else groups.other.push(btn(k, o.a === "declare" ? `Declare victory (${money(p.cash)})` : "Pass", o.a === "declare" ? ' class="primary"' : ""));
         });
         const canProduce = O.some(o => o.a === "produce");
@@ -393,10 +457,11 @@ export function mountScreen(host, hooks) {
         const produce = canProduce ? `<div class="grp" data-group="p"><b>Produce<kbd>1–${p.hand.length}</kbd> <span class="dim">pick a card to see what it would do · hand limit ${handLimit(p)}</span></b>
           ${handCards(w.player)}${produceK >= 0 ? produceBlock(p, w, produceK, selected) : ""}</div>` : "";
         const sellG = g("Sell", "s", groups.sell);
-        const townG = groups.town.length ? g(`Build ${esc(townName(st.townOffer))}`, "t", groups.town) : "";
+        const clk = endClock(st);
+        const townG = groups.town.length ? g(`Build ${esc(townName(st.townOffer))}`, "t", groups.town, clk.ends.town ? "The last town: building it ends the game after this round." : "") + under(["town"]) : "";
         const first = full ? `${advice}${townG}${sellG}${produce}` : `${produce}${sellG}`;
         return `<div class="ask">${q("Your move")}
-          ${first}${g("Auction a railroad", "a", groups.auction)}${g("Buy a building", "b", groups.buy)}${g("Upgrade", "", groups.upgrade)}
+          ${first}${g("Auction a railroad", "a", groups.auction, clk.ends.rail ? "The last railroad: winning it ends the game after this round." : "")}${g("Buy a building", "b", groups.buy, clk.ends.bld ? "The last building: buying it ends the game after this round." : "")}${under(["buy"])}${g("Upgrade", "", groups.upgrade)}${under(["upgrade"])}
           ${full ? "" : townG}${g("", "", groups.other)}</div>`;
       }
 
@@ -445,7 +510,7 @@ export function mountScreen(host, hooks) {
 
       case "moreBuy":
         return `<div class="ask">${q("Construction Company: a second purchase?")}
-          <div class="row">${O.map((o, k) => (o.a === "done" ? btn(k, "Done", ' class="primary"') : o.a === "buy" ? btn(k, `${esc(bldName(st.bldOffer[o.slot]))} ${money(face(st.bldOffer[o.slot], 0).cost)}`, hintAttr({ rows: [`bld-${o.slot}`] })) : btn(k, `Upgrade to ${esc(bType(o.bld).sides[1].printed)} ${money(bType(o.bld).sides[1].cost)}`))).join("")}</div></div>`;
+          <div class="row">${O.map((o, k) => (o.a === "done" ? btn(k, "Done", ' class="primary"') : o.a === "buy" ? stageBtn(k, `${esc(bldName(st.bldOffer[o.slot]))} ${money(face(st.bldOffer[o.slot], 0).cost)}`, hintAttr({ rows: [`bld-${o.slot}`] })) : stageBtn(k, `Upgrade to ${esc(bType(o.bld).sides[1].printed)} ${money(bType(o.bld).sides[1].cost)}`))).join("")}</div>${under(["buy", "upgrade"])}</div>`;
 
       case "payAny": {
         const chosen = Object.entries(w.chosen).flatMap(([gg, k]) => Array(k).fill(gg));
@@ -468,7 +533,7 @@ export function mountScreen(host, hooks) {
     const p = st.players[v];
     const w = st.ask;
     const live = !!(w && w.kind === "action" && w.player === v && !curtain);
-    return `<div class="hand">${p.hand.map((id, n) => {
+    return `<div class="hand${p.hand.length >= 4 ? " dense" : ""}">${p.hand.map((id, n) => {
       const c = CARD[id];
       const k = live ? w.options.findIndex(o => o.a === "produce" && o.card === id) : -1;
       const pv = k >= 0 ? cardPreview(st, v, id) : null;
@@ -510,8 +575,8 @@ export function mountScreen(host, hooks) {
     if (!el || !el.dataset || !host.contains(el)) return null;
     const d = el.dataset;
     if (d.answer !== undefined && st.ask && st.ask.options) return `ans:${canon(st.ask.options[Number(d.answer)])}`;
-    for (const k of ["select", "player", "pick", "helptab", "bidat"]) if (d[k] !== undefined) return `${k}:${d[k]}`;
-    for (const k of ["help", "speed", "debug", "newgame", "bidgo", "bidpass", "bidback", "unselect", "pickgo", "openlog", "lift", "tourreplay", "helpclose", "closeresults"]) if (el.hasAttribute(`data-${k}`)) return k;
+    for (const k of ["select", "stage", "player", "pick", "helptab", "bidat"]) if (d[k] !== undefined) return `${k}:${d[k]}`;
+    for (const k of ["help", "speed", "debug", "newgame", "bidgo", "bidpass", "bidback", "unselect", "pickgo", "openlog", "lift", "tourreplay", "helpclose", "closeresults", "unstage", "recap", "rematch"]) if (el.hasAttribute(`data-${k}`)) return k;
     if (el.matches("[data-bid]")) return "bid";
     if (el.matches("summary")) return "summary";
     return null;
@@ -538,12 +603,14 @@ export function mountScreen(host, hooks) {
     const bldLive = slot => { const k = isAction ? liveIndex(o => o.a === "buy" && o.slot === slot) : -1; return k >= 0 ? k : undefined; };
     const lines = logLines(st.log, st.players).slice(0, 200);
     const end = st.endTrigger && !st.over ? '<span class="endflag">final round</span>' : "";
-    const turnName = st.over ? "Game over" : `${esc(st.players[st.turn].name)}'s turn`;
+    const turnName = st.over ? "Game over"
+      : st.phase !== "turn" ? `Setting up${st.ask ? ` · ${esc(st.players[st.ask.player].name)} choosing` : ""}`
+      : `${esc(st.players[st.turn].name)}'s turn`;
 
     host.innerHTML = `
 <div class="pt game">
   <header class="top"><svg width="22" height="22" viewBox="0 0 100 100" aria-hidden="true"><use href="#pt-mark"/></svg><h1>${esc(SKIN.game)}</h1>
-    <span class="turn">Round ${st.round} · ${turnName}</span>${end}<span class="grow"></span>
+    <span class="turn">${st.phase === "turn" || st.over ? `Round ${st.round} · ` : ""}${turnName}</span>${end}${clock()}<span class="grow"></span>
     <button data-help aria-label="How to play">?</button>
     <button data-speed title="how long bots take over each move">Bots: ${hooks.speedName()}</button>
     <button data-debug title="Save this game, and every answer that led to it, as a file">Debug</button>
@@ -553,13 +620,13 @@ export function mountScreen(host, hooks) {
       ${ticker()}
       <div class="book">
         <div class="book-col">
-          <h2>Railroads <span class="dim">${st.railDeck.length} in the deck</span></h2>
+          <h2>Railroads <span class="dim">${st.railDeck.length ? `${st.railDeck.length} in the deck` : "deck empty"}</span></h2>
           <div class="ob" data-tour="rails">${railSlots().map(r => railRow(r, railLive(r))).join("")}</div>
-          <h2>Town <span class="dim">${st.townDeck.length} more</span></h2>
+          <h2>Town <span class="dim">${st.townDeck.length ? `${st.townDeck.length} more after this one` : st.townOffer ? "the last one" : ""}</span></h2>
           <div class="ob" data-tour="town">${townRow()}</div>
         </div>
         <div class="book-col">
-          <h2>Buildings <span class="dim">${st.bldStack.length} in the stack</span></h2>
+          <h2>Buildings <span class="dim">${st.bldStack.length ? `${st.bldStack.length} in the stack` : "stack empty"}</span></h2>
           <p class="ob-legend"><span class="badge">B</span>a bonus each production, one B at a time · <span class="badge">P</span>take more from a card, one P at a time</p>
           <div class="ob" data-tour="buildings">${[0, 1, 2, 3].map(s => bldRow(s, bldLive(s))).join("")}</div>
         </div>
@@ -592,7 +659,7 @@ ${curtain ? curtainBox() : ""}${st.over && !resultsHidden ? resultsBox() : ""}${
     let target = null;
     if (helpTab !== null) target = host.querySelector("[data-helpclose]");
     else if (curtain) target = host.querySelector("[data-lift]");
-    else if (st.over && !resultsHidden) target = host.querySelector(".veil [data-newgame]");
+    else if (st.over && !resultsHidden) target = host.querySelector(".veil [data-rematch]");
     else if (arrived && mine()) target = host.querySelector("[data-bidgo]") || (selected ? null : host.querySelector(".ask .q"));
     if (!target && prevKey) target = findKey(prevKey);
     if (target && target !== document.activeElement) target.focus({ preventScroll: arrived && mine() ? false : true });
@@ -647,13 +714,25 @@ ${curtain ? curtainBox() : ""}${st.over && !resultsHidden ? resultsBox() : ""}${
       const best = Object.entries(lines).sort((a, b) => b[1] - a[1])[0];
       return `<li><b>${esc(p.name)}</b> ${x.total} VP${top.length ? `, mostly from ${top.slice(0, 2).map(([k, v]) => `${k} (${v})`).join(" and ")}` : ""}${best ? `; ${best[1] > 1 ? `${best[1]} cards of the ` : "the "}${esc(lineName(best[0]))}` : ""}; ${money(x.cash)} left.</li>`;
     }).join("");
+    const hs = humans();
+    let yours = "";
+    if (hs.length === 1) {
+      const order = [...r.rows].sort((a, b) => b.total - a.total || b.cash - a.cash);
+      const at = order.findIndex(x => x.i === hs[0]);
+      const you = order[at];
+      const lead = order[0];
+      const next = order[1];
+      yours = r.winners.includes(hs[0])
+        ? `<p class="yours win">You win, ${next ? (you.total > next.total ? `${you.total - next.total} VP ahead of ${esc(st.players[next.i].name)}` : `level on points with ${esc(st.players[next.i].name)} and ahead on money`) : ""}.</p>`
+        : `<p class="yours">You finished ${ordinal(at + 1)} of ${order.length}: ${you.total} VP, ${lead.total - you.total ? `${lead.total - you.total} behind ${esc(st.players[lead.i].name)}` : `level with ${esc(st.players[lead.i].name)} but behind on money`}.</p>`;
+    }
     return `<div class="veil" role="dialog" aria-modal="true" aria-label="Final scores"><div class="box">
-      <h1>${r.sudden ? `${esc(names)} declares victory` : `${esc(names)} win${r.winners.length > 1 ? "" : "s"}`}</h1>
+      <h1>${r.sudden ? `${esc(names)} declares victory` : `${esc(names)} win${r.winners.length > 1 ? "" : "s"}`}</h1>${yours}
       <ul class="final-lines">${story}</ul>
       <table class="score"><thead><tr><th>Player</th><th>Towns</th><th>Rail</th><th>Bldg</th><th>Pairs</th><th>Bonus</th><th>Mission</th><th>VP</th><th>Cash</th></tr></thead><tbody>${rows}</tbody></table>
       <div><h2>The closing market</h2><div class="final-market">${GOODS.map(g => `<span>${icon(g, 16, GOOD_NAME[g])} ${money(st.prices[g])}</span>`).join("")}</div></div>
       <p class="note">${st.round} rounds. Ties go to the most money.</p>
-      <div class="row"><button class="primary" data-newgame>New game</button><button data-closeresults>Look at the table</button></div></div></div>`;
+      <div class="row"><button class="primary" data-rematch title="The same seats and rules, a new deal">Rematch</button><button data-newgame>New game</button><button data-closeresults>Look at the table</button></div></div></div>`;
   }
 
   function helpBox() {
@@ -703,7 +782,17 @@ ${curtain ? curtainBox() : ""}${st.over && !resultsHidden ? resultsBox() : ""}${
     hooks.submit(w.options[idx]);
   }
 
+  function stage(k) {
+    const o = st.ask && st.ask.options && st.ask.options[k];
+    if (!o) return;
+    staged = staged === canon(o) ? null : canon(o);
+    selected = null;
+    render();
+    if (staged) host.querySelector(".ask .preview [data-answer]")?.focus();
+  }
+
   function select(card) {
+    staged = null;
     selected = selected === card ? null : card;
     render();
     host.querySelector(".preview [data-answer]")?.focus();
@@ -717,6 +806,10 @@ ${curtain ? curtainBox() : ""}${st.over && !resultsHidden ? resultsBox() : ""}${
     if (b.hasAttribute("data-tourreplay")) { helpTab = null; render(); return runTour(); }
     if (b.dataset.helptab !== undefined) { helpTab = Number(b.dataset.helptab); return render(); }
     if (b.hasAttribute("data-newgame")) return hooks.newGame();
+    if (b.hasAttribute("data-rematch")) return hooks.rematch();
+    if (b.hasAttribute("data-recap")) { recapOpen = !recapOpen; return render(); }
+    if (b.dataset.stage !== undefined) return stage(Number(b.dataset.stage));
+    if (b.hasAttribute("data-unstage")) { staged = null; return render(); }
     if (b.hasAttribute("data-speed")) { hooks.cycleSpeed(); return render(); }
     if (b.hasAttribute("data-debug")) return hooks.debugDump();
     if (b.hasAttribute("data-closeresults")) { resultsHidden = true; return render(); }
@@ -768,6 +861,12 @@ ${curtain ? curtainBox() : ""}${st.over && !resultsHidden ? resultsBox() : ""}${
     if (!go || !label) return;
     label.textContent = money(bidValue);
     go.setAttribute("aria-label", `Bid ${money(bidValue)}`);
+    const a = st.tc && st.tc.auc;
+    const rate = host.querySelector("[data-bidrate]");
+    if (a && rate && me() !== null) {
+      rate.textContent = perVP(bidValue, railPreview(st, me(), a.rail).total);
+      host.querySelector("[data-bidlabel2]").textContent = money(bidValue);
+    }
   }
   const onInput = e => {
     if (!e.target.matches("[data-bid]")) return;
@@ -782,6 +881,7 @@ ${curtain ? curtainBox() : ""}${st.over && !resultsHidden ? resultsBox() : ""}${
     if (e.key === "Escape") {
       if (helpTab !== null) { helpTab = null; return render(); }
       if (selected) { selected = null; return render(); }
+      if (staged) { staged = null; return render(); }
     }
     if (e.key === "?") { helpTab = helpTab === null ? 0 : null; return render(); }
     if (helpTab !== null) return;
@@ -805,6 +905,18 @@ ${curtain ? curtainBox() : ""}${st.over && !resultsHidden ? resultsBox() : ""}${
       if (/^[1-5]$/.test(e.key)) {
         const card = st.players[w.player].hand[Number(e.key) - 1];
         if (card && w.options.some(o => o.a === "produce" && o.card === card)) select(card);
+        return;
+      }
+      // Arrows walk the buttons of the group the focus is in.
+      if (e.key.startsWith("Arrow")) {
+        const grp = e.target.closest && e.target.closest(".ask .grp");
+        if (!grp) return;
+        const bs = [...grp.querySelectorAll("button")];
+        const at = bs.indexOf(e.target);
+        if (at < 0) return;
+        e.preventDefault();
+        const d = e.key === "ArrowRight" || e.key === "ArrowDown" ? 1 : -1;
+        bs[(at + d + bs.length) % bs.length].focus();
         return;
       }
       const key = e.key.toLowerCase();
@@ -843,6 +955,7 @@ ${curtain ? curtainBox() : ""}${st.over && !resultsHidden ? resultsBox() : ""}${
       highMoved = high !== null && lastHigh !== null && high !== lastHigh;
       lastHigh = high;
       if (!st.ask || st.ask.kind !== "action") selected = null;
+      staged = null;
       render();
       announce(events);
     },

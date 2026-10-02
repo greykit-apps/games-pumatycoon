@@ -49,9 +49,11 @@ export const SPRITES = `
       <g fill="#b9bfcd"><circle cx="11.5" cy="8.6" r=".7"/><circle cx="16" cy="13" r=".6"/></g>
     </symbol>
     <symbol id="pt-goods" viewBox="0 0 24 24">
-      <rect x="4" y="4" width="16" height="16" rx="1.5" fill="${COLORS.goods}" stroke="#5a1c10" stroke-width="1"/>
-      <path d="M4.8 4.8l14.4 14.4M19.2 4.8L4.8 19.2" stroke="#ffd9a8" stroke-width="2"/>
-      <rect x="4" y="4" width="16" height="16" rx="1.5" fill="none" stroke="#ffd9a8" stroke-width="1.5"/>
+      <!-- a slatted crate: boards across, posts at the ends; no diagonal, which would read as a cross-out -->
+      <rect x="3" y="5" width="18" height="15" rx="1.2" fill="${COLORS.goods}" stroke="#5a1c10" stroke-width="1"/>
+      <path d="M3.6 10h16.8M3.6 15h16.8" stroke="#5a1c10" stroke-width="1.3"/>
+      <path d="M6.5 5.5v14M17.5 5.5v14" stroke="#ffd9a8" stroke-width="1.8"/>
+      <rect x="3" y="5" width="18" height="15" rx="1.2" fill="none" stroke="#ffd9a8" stroke-width="1.2"/>
     </symbol>
     <symbol id="pt-luxury" viewBox="0 0 24 24">
       <path d="M10 2.5h4v4.5c2.6 1.4 3.5 3.4 3.5 6V21a1 1 0 0 1-1 1h-9a1 1 0 0 1-1-1v-8c0-2.6.9-4.6 3.5-6z" fill="${COLORS.luxury}" stroke="#123b25" stroke-width="1" stroke-linejoin="round"/>

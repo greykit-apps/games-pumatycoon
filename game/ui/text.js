@@ -108,23 +108,29 @@ export function logLines(entries, players) {
 /** What happened since a baseline, for the "since your turn" strip: the
  * moves that change the table, not the bookkeeping. Oldest first. */
 const RECAP = new Set(["produce", "sell", "won", "town", "buy", "upgrade", "tradingFloor", "endTriggered", "reshuffle", "suddenDeath"]);
+/** The recap's scoring moments, kept in view when the rest is folded away. */
+export const RECAP_BIG = new Set(["won", "town", "endTriggered", "suddenDeath"]);
 export function recapLines(st, sinceN, viewer) {
+  return recapEntries(st, sinceN, viewer).map(e => e.text);
+}
+export function recapEntries(st, sinceN, viewer) {
   const name = i => (i === viewer ? "You" : st.players[i].name);
   const out = [];
   for (const e of st.log) {
     if (!(e.n > sinceN) || !RECAP.has(e.k)) continue;
     const gl = arr => arr.map(g => GOOD_NAME[g]).join(", ");
+    const add = text => out.push({ k: e.k, p: e.p, text });
     switch (e.k) {
-      case "produce": out.push(`${name(e.p)} produced ${gl([...e.take, ...(e.bonus ? e.bonus.goods : [])])}`); break;
-      case "sell": out.push(`${name(e.p)} sold ${e.q} ${GOOD_NAME[e.good]} at $${e.price}: now $${e.after}`); break;
-      case "won": out.push(`${name(e.p)} won the ${railName(e.rail)} for $${e.paid}`); break;
-      case "town": out.push(`${name(e.p)} built ${townName(e.town)}`); break;
-      case "buy": out.push(`${name(e.p)} bought ${bldName(e.bld)} for $${e.cost}`); break;
-      case "upgrade": out.push(`${name(e.p)} upgraded to ${bldName(e.bld, 1)}`); break;
-      case "tradingFloor": out.push(`${name(e.p)} bought ${e.qty} ${GOOD_NAME[e.good]} from ${name(e.from)}`); break;
-      case "endTriggered": out.push("The end is triggered: this is the final round"); break;
-      case "reshuffle": out.push("The card discards were reshuffled"); break;
-      case "suddenDeath": out.push(`${name(e.p)} declared victory`); break;
+      case "produce": add(`${name(e.p)} produced ${gl([...e.take, ...(e.bonus ? e.bonus.goods : [])])}`); break;
+      case "sell": add(`${name(e.p)} sold ${e.q} ${GOOD_NAME[e.good]} at $${e.price}: now $${e.after}`); break;
+      case "won": add(`${name(e.p)} won the ${railName(e.rail)} for $${e.paid}`); break;
+      case "town": add(`${name(e.p)} built ${townName(e.town)}`); break;
+      case "buy": add(`${name(e.p)} bought ${bldName(e.bld)} for $${e.cost}`); break;
+      case "upgrade": add(`${name(e.p)} upgraded to ${bldName(e.bld, 1)}`); break;
+      case "tradingFloor": add(`${name(e.p)} bought ${e.qty} ${GOOD_NAME[e.good]} from ${name(e.from)}`); break;
+      case "endTriggered": add("The end is triggered: this is the final round"); break;
+      case "reshuffle": add("The card discards were reshuffled"); break;
+      case "suddenDeath": add(`${name(e.p)} declared victory`); break;
     }
   }
   return out;

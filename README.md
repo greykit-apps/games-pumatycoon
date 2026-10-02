@@ -42,7 +42,11 @@ at play time.
   your bid), so the Bid button sits still from round to round and a run of
   raises is a run of Enter presses. Every choice previews what it
   would do (proceeds, price moves, storage overflow, VP) before you commit,
-  and producing takes a deliberate second click. Paying a town's any-mix or
+  and producing, buying a building or building a town from its own
+  commodity takes a deliberate second press. The header counts down the
+  end (what is left of the towns and railroads, amber when one purchase
+  would finish it), your place and gap to the leader sit beside your cash,
+  and the final screen says where you finished, with a one-press rematch. Paying a town's any-mix or
   discarding for storage is one click ("pay with my cheapest"), your own
   last move is echoed back with what it earned and moved, and at the storage
   limit the screen says the way out and puts it first.
@@ -60,9 +64,9 @@ list is below.
 | Key | |
 |---|---|
 | `1`–`5` | preview producing with that card; `Enter` on **Produce** commits |
-| `S` `A` `B` `T` | jump to Sell, Auction, Buy or the Town (a jump never commits) |
+| `S` `A` `B` `T` | jump to Sell, Auction, Buy or the Town (a jump never commits); arrows walk the group |
 | `A` on a sale | sell all |
-| `Esc` | put the previewed card back |
+| `Esc` | put the previewed card or purchase back |
 | `Enter` | take the keyboard from the curtain |
 | `Enter`, `↑` `↓` (`Shift` ±5), `P`, `Esc` | in an auction: bid the amount shown (the minimum unless changed), walk it, pass, take back an unopened auction |
 | `?` | how to play; `Esc` closes it |

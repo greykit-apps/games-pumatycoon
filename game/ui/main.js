@@ -123,6 +123,8 @@ function openScreen() {
     submit: a => advance(a),
     submitMany: list => advance(list[0], list.slice(1)),
     newGame: () => toSetup(),
+    // The same seats, in the same order, and the same rules; a new seed deals a new game.
+    rematch: () => (trace && st && trace.seed === st.seed && trace.setup ? start({ players: trace.setup.players, options: trace.setup.options }) : toSetup()),
     debugDump: downloadDump,
     speedName: () => prefs.speed,
     cycleSpeed: () => { prefs.speed = prefs.speed === "slow" ? "normal" : prefs.speed === "normal" ? "fast" : "slow"; store.set(PREFS_KEY, prefs); },
