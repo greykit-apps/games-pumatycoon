@@ -12,6 +12,10 @@ here is scanned: the icons are original drawings, the cards are
 hand-transcribed tables, and the places and railroads carry new names
 (below).
 
+![Round 15 with four players: the market across the top, each price on its track beside what the others hold and what you hold; the standings beside it, every player's commodities on a line under their row; your hand as a row of cards beneath, the second card's popup open (take all three, the Lumber Yard's bonus wood, the Trading Floor's purchase first, Luxury $10 to $13), and the market previewing that move; the railroads, the town and the buildings in the row below; on the right your $30, Sell, an upgrade, and what you own](screenshots/table.png)
+
+![An auction for the Ocelot Line: one box holds the $6 high bid, each seat's last bid (one out), and your bid, with the minimum raise on the big button, one-press raises beside it, and its price per VP](screenshots/auction.png)
+
 ## Play
 
 <https://greykit.com/games/pumatycoon/>
@@ -216,7 +220,7 @@ route by which a photograph could ship, a symlinked `source/` included.
 
 Merging to `main` deploys. The CI `deploy` job rsyncs the repository to
 DreamHost at `greykit.com/games/pumatycoon/` with `--delete-excluded`,
-leaving out `.git`, `.claude`, `tools` and `source`. Credentials are
+leaving out `.git`, `.claude`, `tools`, `screenshots` and `source`. Credentials are
 protected group variables, so only `main` can deploy.
 
 ## Other Puma games
