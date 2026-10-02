@@ -31,7 +31,7 @@ const STEPS = [
   { at: ".wallet", short: true, title: "Your cash and your place",
     body: "Your money is secret, and it sits at the top of your desk, where you decide what to spend: the largest number here, with a flash and the change whenever it moves. Beside it are your points, your place and the gap to the leader, how full your storage is and how many cards you hold." },
   { at: ".hand", short: true, title: "Your hand",
-    body: "Price & Production cards. Producing with one takes three of the commodities in its red half, then every commodity in its blue half rises $1 per icon. On your move the hand sits at the top of the question: pick a card to see exactly what it would do, then press Produce. You draw back up to your hand limit afterwards. Your hand is secret." },
+    body: "Price & Production cards. Producing with one takes three of the commodities in its red half, then every commodity in its blue half rises $1 per icon. On your move, pick a card to see exactly what it would do, and where it would send the prices above; then press Produce. You draw back up to your hand limit afterwards. Your hand is secret." },
   { at: "[data-tour=rails]", title: "Railroads",
     body: "Two lines are up for auction. Each row shows what the next card of that line is worth to you. Opening an auction is a bid of at least the minimum; bidding goes round the table and a pass is final. The strip is the VP for owning 1, 2, 3 or 4 cards of a line, in total. Open an auction and lose it, and you act again." },
   { at: "[data-tour=town]", title: "Towns",
