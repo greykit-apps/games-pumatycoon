@@ -14,7 +14,7 @@
  * game/tools/replay-dump.js re-runs headlessly. */
 
 import { injectCSS } from "./style.js";
-import { SPRITES } from "./art.js";
+import { SPRITES, SCENE } from "./art.js";
 import { newGame, SAVE_VERSION } from "../engine/state.js";
 import { step } from "../engine/machine.js";
 import { botAnswer } from "../engine/bots.js";
@@ -40,7 +40,7 @@ const store = {
 
 const host = document.querySelector("[data-pumatycoon-game]");
 injectCSS(document);
-document.body.insertAdjacentHTML("afterbegin", SPRITES);
+document.body.insertAdjacentHTML("afterbegin", SPRITES + SCENE);
 
 const prefs = { speed: "normal", ...(store.get(PREFS_KEY) || {}) };
 let st = null;

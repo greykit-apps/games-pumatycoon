@@ -75,3 +75,45 @@ export function icon(g, size = 18, title = "") {
   const t = title ? `<title>${title}</title>` : "";
   return `<svg class="ico" width="${size}" height="${size}" viewBox="0 0 24 24" role="img" aria-label="${title || g}">${t}<use href="#pt-${g}"/></svg>`;
 }
+
+/* The backdrop behind the board (after PumaCity's district scenes): night
+ * over Cougar Country. Far hills, a railroad on a trestle with a lit train
+ * crossing it, a town and its grain elevator and mill on the right, stars.
+ * Drawn once, fixed behind everything, low-contrast so it never competes
+ * with the market. Original shapes; nothing traced. */
+const STARS = [[90, 70], [210, 140], [330, 52], [470, 110], [560, 40], [690, 150], [780, 80], [905, 36], [1010, 120],
+  [1120, 64], [1240, 140], [1330, 48], [1450, 96], [1540, 160], [150, 230], [420, 210], [640, 250], [980, 220], [1190, 240], [1400, 210]];
+const WINDOWS = [[1182, 640], [1196, 640], [1182, 664], [1252, 610], [1266, 610], [1252, 634], [1338, 652], [1352, 652],
+  [1420, 600], [1420, 624], [1434, 624], [1500, 646], [1514, 646], [1500, 670]];
+export const SCENE = `
+<div class="scene" aria-hidden="true">
+<svg viewBox="0 0 1600 900" preserveAspectRatio="xMidYMax slice" focusable="false">
+  <defs>
+    <linearGradient id="pt-beam" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#54f2ff" stop-opacity=".16"/><stop offset="1" stop-color="#54f2ff" stop-opacity="0"/></linearGradient>
+    <linearGradient id="pt-haze" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#ffb000" stop-opacity=".07"/><stop offset="1" stop-color="#ffb000" stop-opacity="0"/></linearGradient>
+  </defs>
+  ${STARS.map(([x, y], k) => `<circle class="s-star" cx="${x}" cy="${y}" r="${k % 3 ? 1.1 : 1.6}"/>`).join("")}
+  <circle class="s-moon" cx="1290" cy="150" r="34"/>
+  <path class="s-far" d="M0 560 L120 500 L230 530 L360 455 L470 505 L600 470 L720 520 L860 450 L990 505 L1120 470 L1260 520 L1400 470 L1600 515 L1600 900 L0 900Z"/>
+  <path class="s-mid" d="M0 650 C180 600 300 615 430 640 S700 600 860 625 S1150 660 1600 610 L1600 900 L0 900Z"/>
+  <!-- the trestle and its track -->
+  <path class="s-line" d="M0 612 L1100 612"/>
+  ${Array.from({ length: 22 }, (_, k) => `<path class="s-line" d="M${k * 50} 612 L${k * 50 + 25} 690 L${k * 50 + 50} 612"/>`).join("")}
+  <!-- the train: a locomotive and four cars, windows lit, its lamp throwing a beam -->
+  <path class="s-body" d="M610 586 h70 v-14 h14 v14 h18 v26 h-102z"/>
+  <rect class="s-body" x="514" y="590" width="90" height="22" rx="2"/>
+  <rect class="s-body" x="418" y="590" width="90" height="22" rx="2"/>
+  <rect class="s-body" x="322" y="590" width="90" height="22" rx="2"/>
+  <rect class="s-body" x="226" y="594" width="90" height="18" rx="2"/>
+  ${[528, 552, 576, 432, 456, 480, 336, 360, 384].map(x => `<rect class="s-win" x="${x}" y="596" width="12" height="6"/>`).join("")}
+  <circle class="s-lamp" cx="712" cy="596" r="3"/>
+  <path class="s-beam" d="M714 592 L980 572 L980 622 L714 600Z"/>
+  <!-- the town: houses, the grain elevator and the mill's chimney -->
+  <path class="s-near" d="M1120 700 V630 l30 -22 l30 22 V700Z M1240 700 V604 h52 V700Z M1324 700 V640 l26 -18 l26 18 V700Z M1400 700 V560 h46 V700Z M1480 700 V636 l34 -24 l34 24 V700Z"/>
+  <path class="s-near" d="M1446 700 V520 h18 V700Z"/>
+  <path class="s-smoke" d="M1455 512 c-14 -22 18 -34 2 -58 c-12 -18 16 -30 6 -50"/>
+  ${WINDOWS.map(([x, y]) => `<rect class="s-win" x="${x}" y="${y}" width="8" height="10"/>`).join("")}
+  <rect class="s-haze" x="1080" y="560" width="520" height="160"/>
+  <path class="s-ground" d="M0 700 C300 690 520 712 800 704 S1300 690 1600 700 L1600 900 L0 900Z"/>
+</svg>
+</div>`;

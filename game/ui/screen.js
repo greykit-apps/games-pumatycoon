@@ -40,7 +40,7 @@ import {
 } from "./text.js";
 import { HELP_TABS } from "./help.js";
 import { startTour } from "./tour.js";
-import { HAND_STRIP } from "./style.js";
+import { HAND_STRIP, SHORT } from "./style.js";
 import {
   sellPreview, cardPreview, railPreview, townPreview, buyPreview, marketMoves, cheapest, lastTurnEntries, auctionSeats, quickBids, endClock, standing,
   secretsShown, holders, missionProgress,
@@ -103,9 +103,13 @@ export function mountScreen(host, hooks) {
    * the hand in the question. The markup follows the query, so the screen
    * redraws when the window crosses it. */
   const stripQuery = typeof matchMedia === "function" ? matchMedia(HAND_STRIP) : null;
-  let stripWas = stripQuery ? stripQuery.matches : false;
-  const onStrip = () => { const now = !!(stripQuery && stripQuery.matches); if (st && now !== stripWas) { stripWas = now; render(); } };
+  // A short window folds "since your turn" to your own last move and a count.
+  const shortQuery = typeof matchMedia === "function" ? matchMedia(SHORT) : null;
+  const layoutNow = () => `${!!(stripQuery && stripQuery.matches)}|${!!(shortQuery && shortQuery.matches)}`;
+  let stripWas = layoutNow();
+  const onStrip = () => { const now = layoutNow(); if (st && now !== stripWas) { stripWas = now; render(); } };
   stripQuery?.addEventListener("change", onStrip);
+  shortQuery?.addEventListener("change", onStrip);
   window.addEventListener("resize", onStrip);   // some browsers and emulators skip the query's change event
   /* Whose hand the strip shows: the viewer's; in hot seat while bots play, a
    * hidden placeholder of the same height, so the table never jumps. */
@@ -180,7 +184,7 @@ export function mountScreen(host, hooks) {
       const held = v !== null ? st.players[v].goods[g] : null;
       const said = m.delta ? `${dir === "up" ? "up" : "down"} ${Math.abs(m.delta)}` : "unchanged";
       rows += `<div class="tk-row${ticks[g] ? ` tick-${ticks[g]}` : ""}${v !== null ? " held" : ""}" role="row" data-g="${g}" style="--c:var(--c-${g})">
-        <span class="tk-name" role="rowheader"><span class="chip">${icon(g, 22, GOOD_NAME[g])}</span><span>${GOOD_NAME[g]}</span></span>
+        <span class="tk-name" role="rowheader"><span class="chip">${icon(g, 22, GOOD_NAME[g])}</span><span class="tk-nm">${GOOD_NAME[g]}${by ? `<small class="tk-by2" aria-hidden="true">${by}</small>` : ""}</span></span>
         <span class="tk-price" role="cell">${money(price)}<span class="tk-to" aria-hidden="true"></span></span>
         <span class="tk-delta ${dir}" role="cell"><span aria-hidden="true">${dir === "up" ? "▲" : dir === "down" ? "▼" : "·"}${m.delta ? Math.abs(m.delta) : ""}</span><span class="sr-only">${said}</span></span>
         <span class="tk-by" role="cell">${by}</span>
@@ -190,7 +194,7 @@ export function mountScreen(host, hooks) {
       </div>`;
     }
     return `<section class="ticker${v !== null ? " with-hold" : ""}" role="table" aria-label="The market">
-      <div class="tk-head" role="row"><span role="columnheader">Commodity</span><span role="columnheader" style="text-align:right">Price</span><span role="columnheader" style="text-align:right">${ownTurn ? (yours ? "Since you" : `Since ${whose}`) : "This round"}</span><span role="columnheader" class="tk-by">Moved by</span><span role="columnheader">Track</span><span role="columnheader" class="tk-others" style="text-align:right">${v !== null ? "Others hold" : "Held"}</span>${v !== null ? `<span role="columnheader" class="tk-hold" style="text-align:right">${whose} hold${yours ? "" : "s"}</span>` : ""}</div>
+      <div class="tk-head" role="row"><span role="columnheader">Commodity</span><span role="columnheader" style="text-align:right">Price</span><span role="columnheader" style="text-align:right"><span class="h-long">${ownTurn ? (yours ? "Since you" : `Since ${whose}`) : "This round"}</span><span class="h-short" aria-hidden="true">±</span></span><span role="columnheader" class="tk-by">Moved by</span><span role="columnheader">Track</span><span role="columnheader" class="tk-others" style="text-align:right">${v !== null ? "Others hold" : "Held"}</span>${v !== null ? `<span role="columnheader" class="tk-hold" style="text-align:right">${whose} hold${yours ? "" : "s"}</span>` : ""}</div>
       ${rows}</section>`;
   }
 
@@ -205,7 +209,7 @@ export function mountScreen(host, hooks) {
     const auc = st.tc && st.tc.auc && slots.includes(st.tc.auc.slot) && st.tc.auc.high !== null;
     const tag = live !== undefined ? "button" : "div";
     return `<${tag} class="ob-row rail${live !== undefined ? " live" : ""}${auc ? " onauction" : ""}" data-row="rail-${slots[0]}"${live !== undefined ? ` data-answer="${live}"${hintAttr({ rows: [`rail-${slots[0]}`] })}` : ""}>
-      <span class="ob-name">${esc(lineName(line))}${both ? ' <span class="dim">×2 on offer</span>' : ""}${auc ? ' <em class="flag">on auction</em>' : ""}${endClock(st).ends.rail ? ' <em class="flag end">the last: ends the game</em>' : ""}</span>
+      <span class="ob-name">${esc(lineName(line))}${both ? ' <span class="dim">×2 on offer</span>' : ""}${auc ? ' <em class="flag">on auction</em>' : ""}${endClock(st).ends.rail ? ' <em class="flag end" title="The last one: taking it ends the game after this round">last: ends the game</em>' : ""}</span>
       <span class="ob-ladder" aria-label="${esc(said)}">VP ${ladder}</span>
       <span class="ob-cost">from ${money(RAIL[line].min)}</span>
       <span class="ob-you">${pv ? `+${pv.marginal} VP to you${pv.pair ? `, +${pv.pair} pair` : ""}${pv.baron ? `, +${pv.baron} baron` : ""}` : ""}</span>
@@ -225,7 +229,7 @@ export function mountScreen(host, hooks) {
       : `<span class="ob-pay${ok ? " ok" : ""}">${inner}</span>`);
     const name = townName(st.townOffer);
     return `<div class="ob-row town" data-row="town">
-      <span class="ob-name">${esc(name)}${endClock(st).ends.town ? ' <em class="flag end">the last: ends the game</em>' : ""}</span>
+      <span class="ob-name">${esc(name)}${endClock(st).ends.town ? ' <em class="flag end" title="The last one: taking it ends the game after this round">last: ends the game</em>' : ""}</span>
       <span class="ob-vp">${t.vp} VP <span class="dim">+2 paired with a railroad</span></span>
       ${pay(kS, `${icon(t.good, 16, GOOD_NAME[t.good])}×${need}${pv ? ` <span class="dim">you ${pv.have}</span>` : ""}`, pv && pv.canSpecific, `Build ${name}, paying ${need} ${GOOD_NAME[t.good]}`, { rows: ["town"], g: {} }, "stage")}
       ${pay(kA, `${icon("any", 16, "any commodity")}×${any}${pv ? ` <span class="dim">you ${pv.tokens}</span>` : ""}`, pv && pv.canAny, `Build ${name}, paying any ${any} commodities`, { rows: ["town"] })}
@@ -244,7 +248,7 @@ export function mountScreen(host, hooks) {
     const on = live !== undefined && staged === canon(st.ask.options[live]);
     return `<${tag} class="ob-row bld${live !== undefined ? " live" : ""}${short ? " short" : ""}" data-row="bld-${slot}"${live !== undefined ? ` data-stage="${live}" aria-pressed="${on}"${hintAttr({ rows: [`bld-${slot}`] })}` : ""}>
       <span class="ob-name">${t.tag ? `<span class="badge">${t.tag}</span>` : ""}${esc(f.printed)}</span>
-      <span class="ob-fx">${esc(effectText(inst, 0))}${up ? `<span class="dim"> · ${esc(up)}</span>` : ""}</span>
+      <span class="ob-fx"${up ? ` title="${esc(up)}"` : ""}>${esc(effectText(inst, 0))}${up ? `<span class="dim upg"> · ${esc(up)}</span>` : ""}</span>
       <span class="ob-cost">${money(f.cost)}</span>
     </${tag}>`;
   }
@@ -275,10 +279,12 @@ export function mountScreen(host, hooks) {
         <td class="num">${p.rails.length}</td><td class="num">${p.towns.length}</td><td class="num">${p.blds.length}</td><td class="num">${p.hand.length}</td>
       </tr><tr class="st-goodsrow${active ? " active" : ""}"><td></td><td colspan="7" class="g-row"><span class="goods-line">${goods}</span></td></tr>${detail}`;
     }).join("");
-    return `<section aria-label="Standings"><h2>Standings${st.over ? "" : ' <span class="dim" title="Public VP: towns, railroads, buildings, pairs and building bonuses. The Bank&#39;s cash bonus and missions are secret until the end.">VP without missions or the Bank bonus</span>'}</h2>
-      <table class="standings"><thead><tr><th scope="col">Player</th><th scope="col">VP</th><th scope="col">Cash</th><th scope="col" class="st-goods">Commodities</th><th scope="col">Rail</th><th scope="col">Towns</th><th scope="col">Bldg</th><th scope="col">Cards</th></tr></thead>
+    // No heading: the box is a tile level with the market's, and the column heads say what it is.
+    const vpNote = st.over ? "Final scores, everything counted" : "Public VP: towns, railroads, buildings, pairs and building bonuses. The Bank's cash bonus and missions count at the end";
+    return `<section class="st-box" aria-label="Standings">
+      <table class="standings"><caption class="sr-only">Standings. ${esc(vpNote)}.</caption><thead><tr><th scope="col">Player</th><th scope="col" title="${esc(vpNote)}">VP<span class="vp-q" aria-hidden="true">*</span></th><th scope="col">Cash</th><th scope="col" class="st-goods">Commodities</th><th scope="col">Rail</th><th scope="col">Towns</th><th scope="col">Bldg</th><th scope="col">Cards</th></tr></thead>
       <tbody>${rows}</tbody></table>
-      ${st.over ? '<p class="note">Final scores, everything counted.</p>' : ""}</section>`;
+      </section>`;
   }
 
   /* ---------- your desk ---------- */
@@ -362,7 +368,7 @@ export function mountScreen(host, hooks) {
     if (!all.length && !last) return "";
     // Folded, the strip keeps what scored (railroads won, towns built, the end) and counts the rest:
     // the market above already shows every price that moved and who moved it.
-    const shown = recapOpen ? all.slice(-5) : all.filter(e => RECAP_BIG.has(e.k)).slice(-3);
+    const shown = recapOpen ? all.slice(-5) : shortQuery && shortQuery.matches ? [] : all.filter(e => RECAP_BIG.has(e.k)).slice(-3);
     const hidden = all.length - shown.length;
     const gain = base.gain > 0 ? ` <span class="vpc">+${base.gain} VP</span>` : "";
     const toggle = recapOpen
@@ -475,7 +481,7 @@ export function mountScreen(host, hooks) {
           else if (o.a === "sell") {
             const n = p.goods[o.good];
             const pv = sellPreview(st, w.player, o.good, n);
-            groups.sell.push(btn(k, `${icon(o.good, 16)} ${n} × ${money(st.prices[o.good])} <span class="dim">= ${money(pv.proceeds)}</span>`, ` aria-label="Sell ${GOOD_NAME[o.good]}: ${n} at ${money(st.prices[o.good])}, ${money(pv.proceeds)}${n > 1 ? " for all" : ""}"${hintAttr({ g: { [o.good]: pv.after } })}`));
+            groups.sell.push(btn(k, `${icon(o.good, 16)} ${n}×${money(st.prices[o.good])} <span class="dim">= ${money(pv.proceeds)}</span>`, ` aria-label="Sell ${GOOD_NAME[o.good]}: ${n} at ${money(st.prices[o.good])}, ${money(pv.proceeds)}${n > 1 ? " for all" : ""}"${hintAttr({ g: { [o.good]: pv.after } })}`));
           } else if (o.a === "auction") {
             const r = st.railOffer[o.slot];
             if (seenLines.has(lineOf(r))) return;
@@ -495,7 +501,7 @@ export function mountScreen(host, hooks) {
         const full = tokens(p) >= storageLimit(p) || cardsOver;
         const townOk = groups.town.length > 0;
         const advice = full && (groups.sell.length || townOk)
-          ? `<p class="notice">Storage ${tokens(p)}/${storageLimit(p)}: ${groups.sell.length ? "selling" : ""}${groups.sell.length && townOk ? ", or " : ""}${townOk ? `building ${esc(townName(st.townOffer))}` : ""}, before producing avoids discards.</p>` : "";
+          ? `<p class="notice">Storage ${tokens(p)}/${storageLimit(p)}: ${groups.sell.length ? "sell" : ""}${groups.sell.length && townOk ? " or " : ""}${townOk ? "build" : ""} first.</p>` : "";
         const inStrip = stripFor() === w.player;
         // One decision at a time: while a card or a purchase is previewed the desk
         // shows just that (and the hand, to switch cards), so it fits; the order
@@ -505,15 +511,24 @@ export function mountScreen(host, hooks) {
           return `<div class="ask">${q("Your move")}${cards}${produceK >= 0 ? produceBlock(p, w, produceK, selected) : stagedBlock(w, stagedK)}
             <p class="sub">Cancel or <kbd>Esc</kbd> for your other moves; another card or building previews in its place.</p></div>`;
         }
-        const produce = canProduce ? `<div class="grp" data-group="p"><b>Produce<kbd>1–${p.hand.length}</kbd> <span class="dim">${inStrip ? "pick a card from your hand, under the market" : `pick a card to see what it would do · hand limit ${handLimit(p)}`}</span></b>
+        const produce = canProduce ? `<div class="grp" data-group="p"><b>Produce<kbd>1–${p.hand.length}</kbd> <span class="dim">${inStrip ? "pick a card from your hand, under the market" : `pick one to preview it · limit ${handLimit(p)}`}</span></b>
           ${inStrip ? "" : handCards(w.player)}${produceK >= 0 ? produceBlock(p, w, produceK, selected) : ""}</div>` : "";
         const sellG = g("Sell", "s", groups.sell);
         const clk = endClock(st);
-        const townG = groups.town.length ? g(`Build ${esc(townName(st.townOffer))}`, "t", groups.town, clk.ends.town ? "The last town: building it ends the game after this round." : "") + under(["town"]) : "";
-        const first = full ? `${advice}${townG}${sellG}${produce}` : `${produce}${sellG}`;
+        // Auctions, buildings and the town are pressed in the table, where each
+        // row says what it is worth to you; the desk points there rather than
+        // repeating them. The keys jump the same way.
+        const short = { a: "Auction", b: "Buy", t: "Town" };
+        const jumps = [
+          groups.auction.length && ["a", "Auction a railroad", clk.ends.rail],
+          groups.buy.length && ["b", "Buy a building", clk.ends.bld],
+          groups.town.length && ["t", `Build ${esc(townName(st.townOffer))}`, clk.ends.town],
+        ].filter(Boolean);
+        const tableG = jumps.length ? `<div class="grp jumps" data-group="x"><b title="Each row in the table says what it is worth to you">Table</b>
+          ${jumps.map(([k, label, last]) => `<button class="jump" data-jump="${k}" aria-label="${label}, in the table"><span class="arr" aria-hidden="true">← </span>${short[k]}${last ? ' <span class="warn">· last</span>' : ""}<kbd>${k.toUpperCase()}</kbd></button>`).join("")}</div>` : "";
+        const first = full ? `${advice}${sellG}${produce}` : `${produce}${sellG}`;
         return `<div class="ask">${q("Your move")}
-          ${first}${g("Auction a railroad", "a", groups.auction, clk.ends.rail ? "The last railroad: winning it ends the game after this round." : "")}${g("Buy a building", "b", groups.buy, clk.ends.bld ? "The last building: buying it ends the game after this round." : "")}${under(["buy"])}${g("Upgrade", "", groups.upgrade)}${under(["upgrade"])}
-          ${full ? "" : townG}${g("", "", groups.other)}</div>`;
+          ${first}${tableG}${g("Upgrade", "", groups.upgrade)}${g("", "", groups.other)}</div>`;
       }
 
       case "take": {
@@ -654,7 +669,7 @@ export function mountScreen(host, hooks) {
     if (!el || !el.dataset || !host.contains(el)) return null;
     const d = el.dataset;
     if (d.answer !== undefined && st.ask && st.ask.options) return `ans:${canon(st.ask.options[Number(d.answer)])}`;
-    for (const k of ["select", "stage", "tfpick", "player", "pick", "helptab", "bidat"]) if (d[k] !== undefined) return `${k}:${d[k]}`;
+    for (const k of ["select", "stage", "tfpick", "jump", "player", "pick", "helptab", "bidat"]) if (d[k] !== undefined) return `${k}:${d[k]}`;
     for (const k of ["help", "speed", "debug", "newgame", "bidgo", "bidpass", "bidback", "unselect", "pickgo", "openlog", "lift", "tourreplay", "helpclose", "closeresults", "unstage", "recap", "rematch"]) if (el.hasAttribute(`data-${k}`)) return k;
     if (el.matches("[data-bid]")) return "bid";
     if (el.matches("summary")) return "summary";
@@ -695,7 +710,10 @@ export function mountScreen(host, hooks) {
     <button data-newgame>New game</button></header>
   <div class="main">
     <section class="stage" aria-label="The table">
-      ${ticker()}
+      <div class="band1">
+        ${ticker()}
+        <div class="bc-stand">${standings()}</div>
+      </div>
       ${handStrip()}
       <div class="board">
         <div class="book-col bc-rails">
@@ -708,10 +726,9 @@ export function mountScreen(host, hooks) {
         </div>
         <div class="book-col bc-blds">
           <h2>Buildings <span class="dim">${st.bldStack.length ? `${st.bldStack.length} in the stack` : "stack empty"}</span></h2>
-          <p class="ob-legend"><span class="badge">B</span>a bonus each production, one B at a time · <span class="badge">P</span>take more from a card, one P at a time</p>
-          <div class="ob" data-tour="buildings">${[0, 1, 2, 3].map(s => bldRow(s, bldLive(s))).join("")}</div>
+          <div class="ob" data-tour="buildings">${[0, 1, 2, 3].map(s => bldRow(s, bldLive(s))).join("")}
+            <p class="ob-legend" title="One B and one P building count at a time"><span class="badge">B</span>a bonus when producing · <span class="badge">P</span>take more · one of each counts</p></div>
         </div>
-        <div class="bc-stand">${standings()}</div>
       </div>
       <details class="fulllog"${logOpen ? " open" : ""}><summary>Full log <span class="dim">${lines.length} lines · ${st.deck.length} cards in the deck, ${st.discard.length} discarded</span></summary>
         <div class="log">${lines.map(l => `<div><span class="r">${l.r}</span>${esc(l.text)}</div>`).join("")}</div></details>
@@ -866,6 +883,11 @@ ${st.over && !resultsHidden ? resultsBox() : ""}${helpTab !== null ? helpBox() :
     hooks.submit(w.options[idx]);
   }
 
+  /* The first live row of the table for a jump: a railroad, a building, the town. */
+  function jumpTarget(key) {
+    return host.querySelector({ a: ".ob-row.rail.live", b: ".ob-row.bld.live", t: ".ob-row.town button" }[key] || "x");
+  }
+
   function stage(k) {
     const o = st.ask && st.ask.options && st.ask.options[k];
     if (!o) return;
@@ -895,6 +917,7 @@ ${st.over && !resultsHidden ? resultsBox() : ""}${helpTab !== null ? helpBox() :
     if (b.dataset.stage !== undefined) return stage(Number(b.dataset.stage));
     if (b.dataset.tfpick) { tfPick = tfPick === b.dataset.tfpick ? null : b.dataset.tfpick; render(); host.querySelector(".ask .tf ~ .row [data-answer]")?.focus(); return; }
     if (b.hasAttribute("data-unstage")) { staged = null; return render(); }
+    if (b.dataset.jump) { const t = jumpTarget(b.dataset.jump); if (t) { t.focus(); t.scrollIntoView({ block: "nearest" }); } return; }
     if (b.hasAttribute("data-speed")) { hooks.cycleSpeed(); return render(); }
     if (b.hasAttribute("data-debug")) return hooks.debugDump();
     if (b.hasAttribute("data-closeresults")) { resultsHidden = true; return render(); }
@@ -992,9 +1015,9 @@ ${st.over && !resultsHidden ? resultsBox() : ""}${helpTab !== null ? helpBox() :
         if (card && w.options.some(o => o.a === "produce" && o.card === card)) select(card);
         return;
       }
-      // Arrows walk the buttons of the group the focus is in.
+      // Arrows walk the buttons of the group (or the table's list) the focus is in.
       if (e.key.startsWith("Arrow")) {
-        const grp = e.target.closest && e.target.closest(".ask .grp");
+        const grp = e.target.closest && e.target.closest(".ask .grp, .ob");
         if (!grp) return;
         const bs = [...grp.querySelectorAll("button")];
         const at = bs.indexOf(e.target);
@@ -1007,9 +1030,9 @@ ${st.over && !resultsHidden ? resultsBox() : ""}${helpTab !== null ? helpBox() :
       const key = e.key.toLowerCase();
       if (key === "p") { host.querySelector("button.pp.live")?.focus(); return; }
       if ("sabt".includes(key) && key.length === 1) {
-        // A shortcut moves to its group; it never commits a move.
-        const first = host.querySelector(`.ask .grp[data-group="${key}"] button`);
-        if (first) { e.preventDefault(); first.focus(); }
+        // A shortcut moves to its choices; it never commits a move.
+        const first = key === "s" ? host.querySelector('.ask .grp[data-group="s"] button') : jumpTarget(key);
+        if (first) { e.preventDefault(); first.focus(); first.scrollIntoView({ block: "nearest" }); }
       }
     } else if (w.kind === "sellQty" && e.key.toLowerCase() === "a") {
       const all = w.options.reduce((best, o, k) => (!o.back && !o.exp && (best < 0 || o.q > w.options[best].q) ? k : best), -1);
@@ -1055,6 +1078,7 @@ ${st.over && !resultsHidden ? resultsBox() : ""}${helpTab !== null ? helpBox() :
       host.removeEventListener("focusin", onFocus);
       host.removeEventListener("input", onInput);
       stripQuery?.removeEventListener("change", onStrip);
+      shortQuery?.removeEventListener("change", onStrip);
       window.removeEventListener("resize", onStrip);
       host.onclick = null;
     },

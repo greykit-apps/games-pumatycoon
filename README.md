@@ -42,7 +42,12 @@ at play time.
   your last turn and who made it, what the others hold of each
   commodity and who holds most, an order book of railroads, the town and
   buildings showing what each is worth to you, live public standings, your
-  cash pinned at the top of your desk, and a "since your turn" recap. An
+  cash pinned at the top of your desk, and a "since your turn" recap, laid
+  out as aligned tiles that fit a laptop-height window without scrolling
+  (the market beside the standings, the railroads, town and buildings
+  beneath; on a wide window the hand runs under the market). Auctions,
+  buildings and the town are pressed in the table, where each row says what
+  it is worth to you; the desk holds producing, selling and every preview. An
   auction is one box that never grows (the high bid, each seat's last bid,
   your bid), so the Bid button sits still from round to round and a run of
   raises is a run of Enter presses. Every choice previews what it
@@ -72,7 +77,7 @@ list is below.
 | Key | |
 |---|---|
 | `1`–`5` | preview producing with that card; `Enter` on **Produce** commits |
-| `S` `A` `B` `T` | jump to Sell, Auction, Buy or the Town (a jump never commits); arrows walk the group |
+| `S` `A` `B` `T` | jump to Sell, or to the railroads, buildings or town in the table (a jump never commits); arrows walk the list |
 | `A` on a sale | sell all |
 | `Esc` | put the previewed card or purchase back |
 | `Enter` | take the keyboard from the curtain |
