@@ -207,7 +207,7 @@ h2 .dim{letter-spacing:.04em;text-transform:none;font-weight:400}
 .ob-row.short .ob-cost{color:var(--dim)}
 .ob-row .badge{display:inline-block;font-size:10px;border:1px solid var(--accent);color:var(--accent);border-radius:2px;padding:0 4px;margin-right:6px;vertical-align:1px}
 .ob-row .flag.end{background:transparent;color:var(--warn);border:1px solid var(--warn);white-space:nowrap;display:inline-block;margin:2px 0 0}
-.ob-row .flag{font-style:normal;font-size:var(--fs-xs);color:var(--bg);background:var(--warn);padding:1px 6px;margin-left:6px;letter-spacing:.06em;text-transform:uppercase}
+.ob-row .flag{white-space:nowrap;display:inline-block;font-style:normal;font-size:var(--fs-xs);color:var(--bg);background:var(--warn);padding:1px 6px;margin-left:6px;letter-spacing:.06em;text-transform:uppercase}
 button.ob-row{cursor:pointer;text-align:left}
 button.ob-row.live .ob-name::before{content:"▸ ";color:var(--accent)}
 button.ob-row.live:hover,button.ob-row.live:focus-visible,.ob-row.hint{background:#0d2028}
