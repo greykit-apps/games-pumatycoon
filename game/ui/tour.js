@@ -38,6 +38,8 @@ const STEPS = [
     body: "Bought with commodities, not money: either the town's count of its own commodity, or its larger count of any mix. Every town you can pair with a railroad card scores 2 more at the end." },
   { at: "[data-tour=buildings]", title: "Buildings",
     body: "Bought with money, and they last all game. B tiles add a bonus commodity each time you produce (one B a production), P tiles let you take more from a card. Every building is 1 VP and one more space in your storage." },
+  { at: ".bc-tape", title: "The log",
+    body: "Every move, newest first, like a trade blotter: who did what, and at what price. The round numbers lit in cyan are the moves made since your last turn; your own moves are brighter, and a railroad won or a town built is set bold. Scroll it for the whole game so far." },
   { at: ".standings", title: "The standings",
     body: "The points anyone can count, and what everyone owns: open a row to see it. Money is secret, so you see only your own, and the Bank's cash bonus and missions are added at the end. You can hold ten commodities, plus one per building; over that after producing, you discard." },
   { at: ".ask", short: true, title: "Your move",

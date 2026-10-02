@@ -50,7 +50,10 @@ at play time.
   out as aligned tiles, floating over a night scene of Cougar Country, that
   fit a laptop-height window without scrolling
   (the market beside the standings, the railroads, town and buildings
-  beneath; on a wide window the hand runs under the market). Auctions,
+  beneath, and under them the log as a trade blotter, newest first, with
+  the moves since your turn marked; on a wide window the hand runs under
+  the market). The town tile says what values follow it, since the town
+  deck is dealt in order. Auctions,
   buildings and the town are pressed in the table, where each row says what
   it is worth to you; the desk holds producing, selling and every preview. An
   auction is one box that never grows (the high bid, each seat's last bid,
