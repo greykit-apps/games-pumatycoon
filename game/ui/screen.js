@@ -636,9 +636,9 @@ export function mountScreen(host, hooks) {
       const hint = pv ? hintAttr({ g: Object.fromEntries(pv.rises.map(r => [r.good, r.to])) }) : "";
       return `<${tag} class="pp${k >= 0 ? " live" : ""}" data-card="${id}" data-n="${n + 1}"${k >= 0 ? ` data-select="${id}" aria-pressed="${selected === id}" aria-label="Card ${n + 1}: preview producing with it"${hint}` : ""}>
         <span class="pp-key" aria-hidden="true">${n + 1}</span>
-        <span class="half prod"><span class="lab">${pv ? (pv.choose ? `take ${pv.take} of` : "take all") : "production"}</span><span class="icons">${goodsIcons(c.prod, 28)}</span></span>
+        <span class="half prod"><span class="lab">${pv ? (pv.choose ? `take ${pv.take} of` : "take all") : "production"}${pv && pv.over ? `<span class="pp-warn"> · ⚠ discard ${pv.over}</span>` : ""}</span><span class="icons">${goodsIcons(c.prod, 28)}</span></span>
         <span class="half price"><span class="lab">prices rise</span><span class="icons">${goodsIcons(c.price, 28)}</span></span>
-        ${pv && pv.over ? `<span class="pp-warn">⚠ discard ${pv.over}</span>` : ""}</${tag}>`;
+        </${tag}>`;
     }).join("")}</div>`;
   }
 
@@ -992,6 +992,12 @@ ${st.over && !resultsHidden ? resultsBox() : ""}${helpTab !== null ? helpBox() :
     if (staged) host.querySelector(".ask .preview [data-answer]")?.focus();
   }
 
+  function produceNow(card) {
+    const w = st.ask;
+    const k = w && w.kind === "action" ? w.options.findIndex(o => o.a === "produce" && o.card === card) : -1;
+    if (k >= 0) answer(k);
+  }
+
   function select(card) {
     staged = null;
     selected = selected === card ? null : card;
@@ -1019,7 +1025,12 @@ ${st.over && !resultsHidden ? resultsBox() : ""}${helpTab !== null ? helpBox() :
     if (b.hasAttribute("data-lift")) { curtain = false; viewer = st.ask.player; lastSig = null; return render(); }
     if (b.hasAttribute("data-openlog")) { logOpen = true; render(); host.querySelector(".fulllog")?.scrollIntoView({ block: "start" }); return; }
     if (b.dataset.player !== undefined) { const i = Number(b.dataset.player); openPlayers.has(i) ? openPlayers.delete(i) : openPlayers.add(i); return render(); }
-    if (b.dataset.select) return select(b.dataset.select);
+    if (b.dataset.select) {
+      // A double-click produces at once: the first click previewed the card, the
+      // second (the browser counts it even though the card was redrawn) commits it.
+      if (e.detail >= 2) return produceNow(b.dataset.select);
+      return select(b.dataset.select);
+    }
     if (b.hasAttribute("data-unselect")) { selected = null; return render(); }
     if (b.dataset.answer !== undefined) return answer(Number(b.dataset.answer));
     if (b.dataset.many) { let list; try { list = JSON.parse(b.dataset.many); } catch (err) { return; } if (list.length) return hooks.submitMany(list); return; }

@@ -378,7 +378,6 @@ table.tf td button{min-width:40px;min-height:28px;text-align:center;padding:2px 
 .hand.strip .pp{min-height:66px}
 .hand.strip .pp .half{padding:4px 12px;gap:2px}
 .hand.strip .pp .ico{width:24px;height:24px}
-.hand.strip .pp .pp-warn{position:absolute;right:6px;bottom:4px;padding:0 6px;border:1px solid color-mix(in oklab,var(--warn) 45%,transparent);border-radius:2px}
 .ask .sub kbd{font:inherit;font-size:10px;color:var(--dim);border:1px solid var(--line);border-radius:2px;padding:0 4px}
 .hand.strip.hidden{display:flex;align-items:center;min-height:72px;border:1px dashed var(--line);padding:0 14px}
 .hand.strip.hidden p{margin:0;font-size:var(--fs-s)}
@@ -393,7 +392,8 @@ table.tf td button{min-width:40px;min-height:28px;text-align:center;padding:2px 
 .pp .half.price{background:#0f1d3a;border-left:1px solid var(--line)}
 .pp .icons{display:flex;flex-wrap:wrap;gap:4px;align-items:center}
 .pp .lab{font-size:var(--fs-xs);color:var(--ink)}
-.pp .pp-warn{grid-column:2/-1;font-size:var(--fs-xs);color:var(--warn);padding:4px 12px;background:#1d1608;border-top:1px solid var(--line)}
+/* Over storage: said in the label line, where it covers nothing. */
+.pp .lab .pp-warn{color:var(--warn);font-weight:700}
 .hand.dense{gap:6px}
 .hand.dense .pp{min-height:62px}
 .hand.dense .pp .half{padding:4px 12px;gap:2px}
