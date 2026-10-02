@@ -88,6 +88,7 @@ export const SCENARIOS = [
   { name: "screen: a mission's progress counts only what is public", layer: "screen", status: "ported" },
   { name: "screen: default seat names say what each seat is, and typed names are kept", layer: "screen", status: "ported" },
   { name: "screen: a player called You reads \"You bid\", not \"You bids\"", layer: "screen", status: "ported" },
+  { name: "screen: a card's popup names the buildings that change producing with it", layer: "screen", status: "ported" },
   { name: "screen: the hot-seat curtain hides money and hand between humans", layer: "screen", status: "pending" },
   { name: "screen: a saved game resumes mid-auction", layer: "screen", status: "pending" },
   { name: "screen: every request kind has a control", layer: "screen", status: "pending" },

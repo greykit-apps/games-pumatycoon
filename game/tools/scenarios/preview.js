@@ -4,7 +4,7 @@
 
 import { table, give, act, eq, assert } from "./harness.js";
 import { sellPreview, cardPreview, railPreview, townPreview, marketMoves, cheapest, lastTurnEntries, auctionSeats, quickBids, buyPreview, endClock, standing,
-  secretsShown, holders, missionProgress } from "../../ui/preview.js";
+  secretsShown, holders, missionProgress, cardEffects } from "../../ui/preview.js";
 import { lastMoveLine, describeLog } from "../../ui/text.js";
 import { rename } from "../../ui/setup.js";
 import { tokens, storageLimit, publicScore } from "../../engine/rules.js";
@@ -226,5 +226,21 @@ export const TESTS = [
     eq(describeLog({ k: "bid", p: 0, pass: true }, players), "You pass");
     eq(describeLog({ k: "produce", p: 0, take: ["wheat"] }, players), "You produce Wheat");
     eq(describeLog({ k: "bid", p: 1, amount: 6 }, players), "Bot 1 bids $6");
+  }],
+
+  ["screen: a card's popup names the buildings that change producing with it", () => {
+    const st = table();
+    give(st, 0, { hand: ["pp52"], goods: {} });
+    let fx = cardEffects(st, 0, "pp52");
+    eq([fx.take, fx.prodBld, fx.bonuses.length, fx.tradingFloor], [3, null, 0, false], "no buildings: three, nothing extra");
+    give(st, 0, { hand: ["pp52"], goods: {}, blds: ["factory", "lumberyard", "tradingfloor"] });
+    fx = cardEffects(st, 0, "pp52");
+    eq([fx.max, fx.prodBld && fx.prodBld.id, fx.take], [5, "factory", 5], "the Factory takes all five");
+    eq(fx.bonuses.map(b => [b.bld, b.goods]), [["lumberyard", ["wood"]]], "the Lumber Yard's bonus");
+    eq([fx.tradingFloor, fx.draw], [true, 3]);
+    // and the engine agrees: produce, take all five, the Lumber Yard's wood
+    act(st, { a: "produce", card: "pp52" });
+    while (st.ask && st.ask.player === 0 && st.ask.kind !== "action") act(st, st.ask.kind === "tradingFloor" ? st.ask.options.find(o => o && o.none) : st.ask.options[0]);
+    eq(tokens(st.players[0]), fx.gain, "the take and the bonus, as the popup said");
   }],
 ];
