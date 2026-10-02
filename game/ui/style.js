@@ -52,6 +52,9 @@ h2 .dim{letter-spacing:.04em;text-transform:none;font-weight:400}
 .top{display:flex;align-items:center;gap:12px;padding:8px 16px;border-bottom:1px solid var(--line);flex-wrap:wrap;background:var(--panel)}
 .top .grow{flex:1}
 .top .turn{color:var(--text)}
+.top .clock{color:var(--ink);font-size:var(--fs-s);border:1px solid var(--line);border-radius:2px;padding:1px 8px}
+.top .clock b{font-weight:700}
+.top .clock.near{color:var(--warn);border-color:color-mix(in oklab,var(--warn) 55%,transparent);background:#1d1608}
 .top .endflag{color:var(--warn);border:1px solid var(--warn);border-radius:2px;padding:1px 8px;font-size:var(--fs-s);text-transform:uppercase;letter-spacing:.1em}
 .main{display:grid;grid-template-columns:minmax(0,1fr) 460px;flex:1;min-height:0}
 .stage{position:relative;padding:16px 18px;overflow-y:auto;display:flex;flex-direction:column;gap:22px;min-width:0}
@@ -119,6 +122,7 @@ h2 .dim{letter-spacing:.04em;text-transform:none;font-weight:400}
 .ob-row.empty{color:var(--dim);justify-content:center;display:flex}
 .ob-row.short .ob-cost{color:var(--dim)}
 .ob-row .badge{display:inline-block;font-size:10px;border:1px solid var(--accent);color:var(--accent);border-radius:2px;padding:0 4px;margin-right:6px;vertical-align:1px}
+.ob-row .flag.end{background:transparent;color:var(--warn);border:1px solid var(--warn)}
 .ob-row .flag{font-style:normal;font-size:var(--fs-xs);color:var(--bg);background:var(--warn);padding:1px 6px;margin-left:6px;letter-spacing:.06em;text-transform:uppercase}
 button.ob-row{cursor:pointer;text-align:left}
 button.ob-row.live .ob-name::before{content:"▸ ";color:var(--accent)}
@@ -174,6 +178,7 @@ details.fulllog summary .dim{letter-spacing:.04em;text-transform:none;font-weigh
 .w-stat{display:flex;flex-direction:column;align-items:flex-end}
 .w-stat b{font-size:var(--fs-l)}
 .w-stat b.full{color:var(--warn)}
+.w-vp .w-sub{font-size:var(--fs-xs);color:var(--ink);white-space:nowrap;margin-top:2px}
 
 /* The auction: one box of fixed shape, whatever the length of the bidding. */
 .auction{border:1px solid var(--warn);background:color-mix(in oklab,var(--warn) 6%,var(--panel));padding:10px 12px;display:flex;flex-direction:column;gap:10px}
@@ -211,6 +216,8 @@ details.fulllog summary .dim{letter-spacing:.04em;text-transform:none;font-weigh
 .notice{margin:0;padding:7px 10px;font-size:var(--fs-s);color:var(--warn);background:#1d1608;border:1px solid color-mix(in oklab,var(--warn) 35%,transparent)}
 table.standings tr.just{animation:pt-just 2.2s cubic-bezier(.16,1,.3,1) 1}
 @keyframes pt-just{from{background:color-mix(in oklab,var(--accent) 22%,transparent)}to{background:transparent}}
+.recap li.big{color:var(--text)}
+.recap .note{margin-top:4px}
 .recap ul{margin:0;padding-left:16px;font-size:var(--fs-s);color:var(--ink);display:flex;flex-direction:column;gap:2px}
 .ask{border:1px solid var(--accent);border-radius:2px;padding:12px;background:#0a1620;display:flex;flex-direction:column;gap:10px}
 .ask p{margin:0}
@@ -219,7 +226,9 @@ table.standings tr.just{animation:pt-just 2.2s cubic-bezier(.16,1,.3,1) 1}
 .ask .sub b{color:var(--vp)}
 .ask .grp{display:flex;flex-direction:column;gap:5px}
 .ask .grp>b{font-size:var(--fs-s);color:var(--ink);font-weight:700}
-.ask .grp[data-group=s] .row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+.ask .grp[data-group=s] button{white-space:nowrap}
+.ask .endwarn{margin:0;font-size:var(--fs-s);color:var(--warn)}
+.preview kbd{font:inherit;font-size:10px;color:var(--dim);border:1px solid var(--line);border-radius:2px;padding:0 4px;margin-left:6px}
 .ask .grp>b .dim{font-weight:400;margin-left:6px}
 .ask .grp>b kbd,.kbd{font:inherit;font-size:10px;color:var(--dim);border:1px solid var(--line);border-radius:2px;padding:0 4px;margin-left:6px}
 .ask .q:focus{outline:none}
@@ -256,6 +265,10 @@ table.standings tr.just{animation:pt-just 2.2s cubic-bezier(.16,1,.3,1) 1}
 .pp .icons{display:flex;flex-wrap:wrap;gap:4px;align-items:center}
 .pp .lab{font-size:var(--fs-xs);color:var(--ink)}
 .pp .pp-warn{grid-column:2/-1;font-size:var(--fs-xs);color:var(--warn);padding:4px 12px;background:#1d1608;border-top:1px solid var(--line)}
+.hand.dense{gap:6px}
+.hand.dense .pp{min-height:62px}
+.hand.dense .pp .half{padding:4px 12px;gap:2px}
+.hand.dense .pp .ico{width:24px;height:24px}
 .pp .pp-key{display:flex;align-items:center;justify-content:center;font-size:var(--fs-m);font-weight:700;color:var(--dim);border-right:1px solid var(--line);background:var(--panel2)}
 button.pp.live .pp-key{color:var(--accent)}
 button.pp{cursor:pointer}
@@ -280,6 +293,8 @@ table.score tr.win td{color:var(--accent)}
 table.score td.vp{color:var(--vp);font-weight:700}
 .final-market{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:var(--fs-s);color:var(--text)}
 .final-market span{display:inline-flex;align-items:center;gap:4px}
+.yours{margin:0;color:var(--text);font-size:var(--fs-l)}
+.yours.win{color:var(--accent)}
 .final-lines{margin:0;padding-left:18px;font-size:var(--fs-s);color:var(--ink);line-height:1.6}
 .final-lines b{color:var(--text)}
 

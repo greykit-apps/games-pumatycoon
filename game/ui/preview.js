@@ -6,7 +6,7 @@
 import { GOODS, TRACK } from "../data/commodities.js";
 import { CARD, bonusOptions } from "../engine/machine.js";
 import {
-  RAIL, TOWN, lineOf, fxValues, tokens, storageLimit, productionMax, clampPrice, townCost,
+  RAIL, TOWN, lineOf, fxValues, tokens, storageLimit, productionMax, clampPrice, townCost, face, bType, publicScore,
 } from "../engine/rules.js";
 
 /** Selling q of g now: what it pays and where the price is left. */
@@ -69,6 +69,53 @@ export function townPreview(st, i) {
     have: p.goods[c.good], tokens: tokens(p),
     canSpecific: p.goods[c.good] >= c.need, canAny: tokens(p) >= c.any,
   };
+}
+
+/** A purchase before it is made: a building from the row ({a:"buy", slot})
+ * or the upgrade of one already owned ({a:"upgrade", bld}). What it costs,
+ * what is left, and the VP and storage it brings, worked out by scoring the
+ * player as they would stand afterwards. */
+export function buyPreview(st, i, o) {
+  const p = st.players[i];
+  const up = o.a === "upgrade";
+  const id = up ? o.bld : st.bldOffer[o.slot];
+  const side = up ? 1 : 0;
+  const cost = up ? bType(id).sides[1].cost : face(id, 0).cost;
+  const blds = up ? p.blds.map(b => (b.id === id ? { ...b, side: 1 } : b)) : [...p.blds, { id, side: 0 }];
+  const after = { ...p, blds, cash: p.cash - cost };
+  const then = { ...st, players: st.players.map((q, j) => (j === i ? after : q)) };
+  return {
+    id, side, up, cost, left: p.cash - cost,
+    vp: publicScore(then, i) - publicScore(st, i),
+    storage: [storageLimit(p), storageLimit(after)],
+    ends: !up && endClock(st).ends.bld,
+  };
+}
+
+/** How near the end is (rulebook p.11, or the designer's revision): what is
+ * left of each supply, and which one purchase would now trigger the end. */
+export function endClock(st) {
+  const towns = st.townDeck.length + (st.townOffer ? 1 : 0);
+  const rails = st.railDeck.length + st.railOffer.filter(Boolean).length;
+  const blds = st.bldStack.length + st.bldOffer.filter(Boolean).length;
+  const revised = st.opts.endRule === "revised";
+  const gone = [towns, rails, blds].filter(x => x === 0).length;
+  const ends = revised
+    ? { town: towns === 1 && gone >= 1, rail: rails === 1 && gone >= 1, bld: blds === 1 && gone >= 1 }
+    : { town: towns === 1, rail: rails === 1, bld: false };
+  return { towns, rails, blds, revised, triggered: !!st.endTrigger, ends, near: ends.town || ends.rail || ends.bld };
+}
+
+/** Where player i stands on the points anyone can count: place, and the gap
+ * to the leader (or, when leading, to the next). */
+export function standing(st, i) {
+  const vp = st.players.map((_, j) => publicScore(st, j));
+  const mine = vp[i];
+  const place = 1 + vp.filter(x => x > mine).length;
+  const tied = vp.filter((x, j) => j !== i && x === mine).length > 0;
+  const others = vp.map((x, j) => [x, j]).filter(([, j]) => j !== i).sort((a, b) => b[0] - a[0]);
+  const [best, who] = others[0] || [mine, i];
+  return { vp: mine, place, tied, of: st.n, gap: mine - best, rival: who };
 }
 
 /** Price moves since a baseline: net change per commodity and who caused it. */

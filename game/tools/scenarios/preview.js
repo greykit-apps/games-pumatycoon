@@ -2,10 +2,10 @@
  * the move it previews would teach the wrong rule. Each test makes the move
  * and checks the preview made beforehand against what happened. */
 
-import { table, give, act, eq } from "./harness.js";
-import { sellPreview, cardPreview, railPreview, townPreview, marketMoves, cheapest, lastTurnEntries, auctionSeats, quickBids } from "../../ui/preview.js";
+import { table, give, act, eq, assert } from "./harness.js";
+import { sellPreview, cardPreview, railPreview, townPreview, marketMoves, cheapest, lastTurnEntries, auctionSeats, quickBids, buyPreview, endClock, standing } from "../../ui/preview.js";
 import { lastMoveLine } from "../../ui/text.js";
-import { tokens } from "../../engine/rules.js";
+import { tokens, storageLimit, publicScore } from "../../engine/rules.js";
 
 export const TESTS = [
   ["screen: a sell preview shows the proceeds and the price it leaves", () => {
@@ -117,5 +117,53 @@ export const TESTS = [
     eq(quickBids(8, 30), [9, 10, 13]);
     eq(quickBids(8, 10), [9, 10], "capped at what you hold, no repeats");
     eq(quickBids(8, 8), [], "only the minimum is possible");
+  }],
+
+  ["screen: a purchase preview shows the cost, what is left, the VP and the storage", () => {
+    const st = table();
+    st.bldOffer[0] = "warehouse.1";
+    st.bldOffer[1] = "mayor";
+    give(st, 0, { cash: 50, blds: ["lumberyard"] });
+    const o = st.ask.options.find(x => x.a === "buy" && x.slot === 0);
+    const pv = buyPreview(st, 0, o);
+    eq([pv.cost, pv.left, pv.storage], [10, 40, [11, 15]], "a Warehouse: one space for the tile and three more");
+    const vp0 = publicScore(st, 0);
+    act(st, o);
+    eq([st.players[0].cash, storageLimit(st.players[0]), publicScore(st, 0) - vp0], [pv.left, pv.storage[1], pv.vp], "the buy matches its preview");
+    give(st, 1, { cash: 40, blds: ["lumberyard", "irondeposit"] });
+    const m = buyPreview(st, 1, st.ask.options.find(x => x.a === "buy" && x.slot === 1));
+    eq(m.vp, 1 + 3, "Mayor's Office: its own VP, and one for each of three buildings");
+  }],
+
+  ["screen: the end clock names the one purchase that ends the game, and the engine agrees", () => {
+    const st = table();
+    st.townDeck = ["molehill"]; st.townOffer = "bridgewater";
+    eq([endClock(st).towns, endClock(st).ends.town], [2, false], "two towns left: not yet");
+    st.townDeck = [];
+    const c = endClock(st);
+    eq([c.towns, c.ends.town, c.near], [1, true, true], "the last town");
+    give(st, 0, { goods: { wheat: 2 } });
+    act(st, { a: "town", pay: "specific" });
+    assert(st.endTrigger, "building it ended the game, as the clock said");
+
+    const rv = table({ options: { endRule: "revised" } });
+    rv.townDeck = []; rv.townOffer = "bridgewater";
+    rv.railDeck = []; rv.railOffer = ["fatcat.1", null];
+    eq(endClock(rv).ends, { town: false, rail: false, bld: false }, "revised: one last of each is not yet a finish");
+    give(rv, 0, { goods: { wheat: 2 } });
+    act(rv, { a: "town", pay: "specific" });
+    eq(endClock(rv).ends.rail, true, "towns gone: the last railroad would make two");
+  }],
+
+  ["screen: your place and the gap to the leader count public VP", () => {
+    const st = table();
+    give(st, 0, { towns: ["molehill"] });                   // 2 VP
+    give(st, 1, { towns: ["bridgewater", "molehill"] });
+    give(st, 2, { towns: ["molehill"] });
+    const lead = publicScore(st, 1);
+    const me = standing(st, 0);
+    eq([me.place, me.tied, me.gap, me.rival], [2, true, publicScore(st, 0) - lead, 1], "tied second, behind P1");
+    const top = standing(st, 1);
+    eq([top.place, top.gap > 0, top.rival], [1, true, 0], "leading, and by how much");
   }],
 ];
