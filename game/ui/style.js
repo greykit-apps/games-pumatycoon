@@ -24,6 +24,21 @@ export const CSS = `
   ${Object.entries(COLORS).map(([g, c]) => `--c-${g}:${c};`).join("")}}
 *{box-sizing:border-box}
 html{color-scheme:dark}
+/* Scrollbars in the terminal's colours: a thin steel thumb on the panel's
+ * ground (lit on hover in Safari). scrollbar-color is inherited, so the html rule
+ * reaches the stage, the desk, the log and the dialogs; the -webkit- rules
+ * are for Safari, which ignores the standard properties. */
+html{scrollbar-color:#2a3a5e var(--bg)}
+*{scrollbar-width:thin}
+.side{scrollbar-color:#2a3a5e #070a14}
+.veil .box{scrollbar-color:#2a3a5e var(--panel)}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-track{background:var(--bg)}
+.side::-webkit-scrollbar-track{background:#070a14}
+.veil .box::-webkit-scrollbar-track{background:var(--panel)}
+::-webkit-scrollbar-thumb{background:#2a3a5e;border:2px solid transparent;background-clip:padding-box;border-radius:5px}
+::-webkit-scrollbar-thumb:hover{background:var(--lit);background-clip:padding-box}
+::-webkit-scrollbar-corner{background:transparent}
 body{margin:0;background:var(--bg);color:var(--ink);font:var(--fs-m)/1.5 ui-monospace,Menlo,Consolas,monospace;font-variant-numeric:tabular-nums}
 button{font:inherit;color:var(--text);background:var(--panel2);border:1px solid var(--line);border-radius:2px;
   padding:5px 10px;cursor:pointer;min-height:32px;text-align:left}
