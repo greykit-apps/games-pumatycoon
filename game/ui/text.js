@@ -96,22 +96,26 @@ export function describeLog(e, players) {
 }
 
 /** Log lines, newest first, with runs of one player's storage discards
- * folded into a single line. Returns [{ r, text }]. */
+ * folded into a single line. Returns [{ r, text, k, p, n, t0 }]: the entry's
+ * kind, player and sequence number, and t0 on the first line of a turn. */
 export function logLines(entries, players) {
   const out = [];
+  let t0 = false;
+  const push = (e, text) => { out.push({ r: e.r, text, k: e.k, p: e.p, n: e.n, t0 }); t0 = false; };
   for (let k = 0; k < entries.length; k++) {
     const e = entries[k];
+    if (e.k === "turn") { t0 = true; continue; }
     if (e.k === "discard") {
       const goods = [e.good];
       while (k + 1 < entries.length && entries[k + 1].k === "discard" && entries[k + 1].p === e.p) goods.push(entries[++k].good);
       const counts = {};
       for (const g of goods) counts[g] = (counts[g] || 0) + 1;
       const list = Object.entries(counts).map(([g, c]) => `${GOOD_NAME[g]}${c > 1 ? ` ×${c}` : ""}`).join(", ");
-      out.push({ r: e.r, text: `${players[e.p].name} ${agree(players[e.p].name, "discards")} ${goods.length} for storage: ${list}` });
+      push(e, `${players[e.p].name} ${agree(players[e.p].name, "discards")} ${goods.length} for storage: ${list}`);
       continue;
     }
     const t = describeLog(e, players);
-    if (t) out.push({ r: e.r, text: t });
+    if (t) push(e, t);
   }
   return out.reverse();
 }

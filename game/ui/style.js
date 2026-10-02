@@ -91,6 +91,12 @@ h2 .dim{letter-spacing:.04em;text-transform:none;font-weight:400}
 .scene .s-smoke{fill:none;stroke:#1d2948;stroke-width:6;stroke-linecap:round;opacity:.7}
 .scene .s-haze{fill:url(#pt-haze)}
 .scene .s-ground{fill:#05070f}
+/* Beside the game's frame the scenery shows only in slivers until the window
+ * is far wider than the frame; there the trestle, train and town read as
+ * stray lines, so only the sky and the hills stay. */
+@media (max-width:2199px){
+  body:has(.pt.game) .scene :is(.s-line,.s-body,.s-win,.s-lamp,.s-beam,.s-near,.s-smoke,.s-haze){display:none}
+}
 [data-pumatycoon-game]{position:relative;z-index:1}
 @media (min-width:901px){
   :root{--gut:clamp(0px,calc((100dvh - 740px) / 3),32px);--gutx:clamp(0px,calc((100vw - 1500px) / 4),64px)}
@@ -164,24 +170,32 @@ h2 .dim{letter-spacing:.04em;text-transform:none;font-weight:400}
 .band1{display:grid;grid-template-columns:minmax(0,1fr);gap:16px;align-items:stretch}
 /* Tiles side by side line up: same top, same height. */
 .st-box{border:1px solid var(--line);background:var(--panel);min-width:0}
-.vp-q{color:var(--dim);font-weight:400;margin-left:1px}
 @container stage (min-width:900px){
   .band1{grid-template-columns:minmax(0,1fr) minmax(380px,40%)}
 }
-.board{display:grid;grid-template-columns:minmax(0,1fr);gap:16px;align-items:stretch;grid-template-areas:"rails" "town" "blds"}
-.bc-rails{grid-area:rails}.bc-town{grid-area:town}.bc-blds{grid-area:blds}.bc-stand{min-width:0}
+.board{display:grid;grid-template-columns:minmax(0,1fr);gap:16px;align-items:stretch;grid-template-areas:"rails" "town" "blds" "tape"}
+.bc-rails{grid-area:rails}.bc-town{grid-area:town}.bc-blds{grid-area:blds}.bc-tape{grid-area:tape}.bc-stand{min-width:0}
 @container stage (min-width:640px){
-  .board{grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-areas:"rails town" "blds blds"}
+  .board{grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-areas:"rails town" "blds blds" "tape tape"}
 }
 @container stage (min-width:900px){
   /* The same right-hand column as the band above, so the tiles' edges line up:
-   * the buildings under the standings, the railroads and town under the market. */
-  .board{grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(380px,40%);grid-template-areas:"rails town blds"}
+   * the buildings under the standings; the railroads and the town under the
+   * market, and the log under them, a blotter across the market's width. The
+   * board takes the height the frame has spare, and the log is what grows: it
+   * scrolls inside whatever it is given. */
+  .board{grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(380px,40%);grid-template-rows:auto 1fr;grid-template-areas:"rails town blds" "tape tape blds";flex:1 0 auto}
+  .bc-blds .ob,.bc-town .ob{display:flex;flex-direction:column}
+  .bc-blds .ob-legend,.bc-town .ob-next{margin-top:auto}
+  .bc-blds .ob-row{flex:1 1 auto;align-content:center}
+  .tape-wrap{position:relative;flex:1;min-height:96px}
+  .tape-wrap .tape{position:absolute;inset:0;max-height:none}
   /* In three columns each building is one line; its upgrade is on hover. */
   .ob-fx .upg{display:none}
 }
 .book-col{display:flex;flex-direction:column;gap:6px;min-width:0}
 .book-col h2+.ob{flex:1}
+.book-col h2 .dim{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ob{border:1px solid var(--line);background:var(--panel)}
 .ob-row{display:grid;align-items:center;gap:2px 10px;padding:6px 10px;border:0;border-bottom:1px solid var(--hair);width:100%;
   background:transparent;color:var(--ink);font-size:var(--fs-xs);border-radius:0;min-height:36px}
@@ -213,6 +227,7 @@ button.ob-row.live .ob-name::before{content:"▸ ";color:var(--accent)}
 button.ob-row.live:hover,button.ob-row.live:focus-visible,.ob-row.hint{background:#0d2028}
 .ob-pay button{min-height:28px;padding:2px 8px;display:inline-flex;align-items:center;gap:4px}
 .ob-legend{font-size:var(--fs-xs);color:var(--dim);margin:0;padding:5px 10px}
+.ob-next{font-size:var(--fs-xs);color:var(--dim);margin:0;padding:5px 10px;border-top:1px solid var(--hair)}
 .ob-legend .badge{margin-right:3px}
 .ob-row.onauction{background:color-mix(in oklab,var(--warn) 9%,transparent)}
 
@@ -232,6 +247,7 @@ table.standings td.goods span.zero{opacity:.3}
 table.standings .goods-line{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 table.standings .goods-line span{display:inline-flex;align-items:center;gap:2px;color:var(--text)}
 table.standings .goods-line span.zero{opacity:.3}
+table.standings .zero i{font-style:normal;display:inline-block;width:1ch;text-align:center}
 table.standings .goods-line span.dim{color:var(--dim)}
 /* Beside the market (or on a phone), the standings keep every player's
  * commodities, on a line of their own under the player's row instead of in a
@@ -251,18 +267,26 @@ table.standings tr.st-goodsrow{display:none}
   table.standings .tg-bot{display:none}
 }
 table.standings .tag{font-size:10px;color:var(--dim);border:1px solid var(--line);border-radius:2px;padding:0 4px;font-weight:400}
-table.standings .tag.first{color:var(--text);border-color:var(--lit)}
+table.standings .tag.first{color:var(--warn);border-color:color-mix(in oklab,var(--warn) 55%,transparent)}
 .st-toggle{min-height:24px;padding:0 6px;margin-right:2px}
 tr.st-detail td{color:var(--ink);background:#080c18;padding:8px 14px 10px 40px;line-height:1.6}
 tr.st-detail b{color:var(--text);font-weight:600;margin-right:6px}
 tr.st-detail ul{margin:2px 0 0;padding-left:18px}
 
-/* ---- the full log ---- */
-details.fulllog summary{cursor:pointer;color:var(--ink);font-size:var(--fs-xs);letter-spacing:.14em;text-transform:uppercase;font-weight:700;padding:4px 0}
-details.fulllog summary .dim{letter-spacing:.04em;text-transform:none;font-weight:400;margin-left:8px}
-.log{font-size:var(--fs-s);max-height:320px;overflow-y:auto;display:flex;flex-direction:column;gap:1px;margin-top:6px;border-top:1px solid var(--line);padding-top:6px}
-.log div{color:var(--ink)}
-.log .r{color:var(--dim);display:inline-block;min-width:28px}
+/* ---- the log, a blotter beside the order book ---- */
+.tape{border:1px solid var(--line);background:var(--panel);max-height:240px;overflow-y:auto;font-size:var(--fs-xs);line-height:1.45;padding:4px 0;scrollbar-color:#2a3a5e var(--panel)}
+.tape::-webkit-scrollbar-track{background:var(--panel)}
+.tape > div{display:grid;grid-template-columns:30px minmax(0,1fr);padding:1px 10px 1px 0;color:var(--ink)}
+.tape > div.t0{border-bottom:1px solid var(--hair);padding-bottom:3px;margin-bottom:2px}
+.tape > div:last-child{border-bottom:0}
+.tape .r{color:var(--dim);text-align:right;padding-right:8px}
+/* Since your last turn: the round number lit, as on a fresh print. */
+.tape .new .r{color:var(--accent)}
+.tape .mine{color:var(--text)}
+.tape .big{color:var(--text);font-weight:700}
+.tape .up > span:last-child{color:color-mix(in oklab,var(--up) 70%,var(--ink))}
+.tape .dn > span:last-child{color:color-mix(in oklab,var(--down) 70%,var(--ink))}
+.tape > p{margin:4px 10px}
 
 /* ---- your desk ---- */
 /* Cash: the largest number on the desk, pinned to its top. */
@@ -388,6 +412,7 @@ table.tf td button{min-width:40px;min-height:28px;text-align:center;padding:2px 
 .pp{width:100%;border:1px solid var(--lit);border-radius:3px;overflow:hidden;background:var(--panel);padding:0;
   display:grid;grid-template-columns:34px minmax(0,1.25fr) minmax(0,1fr);text-align:left;position:relative;min-height:76px}
 .pp .half{padding:6px 12px;display:flex;flex-direction:column;justify-content:center;gap:4px}
+/* Red over blue, as the printed card: the Production half and the Price half. */
 .pp .half.prod{background:#2a1016}
 .pp .half.price{background:#0f1d3a;border-left:1px solid var(--line)}
 .pp .icons{display:flex;flex-wrap:wrap;gap:4px;align-items:center}
@@ -452,6 +477,13 @@ table.score th,table.score td{border-bottom:1px solid var(--line);padding:5px 6p
 table.score th:first-child,table.score td:first-child{text-align:left}
 table.score th{color:var(--dim);font-weight:400}
 table.score tr.win td{color:var(--accent)}
+table.score tr.you td{background:#0d1a2a;color:var(--text);font-weight:700}
+table.score tr.you.win td{color:var(--accent)}
+table.score td.cash{animation:pt-reveal .5s cubic-bezier(.16,1,.3,1) both}
+@keyframes pt-reveal{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+/* A win in the live colour, a loss in plain text: the two endings do not look alike. */
+.veil .box h1.won{font-size:var(--fs-xl)}
+.veil .box h1.lost{color:var(--text)}
 table.score td.vp{color:var(--vp);font-weight:700}
 .final-market{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:var(--fs-s);color:var(--text)}
 .final-market span{display:inline-flex;align-items:center;gap:4px}
@@ -508,7 +540,7 @@ table.score td.vp{color:var(--vp);font-weight:700}
 @media (prefers-reduced-motion:reduce){
   .ask.attention.arrive{animation:none}
   .tk-scale i,.tk-to{transition:none}
-  .tk-row.tick-up,.tk-row.tick-down,.ask .dot,table.standings tr.just,.au-wait .dot,.w-cash b.moved,.au-amt.moved,.auction.live.attention.arrive{animation:none}
+  .tk-row.tick-up,.tk-row.tick-down,.ask .dot,table.standings tr.just,table.score td.cash,.au-wait .dot,.w-cash b.moved,.au-amt.moved,.auction.live.attention.arrive{animation:none}
   .w-delta{animation:none;opacity:1}
   .tour-spot{transition:none}
 }
