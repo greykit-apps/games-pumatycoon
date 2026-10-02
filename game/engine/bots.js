@@ -52,6 +52,8 @@ function railTotal(st) {
 }
 
 function stage(st) {
+  // The final round: nothing left to earn over time.
+  if (st.endTrigger) return { left: 0, roundsLeft: 0 };
   const towns = (st.townOffer ? 1 : 0) + st.townDeck.length;
   const townsAll = st.n === 2 ? 12 : 16;
   const rails = st.railOffer.filter(Boolean).length + st.railDeck.length;
@@ -66,10 +68,24 @@ function stage(st) {
  * not piling up more. `m` is the marginal worth of a dollar. */
 const DOLLARS_PER_VP = 5;
 const m = cash => 1 / (1 + Math.max(0, cash) / 50);
-const toVP = (st, who, dollars) => (dollars * m(st.players[who].cash)) / DOLLARS_PER_VP;
+
+/* Once the end is triggered every player has this one turn left, and money
+ * left over scores nothing but a tie-break -- or, with the Bank, 1 VP per $20.
+ * So in the final round a dollar is worth only that, and a bot turns its
+ * cash into buildings, towns and railroads rather than keeping it. */
+function finalDollarVP(st, who) {
+  let per = 0.01;   // a tie-break
+  for (const b of st.players[who].blds) {
+    const fx = face(b.id, b.side).fx;
+    if (fx.vpPerCash) per += fx.vpPerCash[0] / fx.vpPerCash[1];
+  }
+  return per;
+}
+const toVP = (st, who, dollars) => (st.endTrigger ? dollars * finalDollarVP(st, who) : (dollars * m(st.players[who].cash)) / DOLLARS_PER_VP);
 
 /** Dollars a VP is worth to this bot right now. */
 function vpv(st, who) {
+  if (st.endTrigger) return 1 / finalDollarVP(st, who);
   return DOLLARS_PER_VP / m(st.players[who].cash) * (1 + 0.5 * (1 - stage(st).left));
 }
 

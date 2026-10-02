@@ -12,7 +12,7 @@ export const HELP_TABS = [
 <ul>
 <li><b>Produce</b> — play a card from your hand. Take three of the commodities in its red Production half (more with a Cottage Industry or Factory, never more than it shows), plus the bonus of one of your bonus buildings. Then every commodity in its blue Price half rises $1 per icon. Draw back up to your hand limit.</li>
 <li><b>Sell</b> — sell any number of one commodity at its current price. Its price then falls $1 per unit sold.</li>
-<li><b>Auction</b> — put up one of the two railroads on offer, opening at least at its minimum bid. Bidding goes clockwise; a pass is final; nobody bids more than they hold. If you lose the auction you act again.</li>
+<li><b>Auction</b> — put up one of the two railroads on offer, opening at least at its minimum bid. Bidding goes clockwise; a pass is final; nobody bids more than they hold. If you lose the auction you act again. With two players the opener bids once and the other player bids once.</li>
 <li><b>Buy a building</b> — pay its price; or pay the +2 price to upgrade a commodity building you own.</li>
 <li><b>Build a town</b> — pay the town's count of its own commodity, or its larger count of any mix.</li>
 </ul>

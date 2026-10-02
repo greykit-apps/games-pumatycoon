@@ -155,21 +155,24 @@ scenario:
 | `RAILROADS_EXHAUSTED` | "The last railroad is auctioned" means the deck and both offer spots are empty. |
 | `SUDDEN_DEATH_WHEN` | Sudden Death is offered at the start of your own turn when you hold $1,000. |
 | `FULL_TIE` | A tie on VP and money is shared. |
+| `BEGINNER_FULL_ROW` | Beginners and the per-player building setup do not combine: Beginners deals its four basic tiles. |
 
 ## Bots
 
 A bot values every legal answer in victory points, a dollar being worth less
 the more of them it already holds, and takes the best after a jitter hashed
-from the position (never from the game's random stream). Skill sets the
+from the position (never from the game's random stream). In the final round
+a dollar is worth only its tie-break (or the Bank's VP), so a bot's last turn
+turns its cash into points. Skill sets the
 jitter and how well it values railroads and towns. Measured head to head with
 `node game/tools/sim.js --ladder 300`, 300 games a pairing on 2–5 seats,
 seats alternating:
 
 | | wins |
 |---|---|
-| Normal vs Easy | 74% |
-| Hard vs Normal | 61% |
-| Hard vs Easy | 84% |
+| Normal vs Easy | 72% |
+| Hard vs Normal | 62% |
+| Hard vs Easy | 85% |
 
 Bots read every player's money. Money is secret at the table, but every
 transaction that moves it is public, so a careful player can count it.

@@ -1,5 +1,6 @@
 import { game, table, act, waiting, eq, assert } from "./harness.js";
 import { step } from "../../engine/machine.js";
+import { BEGINNER_FULL_ROW } from "../../engine/state.js";
 import { GOODS, TRACK } from "../../data/commodities.js";
 import { TOWNS } from "../../data/towns.js";
 import { lineOf, typeOf, TOWN } from "../../engine/rules.js";
@@ -107,6 +108,16 @@ export const TESTS = [
       eq(st.players[w.player].mission, w.options[1]);
     }
     waiting(st, "startGoods");
+  }],
+  ["setup: Beginners and the per-player building setup do not combine: four tiles on offer", () => {
+    eq(BEGINNER_FULL_ROW, true);
+    const st = game({ n: 2, options: { beginner: true, basicSetup: true } });
+    eq(st.bldOffer.filter(Boolean).length, 4, "no empty spaces the missing stack would never fill");
+    eq(st.bldStack.length, 0);
+    const basic = st.bldOffer.filter(id => BASIC.some(b => b.id === typeOf(id))).length;
+    eq(basic, 4, "four basic tiles, as the rulebook deals for Beginners");
+    const per = game({ n: 2, options: { basicSetup: true } });
+    eq(per.bldOffer.filter(id => id && BASIC.some(b => b.id === typeOf(id))).length, 2, "without Beginners: one basic tile per player, the rest advanced");
   }],
 ];
 

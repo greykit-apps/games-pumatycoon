@@ -483,6 +483,7 @@ table.score td.vp{color:var(--vp);font-weight:700}
 .seat .noskill{color:var(--dim);font-size:var(--fs-s);padding-left:8px}
 .opt{display:flex;gap:10px;align-items:flex-start;color:var(--text);font-size:var(--fs-m)}
 .opt input{margin-top:4px}
+.opt.off{opacity:.45}
 .opt small{display:block;color:var(--dim);font-size:var(--fs-s);line-height:1.45}
 .setup .go{margin-top:8px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .setup .go button.primary{padding:10px 22px;font-size:var(--fs-l)}
