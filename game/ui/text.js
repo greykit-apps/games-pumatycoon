@@ -52,33 +52,41 @@ export const railVPText = line => RAIL[line].vp.join(" · ");
 
 export const ACTION_LABEL = { produce: "Produce", sell: "Sell", auction: "Auction", buy: "Buy", upgrade: "Upgrade", town: "Town", declare: "Declare victory", pass: "Pass" };
 
+/** A player may be called "You" (the default name of a lone human seat);
+ * then the log's verbs drop their -s: "You bid $5", "You pass". */
+export function agree(name, verb) {
+  if (name !== "You") return verb;
+  return /(ss|sh|ch|x)es$/.test(verb) ? verb.slice(0, -2) : verb.replace(/s$/, "");
+}
+
 export function describeLog(e, players) {
   const n = i => (players[i] ? players[i].name : `P${i + 1}`);
+  const says = (i, verb) => `${n(i)} ${agree(n(i), verb)}`;
   const gl = arr => arr.map(g => GOOD_NAME[g]).join(", ");
   switch (e.k) {
     case "turn": return null;
-    case "mission": return `${n(e.p)} keeps a mission`;
-    case "startGoods": return `${n(e.p)} starts with ${gl(e.goods)}`;
-    case "produce": return `${n(e.p)} produces ${gl(e.take)}${e.bonus ? ` + ${gl(e.bonus.goods)} (${bldName(e.bonus.bld)})` : ""}`;
+    case "mission": return `${says(e.p, "keeps")} a mission`;
+    case "startGoods": return `${says(e.p, "starts")} with ${gl(e.goods)}`;
+    case "produce": return `${says(e.p, "produces")} ${gl(e.take)}${e.bonus ? ` + ${gl(e.bonus.goods)} (${bldName(e.bonus.bld)})` : ""}`;
     case "prices": {
       const moved = Object.entries(e.moved);
       return moved.length ? `Prices up: ${moved.map(([g, k]) => `${GOOD_NAME[g]} +$${k}`).join(", ")}` : "No price moves (at the top)";
     }
-    case "tradingFloor": return `${n(e.p)} buys ${e.qty} ${GOOD_NAME[e.good]} from ${n(e.from)} at $${e.price}`;
-    case "discard": return `${n(e.p)} discards ${GOOD_NAME[e.good]} (storage)`;
+    case "tradingFloor": return `${says(e.p, "buys")} ${e.qty} ${GOOD_NAME[e.good]} from ${n(e.from)} at $${e.price}`;
+    case "discard": return `${says(e.p, "discards")} ${GOOD_NAME[e.good]} (storage)`;
     case "reshuffle": return "The Price & Production discards are shuffled into a new deck";
-    case "sell": return `${n(e.p)} sells ${e.q} ${GOOD_NAME[e.good]} at $${e.price}${e.exp ? " (Export +$3)" : ""}; now $${e.after}`;
-    case "firm": return `${n(e.p)} collects $${e.amount} (Trading Firm)`;
-    case "auction": return `${n(e.p)} auctions the ${railName(e.rail)}`;
-    case "bid": return e.pass ? `${n(e.p)} passes${e.forced ? " (cannot outbid)" : ""}` : `${n(e.p)} bids $${e.amount}`;
-    case "won": return `${n(e.p)} wins the ${railName(e.rail)} for $${e.paid}`;
-    case "commission": return `${n(e.p)} collects $${e.amount} (Auction House)`;
-    case "buy": return `${n(e.p)} buys ${bldName(e.bld)} for $${e.cost}`;
-    case "upgrade": return `${n(e.p)} upgrades to ${bldName(e.bld, 1)} for $${e.cost}`;
-    case "town": return `${n(e.p)} builds ${townName(e.town)}`;
-    case "pass": return `${n(e.p)} passes`;
+    case "sell": return `${says(e.p, "sells")} ${e.q} ${GOOD_NAME[e.good]} at $${e.price}${e.exp ? " (Export +$3)" : ""}; now $${e.after}`;
+    case "firm": return `${says(e.p, "collects")} $${e.amount} (Trading Firm)`;
+    case "auction": return `${says(e.p, "auctions")} the ${railName(e.rail)}`;
+    case "bid": return e.pass ? `${says(e.p, "passes")}${e.forced ? " (cannot outbid)" : ""}` : `${says(e.p, "bids")} $${e.amount}`;
+    case "won": return `${says(e.p, "wins")} the ${railName(e.rail)} for $${e.paid}`;
+    case "commission": return `${says(e.p, "collects")} $${e.amount} (Auction House)`;
+    case "buy": return `${says(e.p, "buys")} ${bldName(e.bld)} for $${e.cost}`;
+    case "upgrade": return `${says(e.p, "upgrades")} to ${bldName(e.bld, 1)} for $${e.cost}`;
+    case "town": return `${says(e.p, "builds")} ${townName(e.town)}`;
+    case "pass": return `${says(e.p, "passes")}`;
     case "endTriggered": return `The end is triggered (${e.gone.join(" and ")} gone): the round finishes`;
-    case "suddenDeath": return `${n(e.p)} declares victory with $${e.cash}`;
+    case "suddenDeath": return `${says(e.p, "declares")} victory with $${e.cash}`;
     case "over": return "Game over";
   }
   return null;
@@ -96,7 +104,7 @@ export function logLines(entries, players) {
       const counts = {};
       for (const g of goods) counts[g] = (counts[g] || 0) + 1;
       const list = Object.entries(counts).map(([g, c]) => `${GOOD_NAME[g]}${c > 1 ? ` ×${c}` : ""}`).join(", ");
-      out.push({ r: e.r, text: `${players[e.p].name} discards ${goods.length} for storage: ${list}` });
+      out.push({ r: e.r, text: `${players[e.p].name} ${agree(players[e.p].name, "discards")} ${goods.length} for storage: ${list}` });
       continue;
     }
     const t = describeLog(e, players);

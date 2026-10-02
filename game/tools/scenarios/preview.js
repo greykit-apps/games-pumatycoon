@@ -5,7 +5,8 @@
 import { table, give, act, eq, assert } from "./harness.js";
 import { sellPreview, cardPreview, railPreview, townPreview, marketMoves, cheapest, lastTurnEntries, auctionSeats, quickBids, buyPreview, endClock, standing,
   secretsShown, holders, missionProgress } from "../../ui/preview.js";
-import { lastMoveLine } from "../../ui/text.js";
+import { lastMoveLine, describeLog } from "../../ui/text.js";
+import { rename } from "../../ui/setup.js";
 import { tokens, storageLimit, publicScore } from "../../engine/rules.js";
 
 export const TESTS = [
@@ -207,5 +208,23 @@ export const TESTS = [
     eq(missionProgress(st, 0).state, "tied", "a tie scores nothing");
     st.players[0].mission = "money1";
     eq(missionProgress(st, 0), { kind: "secret" }, "Most Money never compares secret cash");
+  }],
+
+  ["screen: default seat names say what each seat is, and typed names are kept", () => {
+    const seats = (...k) => k.map(seat => ({ name: "", seat }));
+    eq(rename(seats("human", "bot", "bot", "bot")).map(p => p.name), ["You", "Bot 1", "Bot 2", "Bot 3"]);
+    eq(rename(seats("bot", "human", "bot")).map(p => p.name), ["Bot 1", "You", "Bot 2"], "bots count in seat order");
+    const two = rename([{ name: "You", seat: "human" }, { name: "Bot 1", seat: "human" }, { name: "Bot 2", seat: "bot" }]);
+    eq(two.map(p => p.name), ["Player 1", "Player 2", "Bot 1"], "two humans: nobody is \"You\"");
+    eq(rename([{ name: "Shan", seat: "human" }, { name: "Jad", seat: "bot" }, { name: "Ada", seat: "bot" }]).map(p => p.name),
+      ["Shan", "Bot 1", "Ada"], "a typed name stays; an old default (Jad) gives way");
+  }],
+
+  ["screen: a player called You reads \"You bid\", not \"You bids\"", () => {
+    const players = [{ name: "You" }, { name: "Bot 1" }];
+    eq(describeLog({ k: "bid", p: 0, amount: 5 }, players), "You bid $5");
+    eq(describeLog({ k: "bid", p: 0, pass: true }, players), "You pass");
+    eq(describeLog({ k: "produce", p: 0, take: ["wheat"] }, players), "You produce Wheat");
+    eq(describeLog({ k: "bid", p: 1, amount: 6 }, players), "Bot 1 bids $6");
   }],
 ];
