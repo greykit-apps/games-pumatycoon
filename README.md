@@ -39,7 +39,10 @@ at play time.
   buildings showing what each is worth to you, live public standings, an
   auction ladder, and a "since your turn" recap. Every choice previews what it
   would do (proceeds, price moves, storage overflow, VP) before you commit,
-  and producing takes a deliberate second click.
+  and producing takes a deliberate second click. Paying a town's any-mix or
+  discarding for storage is one click ("pay with my cheapest"), your own
+  last move is echoed back with what it earned and moved, and at the storage
+  limit the screen says the way out and puts it first.
 - **Guidance for new players**: a one-minute walkthrough that spotlights each
   part of the table at the first move (on until a browser has seen it once,
   replayable from the help), and the box waiting for your answer breathes

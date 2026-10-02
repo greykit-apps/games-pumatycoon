@@ -87,3 +87,26 @@ export function marketMoves(st, baseline) {
   }
   return out;
 }
+
+/** The n cheapest commodities player i can spend (lowest price first; ties in
+ * commodity order), not counting what is already set aside in `chosen`. The
+ * one-click "pay with my cheapest" and "discard the cheapest" use it. */
+export function cheapest(st, i, n, chosen = {}) {
+  const p = st.players[i];
+  const pool = [];
+  for (const g of GOODS) for (let k = 0; k < p.goods[g] - (chosen[g] || 0); k++) pool.push(g);
+  pool.sort((a, b) => st.prices[a] - st.prices[b] || GOODS.indexOf(a) - GOODS.indexOf(b));
+  return pool.slice(0, n);
+}
+
+/** The log entries of player i's most recent finished turn. */
+export function lastTurnEntries(st, i) {
+  const turns = [];
+  st.log.forEach((e, k) => { if (e.k === "turn") turns.push(k); });
+  for (let t = turns.length - 1; t >= 0; t--) {
+    if (st.log[turns[t]].p !== i) continue;
+    if (t === turns.length - 1 && st.turn === i && !st.over) continue;   // the turn in progress
+    return st.log.slice(turns[t] + 1, t + 1 < turns.length ? turns[t + 1] : st.log.length);
+  }
+  return [];
+}

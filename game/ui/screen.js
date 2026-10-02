@@ -31,11 +31,11 @@ import {
 } from "../engine/rules.js";
 import { icon } from "./art.js";
 import {
-  GOOD_NAME, railName, lineName, townName, bldName, effectText, upgradeText, missionText, logLines, recapLines, describeLog,
+  GOOD_NAME, railName, lineName, townName, bldName, effectText, upgradeText, missionText, logLines, recapLines, describeLog, lastMoveLine,
 } from "./text.js";
 import { HELP_TABS } from "./help.js";
 import { startTour } from "./tour.js";
-import { sellPreview, cardPreview, railPreview, townPreview, marketMoves } from "./preview.js";
+import { sellPreview, cardPreview, railPreview, townPreview, marketMoves, cheapest, lastTurnEntries } from "./preview.js";
 
 const VIEW_KEY = "pumatycoon_view_v1";
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -63,6 +63,7 @@ export function mountScreen(host, hooks) {
   let lastSig = null;         // the question last drawn, to tell a new one from a redraw
   const openPlayers = new Set();
   let resultsHidden = false;
+  let justScored = false;     // the viewer just won a railroad or built a town: a quiet beat on their row
   /* Per-player snapshot of the table at the end of their last turn: the
    * baseline for "since your turn". Kept per game, beside the save. */
   let view = { seed: null, base: {} };
@@ -106,7 +107,9 @@ export function mountScreen(host, hooks) {
   /* When a turn passes on, the player whose turn it was gets a fresh baseline. */
   function trackTurns() {
     if (prevTurn !== null && st.turn !== prevTurn) {
-      view.base[prevTurn] = { n: st.logSeq || 0, prices: { ...st.prices } };
+      const start = view.vpStart && view.vpStart[prevTurn];
+      view.base[prevTurn] = { n: st.logSeq || 0, prices: { ...st.prices }, gain: start === undefined ? 0 : publicScore(st, prevTurn) - start };
+      (view.vpStart ||= {})[st.turn] = publicScore(st, st.turn);
       if (st.turn === st.start) view.base.spectator = { n: st.logSeq || 0, prices: { ...st.prices } };
       saveView();
     }
@@ -220,12 +223,12 @@ export function mountScreen(host, hooks) {
         ${p.blds.length ? `<div><b>Buildings</b><ul>${p.blds.map(b => `<li>${esc(bldName(b.id, b.side))} <span class="dim">— ${esc(effectText(b.id, b.side))}</span></li>`).join("")}</ul></div>` : ""}
         ${!p.rails.length && !p.towns.length && !p.blds.length ? '<div class="dim">Nothing owned yet.</div>' : ""}
       </td></tr>` : "";
-      return `<tr class="${active ? "active" : ""}${i === v ? " mine" : ""}">
+      return `<tr class="${active ? "active" : ""}${i === v ? " mine" : ""}${i === v && justScored ? " just" : ""}">
         <th scope="row"><button class="ghost st-toggle" data-player="${i}" aria-expanded="${open}" aria-label="${open ? "Hide" : "Show"} what ${esc(p.name)} owns">${open ? "▾" : "▸"}</button>
           <span class="st-name">${esc(p.name)}</span>${i === st.start ? ' <span class="tag first">1st</span>' : ""}${p.seat === "bot" ? ` <span class="tag">${["easy", "normal", "hard"][p.skill]} bot</span>` : ""}</th>
         <td class="num vp">${st.over ? scoreOf(st, i).total : publicScore(st, i)}</td>
         <td class="num">${cash}</td>
-        <td class="goods">${GOODS.map(g => `<span class="${p.goods[g] ? "" : "zero"}">${icon(g, 14, GOOD_NAME[g])}${p.goods[g]}</span>`).join("")}<span class="dim">${tokens(p)}/${storageLimit(p)}</span></td>
+        <td class="goods">${i === v ? '<span class="dim">in the market above · </span>' : GOODS.map(g => `<span class="${p.goods[g] ? "" : "zero"}">${icon(g, 14, GOOD_NAME[g])}${p.goods[g]}</span>`).join("")}<span class="dim">${tokens(p)}/${storageLimit(p)}</span></td>
         <td class="num">${p.rails.length}</td><td class="num">${p.towns.length}</td><td class="num">${p.blds.length}</td><td class="num">${p.hand.length}</td>
       </tr>${detail}`;
     }).join("");
@@ -255,11 +258,14 @@ export function mountScreen(host, hooks) {
     if (v === null || st.over) return "";
     const base = view.base[v];
     if (!base) return "";
+    const last = lastMoveLine(lastTurnEntries(st, v), v, st.players);
     const lines = recapLines(st, base.n, v);
-    if (!lines.length) return "";
-    const shown = lines.slice(-10);
+    if (!lines.length && !last) return "";
+    const shown = lines.slice(-5);
+    const gain = base.gain > 0 ? ` <span class="vpc">+${base.gain} VP</span>` : "";
     return `<section class="recap" aria-label="Since your last turn"><h2>Since your turn</h2>
-      <ul>${shown.map(l => `<li>${esc(l)}</li>`).join("")}</ul>${lines.length > shown.length ? `<p class="note">and ${lines.length - shown.length} earlier: <button class="linkish" data-openlog>open the log</button></p>` : ""}</section>`;
+      ${last ? `<p class="lastmove${last.big ? " big" : ""}">${last.big ? "✓ " : ""}${esc(last.text)}.${gain}</p>` : ""}
+      ${shown.length ? `<ul>${shown.map(l => `<li>${esc(l)}</li>`).join("")}</ul>` : '<p class="note">Nobody else has moved yet.</p>'}${lines.length > shown.length ? `<p class="note">and ${lines.length - shown.length} earlier: <button class="linkish" data-openlog>open the log</button></p>` : ""}</section>`;
   }
 
   function produceBlock(p, w, k, cardId) {
@@ -311,7 +317,7 @@ export function mountScreen(host, hooks) {
           else if (o.a === "sell") {
             const n = p.goods[o.good];
             const pv = sellPreview(st, w.player, o.good, n);
-            groups.sell.push(btn(k, `${icon(o.good, 16)} ${n} at ${money(st.prices[o.good])} <span class="dim">→ ${n > 1 ? "up to " : ""}${money(pv.proceeds)}</span>`, ` aria-label="Sell ${GOOD_NAME[o.good]}: ${n} at ${money(st.prices[o.good])}"${hintAttr({ g: { [o.good]: pv.after } })}`));
+            groups.sell.push(btn(k, `${icon(o.good, 16)} ${n} at ${money(st.prices[o.good])} <span class="dim">→ ${money(pv.proceeds)}${n > 1 ? " for all" : ""}</span>`, ` aria-label="Sell ${GOOD_NAME[o.good]}: ${n} at ${money(st.prices[o.good])}"${hintAttr({ g: { [o.good]: pv.after } })}`));
           } else if (o.a === "auction") {
             const r = st.railOffer[o.slot];
             if (seenLines.has(lineOf(r))) return;
@@ -326,11 +332,20 @@ export function mountScreen(host, hooks) {
           } else groups.other.push(btn(k, o.a === "declare" ? `Declare victory (${money(p.cash)})` : "Pass", o.a === "declare" ? ' class="primary"' : ""));
         });
         const canProduce = O.some(o => o.a === "produce");
+        // At the storage limit every card overflows: say the way out, and put it first.
+        const cardsOver = p.hand.length && p.hand.every(id => cardPreview(st, w.player, id).over > 0);
+        const full = tokens(p) >= storageLimit(p) || cardsOver;
+        const townOk = groups.town.length > 0;
+        const advice = full && (groups.sell.length || townOk)
+          ? `<p class="notice">Storage ${tokens(p)}/${storageLimit(p)}: ${groups.sell.length ? "selling" : ""}${groups.sell.length && townOk ? ", or " : ""}${townOk ? `building ${esc(townName(st.townOffer))}` : ""}, before producing avoids discards.</p>` : "";
         const produce = canProduce ? `<div class="grp" data-group="p"><b>Produce<kbd>1–${p.hand.length}</kbd> <span class="dim">pick a card to see what it would do · hand limit ${handLimit(p)}</span></b>
           ${handCards(w.player)}${produceK >= 0 ? produceBlock(p, w, produceK, selected) : ""}</div>` : "";
+        const sellG = g("Sell", "s", groups.sell);
+        const townG = groups.town.length ? g(`Build ${esc(townName(st.townOffer))}`, "t", groups.town) : "";
+        const first = full ? `${advice}${townG}${sellG}${produce}` : `${produce}${sellG}`;
         return `<div class="ask">${q("Your move")}
-          ${produce}${g("Sell", "s", groups.sell)}${g("Auction a railroad", "a", groups.auction)}${g("Buy a building", "b", groups.buy)}${g("Upgrade", "", groups.upgrade)}
-          ${groups.town.length ? g(`Build ${esc(townName(st.townOffer))}`, "t", groups.town) : ""}${g("", "", groups.other)}</div>`;
+          ${first}${g("Auction a railroad", "a", groups.auction)}${g("Buy a building", "b", groups.buy)}${g("Upgrade", "", groups.upgrade)}
+          ${full ? "" : townG}${g("", "", groups.other)}</div>`;
       }
 
       case "take": {
@@ -357,9 +372,13 @@ export function mountScreen(host, hooks) {
           ${Object.entries(rows).map(([key, list]) => { const [from, gg] = key.split("|"); return `<div class="row"><span>${icon(gg, 16)} from ${esc(st.players[from].name)} at ${money(st.prices[gg])}</span>${list.map(([o, k]) => btn(k, `${o.qty} <span class="dim">${money(o.qty * st.prices[gg])}</span>`, ` aria-label="Buy ${o.qty} ${GOOD_NAME[gg]}"`)).join("")}</div>`; }).join("")}</div>`;
       }
 
-      case "discard":
-        return `<div class="ask">${q(`Discard ${w.over} for storage`)}<p class="sub">Your limit is ${w.limit}. Pick one at a time; the cheapest first is usually right.</p>
+      case "discard": {
+        const cheap = cheapest(st, w.player, w.over);
+        return `<div class="ask">${q(`Discard ${w.over} for storage`)}<p class="sub">Your limit is ${w.limit}.</p>
+          <div class="row"><button class="primary" data-many="${esc(JSON.stringify(cheap))}">Discard the cheapest ${w.over}: ${goodsIcons(cheap)}</button></div>
+          <p class="sub">Or pick them one at a time:</p>
           <div class="row">${O.map((gg, k) => btn(k, `${icon(gg, 16)} ${p.goods[gg]} <span class="dim">${money(st.prices[gg])}</span>`, ` aria-label="Discard one ${GOOD_NAME[gg]}"`)).join("")}</div></div>`;
+      }
 
       case "sellQty": {
         const gg = w.good;
@@ -378,7 +397,11 @@ export function mountScreen(host, hooks) {
 
       case "payAny": {
         const chosen = Object.entries(w.chosen).flatMap(([gg, k]) => Array(k).fill(gg));
+        const cheap = cheapest(st, w.player, w.left, w.chosen);
+        const cost = cheap.reduce((a, gg) => a + st.prices[gg], 0);
         return `<div class="ask">${q(`Pay ${w.left} more for ${esc(townName(st.townOffer))}`)}<p class="sub">Any mix of commodities.${chosen.length ? ` Paying so far: ${goodsIcons(chosen)}` : ""}</p>
+          <div class="row"><button class="primary" data-many="${esc(JSON.stringify(cheap))}">Pay with my cheapest: ${goodsIcons(cheap)} <span class="dim">worth ${money(cost)}</span></button></div>
+          <p class="sub">Or pick them one at a time:</p>
           <div class="row">${O.map((gg, k) => (gg && gg.back ? "" : btn(k, `${icon(gg, 16)} ${p.goods[gg] - (w.chosen[gg] || 0)} <span class="dim">${money(st.prices[gg])}</span>`, ` aria-label="Pay one ${GOOD_NAME[gg]}"`))).join("")}</div>
           <div class="row">${back()}</div></div>`;
       }
@@ -661,6 +684,7 @@ ${curtain ? curtainBox() : ""}${st.over && !resultsHidden ? resultsBox() : ""}${
     if (b.dataset.select) return select(b.dataset.select);
     if (b.hasAttribute("data-unselect")) { selected = null; return render(); }
     if (b.dataset.answer !== undefined) return answer(Number(b.dataset.answer));
+    if (b.dataset.many) { let list; try { list = JSON.parse(b.dataset.many); } catch (err) { return; } if (list.length) return hooks.submitMany(list); return; }
     if (b.dataset.pick) {
       const gg = b.dataset.pick;
       pick = pick.includes(gg) ? pick.filter(x => x !== gg) : [...pick, gg];
@@ -735,6 +759,9 @@ ${curtain ? curtainBox() : ""}${st.over && !resultsHidden ? resultsBox() : ""}${
       lastPrices = { ...s.prices };
       trackTurns();
       settleViewer();
+      const v = viewer;
+      if (v !== null && (events || []).some(e => (e.k === "won" || e.k === "town") && e.p === v)) justScored = true;
+      else if ((events || []).some(e => e.k === "turn" && e.p === v)) justScored = false;
       if (!st.ask || st.ask.kind !== "startGoods") pick = [];
       if (!st.ask || st.ask.kind !== "bid") bidValue = null;
       if (!st.ask || st.ask.kind !== "action") selected = null;

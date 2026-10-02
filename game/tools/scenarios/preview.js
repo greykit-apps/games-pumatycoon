@@ -3,7 +3,8 @@
  * and checks the preview made beforehand against what happened. */
 
 import { table, give, act, eq } from "./harness.js";
-import { sellPreview, cardPreview, railPreview, townPreview, marketMoves } from "../../ui/preview.js";
+import { sellPreview, cardPreview, railPreview, townPreview, marketMoves, cheapest, lastTurnEntries } from "../../ui/preview.js";
+import { lastMoveLine } from "../../ui/text.js";
 import { tokens } from "../../engine/rules.js";
 
 export const TESTS = [
@@ -62,5 +63,33 @@ export const TESTS = [
     eq(m.wheat.delta, st.prices.wheat - baseline.prices.wheat);
     eq(Object.values(m.wheat.by).reduce((a, b) => a + b, 0), m.wheat.delta, "the movers sum to the change");
     eq([m.wheat.by[0], m.wheat.by[1]], [2, -2], "P0's card +2, P1's sale -2");
+  }],
+  ["screen: pay with my cheapest picks the cheapest and the engine takes every step", () => {
+    const st = table();
+    st.townOffer = "bridgewater";                          // any 4
+    give(st, 0, { goods: { wheat: 1, coal: 2, luxury: 3 } });
+    st.prices.wheat = 2; st.prices.coal = 5; st.prices.luxury = 9;
+    act(st, { a: "town", pay: "any" });
+    const pick = cheapest(st, 0, st.ask.left, st.ask.chosen);
+    eq(pick, ["wheat", "coal", "coal", "luxury"], "cheapest first");
+    for (const g of pick) act(st, g);
+    eq(st.players[0].towns, ["bridgewater"]);
+    eq(st.players[0].goods.luxury, 2, "the dear ones kept");
+  }],
+
+  ["screen: your last move names what you did and the prices it moved", () => {
+    const st = table();
+    give(st, 0, { hand: ["pp52"], goods: {} });
+    act(st, { a: "produce", card: "pp52" });
+    act(st, ["wood", "wood", "goods"]);
+    // now P1's turn: P0's last turn is finished
+    const line = lastMoveLine(lastTurnEntries(st, 0), 0, st.players);
+    eq(line.big, false);
+    eq(line.text, "You produced Wood ×2, Goods · Goods $3→$4, Luxury $3→$4");
+    give(st, 1, { goods: { iron: 4 }, cash: 0 });
+    st.prices.iron = 13;
+    act(st, { a: "sell", good: "iron" });
+    act(st, { q: 4 });
+    eq(lastMoveLine(lastTurnEntries(st, 1), 1, st.players).text, "You sold 4 Iron for $52 · Iron $13→$9");
   }],
 ];

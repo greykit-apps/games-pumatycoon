@@ -163,6 +163,11 @@ details.fulllog summary .dim{letter-spacing:.04em;text-transform:none;font-weigh
 .au-ladder{margin:6px 0 0;padding-left:22px;font-size:var(--fs-s);display:flex;flex-direction:column-reverse;gap:1px}
 .au-ladder li.pass{color:var(--dim)}
 .au-ladder li.bid b{color:var(--text)}
+.lastmove{margin:0 0 6px;font-size:var(--fs-s);color:var(--text);line-height:1.45}
+.lastmove.big{color:var(--accent)}
+.notice{margin:0;padding:7px 10px;font-size:var(--fs-s);color:var(--warn);background:#1d1608;border:1px solid color-mix(in oklab,var(--warn) 35%,transparent)}
+table.standings tr.just{animation:pt-just 2.2s cubic-bezier(.16,1,.3,1) 1}
+@keyframes pt-just{from{background:color-mix(in oklab,var(--accent) 22%,transparent)}to{background:transparent}}
 .recap ul{margin:0;padding-left:16px;font-size:var(--fs-s);color:var(--ink);display:flex;flex-direction:column;gap:2px}
 .ask{border:1px solid var(--accent);border-radius:2px;padding:12px;background:#0a1620;display:flex;flex-direction:column;gap:10px}
 .ask p{margin:0}
@@ -201,8 +206,8 @@ details.fulllog summary .dim{letter-spacing:.04em;text-transform:none;font-weigh
  * desk: one wide card per row, production (what you take) first. */
 .hand{display:flex;flex-direction:column;gap:8px}
 .pp{width:100%;border:1px solid var(--lit);border-radius:3px;overflow:hidden;background:var(--panel);padding:0;
-  display:grid;grid-template-columns:34px minmax(0,1.25fr) minmax(0,1fr);text-align:left;position:relative;min-height:84px}
-.pp .half{padding:8px 12px;display:flex;flex-direction:column;justify-content:center;gap:5px}
+  display:grid;grid-template-columns:34px minmax(0,1.25fr) minmax(0,1fr);text-align:left;position:relative;min-height:76px}
+.pp .half{padding:6px 12px;display:flex;flex-direction:column;justify-content:center;gap:4px}
 .pp .half.prod{background:#2a1016}
 .pp .half.price{background:#0f1d3a;border-left:1px solid var(--line)}
 .pp .icons{display:flex;flex-wrap:wrap;gap:4px;align-items:center}
@@ -267,7 +272,7 @@ table.score td.vp{color:var(--vp);font-weight:700}
 @media (prefers-reduced-motion:reduce){
   .ask.attention.arrive{animation:none}
   .tk-scale i,.tk-to{transition:none}
-  .tk-row.tick-up,.tk-row.tick-down,.ask .dot{animation:none}
+  .tk-row.tick-up,.tk-row.tick-down,.ask .dot,table.standings tr.just{animation:none}
   .tour-spot{transition:none}
 }
 @media (max-width:1280px){
