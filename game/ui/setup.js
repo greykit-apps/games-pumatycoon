@@ -9,20 +9,34 @@ const SETUP_KEY = "pumatycoon_setup_v1";
 const SKILLS = ["Easy", "Normal", "Hard"];
 const DEFAULT = {
   seats: [
-    { name: "Fore", seat: "human", skill: 1 },
-    { name: "Jad", seat: "bot", skill: 1 },
-    { name: "Clinton", seat: "bot", skill: 1 },
+    { name: "You", seat: "human", skill: 1 },
+    { name: "Bot 1", seat: "bot", skill: 1 },
+    { name: "Bot 2", seat: "bot", skill: 1 },
   ],
   options: { missions: false, suddenDeath: false, beginner: false, basicSetup: false, endRule: "printed" },
 };
-/* The seat names, in order: the first three seat a new game, Add a seat
- * takes the next unused one. Five names for five seats. */
-const PLAYER_NAMES = ["Fore", "Jad", "Clinton", "Cal", "Noya"];
+/* Default names say what a seat is: "You" for a lone human, "Player N"
+ * for each of several (so nobody reads "You's cash" in hot seat), and
+ * "Bot 1", "Bot 2"... for the bots in seat order. A seat keeps a name the
+ * player typed; one still on a default is renamed whenever the seats
+ * change. The earlier defaults count as defaults, so a remembered setup
+ * picks up the new names. */
+const OLD_DEFAULTS = new Set(["Fore", "Jad", "Clinton", "Cal", "Noya"]);
+const isDefault = name => !name || name === "You" || /^(Bot|Player) \d+$/.test(name) || OLD_DEFAULTS.has(name);
+export function rename(seats) {
+  const humans = seats.filter(p => p.seat === "human").length;
+  let bot = 0;
+  seats.forEach((p, i) => {
+    const auto = p.seat === "bot" ? `Bot ${++bot}` : humans === 1 ? "You" : `Player ${i + 1}`;
+    if (isDefault(p.name)) p.name = auto;
+  });
+  return seats;
+}
 
 function load() {
   try {
     const s = JSON.parse(localStorage.getItem(SETUP_KEY));
-    if (s && Array.isArray(s.seats) && s.seats.length >= 2 && s.seats.length <= 5) return { ...DEFAULT, ...s, options: { ...DEFAULT.options, ...(s.options || {}) } };
+    if (s && Array.isArray(s.seats) && s.seats.length >= 2 && s.seats.length <= 5) return { ...DEFAULT, ...s, seats: rename(s.seats), options: { ...DEFAULT.options, ...(s.options || {}) } };
   } catch (e) { /* no storage */ }
   return JSON.parse(JSON.stringify(DEFAULT));
 }
@@ -85,7 +99,7 @@ export function mountSetup(host, { onStart, onResume, onHelp }) {
   function read() {
     host.querySelectorAll(".seat").forEach(row => {
       const i = Number(row.dataset.i);
-      s.seats[i].name = row.querySelector("[data-name]").value.trim() || `Player ${i + 1}`;
+      s.seats[i].name = row.querySelector("[data-name]").value.trim();
       s.seats[i].seat = row.querySelector("[data-seat]").value;
       const skill = row.querySelector("[data-skill]");
       if (skill) s.seats[i].skill = Number(skill.value);
@@ -103,11 +117,12 @@ export function mountSetup(host, { onStart, onResume, onHelp }) {
     if (b.hasAttribute("data-help")) return onHelp && onHelp();
     read();
     if (b.hasAttribute("data-add")) {
-      const used = new Set(s.seats.map(x => x.name));
-      s.seats.push({ name: PLAYER_NAMES.find(n => !used.has(n)) || `Player ${s.seats.length + 1}`, seat: "bot", skill: 1 });
+      s.seats.push({ name: "", seat: "bot", skill: 1 });
     } else if (b.hasAttribute("data-del")) {
       s.seats.splice(Number(b.closest(".seat").dataset.i), 1);
-    } else if (b.hasAttribute("data-start")) {
+    }
+    rename(s.seats);
+    if (b.hasAttribute("data-start")) {
       save(s);
       return onStart({ players: s.seats.map(x => ({ ...x })), options: { ...s.options }, tour });
     } else if (b.hasAttribute("data-resume")) {
@@ -118,7 +133,7 @@ export function mountSetup(host, { onStart, onResume, onHelp }) {
     render();
   };
   host.onchange = e => {
-    if (e.target.matches("[data-seat]")) { read(); save(s); render(); }
+    if (e.target.matches("[data-seat]")) { read(); rename(s.seats); save(s); render(); }
   };
   host.onkeydown = null;
   render();

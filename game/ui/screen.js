@@ -36,7 +36,7 @@ import {
 } from "../engine/rules.js";
 import { icon } from "./art.js";
 import {
-  GOOD_NAME, railName, lineName, townName, bldName, effectText, upgradeText, missionText, logLines, recapEntries, RECAP_BIG, describeLog, lastMoveLine,
+  GOOD_NAME, railName, lineName, townName, bldName, effectText, upgradeText, missionText, logLines, recapEntries, RECAP_BIG, describeLog, lastMoveLine, agree,
 } from "./text.js";
 import { HELP_TABS } from "./help.js";
 import { startTour } from "./tour.js";
@@ -755,7 +755,7 @@ ${st.over && !resultsHidden ? resultsBox() : ""}${helpTab !== null ? helpBox() :
         : `<p class="yours">You finished ${ordinal(at + 1)} of ${order.length}: ${you.total} VP, ${lead.total - you.total ? `${lead.total - you.total} behind ${esc(st.players[lead.i].name)}` : `level with ${esc(st.players[lead.i].name)} but behind on money`}.</p>`;
     }
     return `<div class="veil" role="dialog" aria-modal="true" aria-label="Final scores"><div class="box">
-      <h1>${r.sudden ? `${esc(names)} declares victory` : `${esc(names)} win${r.winners.length > 1 ? "" : "s"}`}</h1>${yours}
+      <h1>${r.sudden ? `${esc(names)} ${agree(names, "declares")} victory` : `${esc(names)} ${r.winners.length > 1 ? "win" : agree(names, "wins")}`}</h1>${yours}
       <ul class="final-lines">${story}</ul>
       <table class="score"><thead><tr><th>Player</th><th>Towns</th><th>Rail</th><th>Bldg</th><th>Pairs</th><th>Bonus</th><th>Mission</th><th>VP</th><th>Cash</th></tr></thead><tbody>${rows}</tbody></table>
       <div><h2>The closing market</h2><div class="final-market">${GOODS.map(g => `<span>${icon(g, 16, GOOD_NAME[g])} ${money(st.prices[g])}</span>`).join("")}</div></div>

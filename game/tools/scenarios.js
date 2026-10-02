@@ -86,6 +86,8 @@ export const SCENARIOS = [
   { name: "screen: in hot seat a human's secrets hide the moment their move hands over to a bot", layer: "screen", status: "ported" },
   { name: "screen: the market shows what the others hold and who holds most", layer: "screen", status: "ported" },
   { name: "screen: a mission's progress counts only what is public", layer: "screen", status: "ported" },
+  { name: "screen: default seat names say what each seat is, and typed names are kept", layer: "screen", status: "ported" },
+  { name: "screen: a player called You reads \"You bid\", not \"You bids\"", layer: "screen", status: "ported" },
   { name: "screen: the hot-seat curtain hides money and hand between humans", layer: "screen", status: "pending" },
   { name: "screen: a saved game resumes mid-auction", layer: "screen", status: "pending" },
   { name: "screen: every request kind has a control", layer: "screen", status: "pending" },
