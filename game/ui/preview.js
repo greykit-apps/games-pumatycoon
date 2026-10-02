@@ -99,6 +99,27 @@ export function cheapest(st, i, n, chosen = {}) {
   return pool.slice(0, n);
 }
 
+/** The auction in progress, one entry per seat in bidding order from the
+ * opener: each seat's latest bid, whether it is out, and whose bid is asked.
+ * Bounded by the number of seats however long the bidding runs. */
+export function auctionSeats(st) {
+  const a = st.tc && st.tc.auc;
+  if (!a) return null;
+  const last = {};
+  if (a.seq !== undefined) for (const e of st.log) if (e.n >= a.seq && e.k === "bid" && !e.pass) last[e.p] = e.amount;
+  const order = Array.from({ length: st.n }, (_, k) => (a.opener + k) % st.n);
+  return order.map(i => ({
+    i, bid: last[i] ?? null, out: a.out.includes(i), high: i === a.bidder,
+    asked: !!(st.ask && st.ask.kind === "bid" && st.ask.player === i),
+  }));
+}
+
+/** The one-press raises beside the main bid: a step or two over the minimum
+ * and a jump, never past what the bidder holds. */
+export function quickBids(lo, hi) {
+  return [...new Set([lo + 1, lo + 2, lo + 5].map(v => Math.min(v, hi)))].filter(v => v > lo);
+}
+
 /** The log entries of player i's most recent finished turn. */
 export function lastTurnEntries(st, i) {
   const turns = [];

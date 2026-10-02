@@ -156,13 +156,56 @@ details.fulllog summary .dim{letter-spacing:.04em;text-transform:none;font-weigh
 .log .r{color:var(--dim);display:inline-block;min-width:28px}
 
 /* ---- your desk ---- */
-.auction{border:1px solid var(--warn);background:color-mix(in oklab,var(--warn) 6%,var(--panel));padding:10px 12px}
-.auction h2{border-color:color-mix(in oklab,var(--warn) 40%,var(--line));color:var(--warn)}
+/* Cash: the largest number on the desk, pinned to its top. */
+.wallet{position:sticky;top:-16px;z-index:2;margin:-16px -16px 0;padding:10px 16px;background:#070a14;border-bottom:1px solid var(--line);
+  display:flex;align-items:flex-end;gap:22px}
+.wallet .lab{display:block;font-size:var(--fs-xs);color:var(--dim);letter-spacing:.12em;text-transform:uppercase;line-height:1.2}
+.wallet b{display:inline-block;font-weight:700;color:var(--text);line-height:1.05}
+.w-cash{flex:1;display:flex;flex-wrap:wrap;align-items:baseline;gap:0 10px}
+.w-cash .lab{flex-basis:100%}
+.w-cash b{font-size:34px;letter-spacing:-.01em}
+.w-cash b.moved.up{animation:pt-cash-up 1.4s cubic-bezier(.16,1,.3,1)}
+.w-cash b.moved.down{animation:pt-cash-down 1.4s cubic-bezier(.16,1,.3,1)}
+@keyframes pt-cash-up{from{color:var(--up)}to{color:var(--text)}}
+@keyframes pt-cash-down{from{color:var(--down)}to{color:var(--text)}}
+.w-delta{font-size:var(--fs-m);font-weight:700;animation:pt-fade 2.6s ease-in forwards}   /* 2.6s: CASH_FADE in screen.js */
+.w-delta.up{color:var(--up)} .w-delta.down{color:var(--down)}
+@keyframes pt-fade{0%,55%{opacity:1}100%{opacity:0}}
+.w-stat{display:flex;flex-direction:column;align-items:flex-end}
+.w-stat b{font-size:var(--fs-l)}
+.w-stat b.full{color:var(--warn)}
+
+/* The auction: one box of fixed shape, whatever the length of the bidding. */
+.auction{border:1px solid var(--warn);background:color-mix(in oklab,var(--warn) 6%,var(--panel));padding:10px 12px;display:flex;flex-direction:column;gap:10px}
+.auction h2{border-color:color-mix(in oklab,var(--warn) 40%,var(--line));color:var(--warn);margin:0}
+.auction h2 .grow{flex:1}
+.auction h2 .vpc{letter-spacing:.04em;text-transform:none}
 .au-high{display:flex;align-items:baseline;gap:10px;color:var(--ink)}
-.au-high b{font-size:var(--fs-xl);color:var(--text)}
-.au-ladder{margin:6px 0 0;padding-left:22px;font-size:var(--fs-s);display:flex;flex-direction:column-reverse;gap:1px}
-.au-ladder li.pass{color:var(--dim)}
-.au-ladder li.bid b{color:var(--text)}
+.au-amt{font-size:30px;font-weight:700;color:var(--text);line-height:1}
+.au-amt.moved{animation:pt-high 1s cubic-bezier(.16,1,.3,1)}
+@keyframes pt-high{from{color:var(--warn)}to{color:var(--text)}}
+.au-seats{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));border:1px solid var(--line);background:var(--panel)}
+.au-seats li{padding:5px 8px;border-left:1px solid var(--hair);display:flex;flex-direction:column;min-width:0}
+.au-seats li:first-child{border-left:0}
+.au-seats .au-who{font-size:var(--fs-xs);color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.au-seats b{font-size:var(--fs-m);color:var(--text)}
+.au-seats li.out{opacity:.45} .au-seats li.out b{font-weight:400}
+.au-seats li.high{background:color-mix(in oklab,var(--warn) 14%,transparent)} .au-seats li.high b{color:var(--warn)}
+.au-seats li.asked .au-who::after{content:" ●";color:var(--accent)}
+.au-act{display:flex;flex-direction:column;gap:8px;min-height:118px}
+.au-act .q{color:var(--text);font-size:var(--fs-l);font-weight:700;margin:0}
+.au-act .q:focus{outline:none}
+.au-act .sub{color:var(--ink);font-size:var(--fs-s);margin:0}
+.au-quick button{min-height:44px;font-size:var(--fs-m)}
+.au-quick .au-go{min-width:150px;font-size:var(--fs-l)}
+.au-quick kbd,.au-custom kbd{font:inherit;font-size:10px;color:var(--dim);border:1px solid var(--line);border-radius:2px;padding:0 4px;margin-left:6px}
+.au-custom{font-size:var(--fs-s)}
+.au-custom kbd{margin:0 2px 0 0}
+.au-custom input{width:84px}
+.au-wait{display:flex;align-items:center;gap:10px;color:var(--dim);min-height:44px}
+.au-wait .dot{width:8px;height:8px;border-radius:50%;background:var(--dim);animation:pt-wait 1.2s ease-in-out infinite}
+.auction.live.attention{box-shadow:0 0 0 1px rgba(84,242,255,.6);border-color:var(--accent)}
+.auction.live.attention.arrive{animation:pt-attention 1.8s ease-in-out 1}
 .lastmove{margin:0 0 6px;font-size:var(--fs-s);color:var(--text);line-height:1.45}
 .lastmove.big{color:var(--accent)}
 .notice{margin:0;padding:7px 10px;font-size:var(--fs-s);color:var(--warn);background:#1d1608;border:1px solid color-mix(in oklab,var(--warn) 35%,transparent)}
@@ -176,13 +219,13 @@ table.standings tr.just{animation:pt-just 2.2s cubic-bezier(.16,1,.3,1) 1}
 .ask .sub b{color:var(--vp)}
 .ask .grp{display:flex;flex-direction:column;gap:5px}
 .ask .grp>b{font-size:var(--fs-s);color:var(--ink);font-weight:700}
+.ask .grp[data-group=s] .row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
 .ask .grp>b .dim{font-weight:400;margin-left:6px}
 .ask .grp>b kbd,.kbd{font:inherit;font-size:10px;color:var(--dim);border:1px solid var(--line);border-radius:2px;padding:0 4px;margin-left:6px}
 .ask .q:focus{outline:none}
 .ask.wait{border-color:var(--line);background:var(--panel);color:var(--dim);display:flex;flex-direction:row;align-items:center;gap:10px}
 .ask .dot,.ask.wait .dot{width:8px;height:8px;border-radius:50%;background:var(--dim);animation:pt-wait 1.2s ease-in-out infinite}
 @keyframes pt-wait{0%,100%{opacity:.25}50%{opacity:1}}
-.bidrow input{width:96px}
 .combo{display:inline-flex;gap:2px;align-items:center}
 .preview{border:1px solid var(--accentDim,#2b7f92);background:#08131c;padding:10px;display:flex;flex-direction:column;gap:6px}
 .preview .pv-title{color:var(--accent);font-weight:700}
@@ -268,11 +311,12 @@ table.score td.vp{color:var(--vp);font-weight:700}
 .setup .go button.primary{padding:10px 22px;font-size:var(--fs-l)}
 .boot{padding:24px}
 
-@media (hover:none){.ask kbd{display:none}}
+@media (hover:none){.ask kbd,.auction kbd{display:none}}
 @media (prefers-reduced-motion:reduce){
   .ask.attention.arrive{animation:none}
   .tk-scale i,.tk-to{transition:none}
-  .tk-row.tick-up,.tk-row.tick-down,.ask .dot,table.standings tr.just{animation:none}
+  .tk-row.tick-up,.tk-row.tick-down,.ask .dot,table.standings tr.just,.au-wait .dot,.w-cash b.moved,.au-amt.moved,.auction.live.attention.arrive{animation:none}
+  .w-delta{animation:none;opacity:1}
   .tour-spot{transition:none}
 }
 @media (max-width:1280px){
@@ -286,10 +330,13 @@ table.score td.vp{color:var(--vp);font-weight:700}
 @media (max-width:900px){
   .main{grid-template-columns:1fr}
   .side{order:-1;border-left:0;border-bottom:1px solid var(--line)}
+  .wallet{top:0}
   .setup{grid-template-columns:1fr;padding:18px 16px 32px}
 }
 @media (max-width:560px){
   .stage,.side{padding:12px}
+  .wallet{top:0;margin:-12px -12px 0;padding:8px 12px;gap:14px}
+  .w-cash b{font-size:28px}
   .tk-head,.tk-row{grid-template-columns:40px 58px 44px minmax(0,1fr);gap:0 8px;padding:0 10px}
   .tk-hold,.tk-head{display:none}
   .tk-name span{display:none}

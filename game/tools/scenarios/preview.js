@@ -3,7 +3,7 @@
  * and checks the preview made beforehand against what happened. */
 
 import { table, give, act, eq } from "./harness.js";
-import { sellPreview, cardPreview, railPreview, townPreview, marketMoves, cheapest, lastTurnEntries } from "../../ui/preview.js";
+import { sellPreview, cardPreview, railPreview, townPreview, marketMoves, cheapest, lastTurnEntries, auctionSeats, quickBids } from "../../ui/preview.js";
 import { lastMoveLine } from "../../ui/text.js";
 import { tokens } from "../../engine/rules.js";
 
@@ -91,5 +91,31 @@ export const TESTS = [
     act(st, { a: "sell", good: "iron" });
     act(st, { q: 4 });
     eq(lastMoveLine(lastTurnEntries(st, 1), 1, st.players).text, "You sold 4 Iron for $52 · Iron $13→$9");
+  }],
+
+  ["screen: the auction box holds one entry per seat however long the bidding runs", () => {
+    const st = table({ n: 4 });
+    for (const i of [0, 1, 2, 3]) give(st, i, { cash: 60 });
+    act(st, { a: "auction", slot: 0 });
+    eq(auctionSeats(st).map(x => [x.i, x.bid, x.asked]), [[0, null, true], [1, null, false], [2, null, false], [3, null, false]], "before the opening bid");
+    act(st, st.ask.lo);                                     // P0 opens
+    let bids = 1;
+    // Three times round the table, P3 passing on the first lap.
+    for (let k = 0; st.tc.auc && k < 8; k++) {
+      const who = st.ask.player;
+      if (who === 3) act(st, "pass"); else { act(st, st.ask.lo); bids++; }
+    }
+    const seats = auctionSeats(st);
+    eq(seats.length, 4, "one per seat, after " + bids + " bids");
+    eq(seats.map(x => x.out), [false, false, false, true]);
+    const high = seats.find(x => x.high);
+    eq(high.bid, st.tc.auc.high, "the high seat shows the high bid");
+    eq(seats.filter(x => x.asked).map(x => x.i), [st.ask.player]);
+  }],
+
+  ["screen: the quick bids raise over the minimum and never past your cash", () => {
+    eq(quickBids(8, 30), [9, 10, 13]);
+    eq(quickBids(8, 10), [9, 10], "capped at what you hold, no repeats");
+    eq(quickBids(8, 8), [], "only the minimum is possible");
   }],
 ];

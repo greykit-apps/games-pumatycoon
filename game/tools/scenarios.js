@@ -78,6 +78,8 @@ export const SCENARIOS = [
   { name: "screen: market moves add up to the change and name who made them", layer: "screen", status: "ported" },
   { name: "screen: pay with my cheapest picks the cheapest and the engine takes every step", layer: "screen", status: "ported" },
   { name: "screen: your last move names what you did and the prices it moved", layer: "screen", status: "ported" },
+  { name: "screen: the auction box holds one entry per seat however long the bidding runs", layer: "screen", status: "ported" },
+  { name: "screen: the quick bids raise over the minimum and never past your cash", layer: "screen", status: "ported" },
   { name: "screen: the hot-seat curtain hides money and hand between humans", layer: "screen", status: "pending" },
   { name: "screen: a saved game resumes mid-auction", layer: "screen", status: "pending" },
   { name: "screen: every request kind has a control", layer: "screen", status: "pending" },
