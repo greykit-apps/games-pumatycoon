@@ -101,6 +101,11 @@ export const SUDDEN_DEATH_WHEN = "own-turn";
 /* A tie on VP and money (p.12 breaks only the first) is shared. */
 export const FULL_TIE = "shared";
 
+/* Beginners (no advanced stack) with the per-player building setup: the
+ * rulebook never combines them, and together they would leave spaces in the
+ * row that nothing ever fills. Beginners wins: four basic tiles, as dealt. */
+export const BEGINNER_FULL_ROW = true;
+
 export const STARTING_CASH = 10;
 export const HAND_SIZE = 3;
 export const BASE_STORAGE = 10;
@@ -173,7 +178,9 @@ export function newGame(setup) {
   // J: four basic tiles at random (+1 side up), the other two out of the game.
   // Optional rule: one per player (four at five), the open spots from the stack.
   const basics = shuffle(st, instances(BASIC));
-  const place = opts.basicSetup ? Math.min(n, OFFER_BUILDINGS) : OFFER_BUILDINGS;
+  // The per-player setup leaves spaces for the advanced stack to fill; with no
+  // stack (Beginners) they would stay empty, so the two options do not combine.
+  const place = opts.basicSetup && !(opts.beginner && BEGINNER_FULL_ROW) ? Math.min(n, OFFER_BUILDINGS) : OFFER_BUILDINGS;
   for (let i = 0; i < place; i++) st.bldOffer[i] = basics.shift();
   st.bldOut.push(...basics);
   // K: the advanced tiles, shuffled face down (none for beginners, p.12).

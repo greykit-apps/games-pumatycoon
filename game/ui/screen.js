@@ -440,7 +440,7 @@ export function mountScreen(host, hooks) {
       return `<div class="preview">
         <p class="pv-title">Build ${esc(townName(st.townOffer))}</p>
         <div class="pv-row"><span class="dim">You pay</span> ${pv.need} ${icon(pv.good, 16)} ${GOOD_NAME[pv.good]} <span class="dim">of your ${pv.have}, worth ${money(pv.need * st.prices[pv.good])} today</span></div>
-        <div class="pv-row"><span class="dim">Scores</span> <span class="vpc">+${pv.vp} VP${pv.pair ? `, +${pv.pair} for a pair` : ""}</span></div>
+        <div class="pv-row"><span class="dim">Scores</span> <span class="vpc">+${pv.vp} VP${pv.pair ? `, +${pv.pair} for a pair` : ""}${pv.bonus ? `, +${pv.bonus} from your buildings` : ""}</span></div>
         ${endClock(st).ends.town ? warn("The last town: building it ends the game after this round.") : ""}
         <div class="row"><button class="primary" data-answer="${k}"${hintAttr({ rows: ["town"] })}>Build it</button><button class="ghost" data-unstage>Cancel<kbd>Esc</kbd></button></div></div>`;
     }
@@ -519,14 +519,6 @@ export function mountScreen(host, hooks) {
         const advice = full && (groups.sell.length || townOk)
           ? `<p class="notice">Storage ${tokens(p)}/${storageLimit(p)}: ${groups.sell.length ? "sell" : ""}${groups.sell.length && townOk ? " or " : ""}${townOk ? "build" : ""} first.</p>` : "";
         const inStrip = stripFor() === w.player;
-        // One decision at a time: while a card or a purchase is previewed the desk
-        // shows just that (and the hand, to switch cards), so it fits; the order
-        // book stays live for switching, and Cancel or Esc brings the rest back.
-        if (produceK >= 0 || stagedK >= 0) {
-          const cards = produceK >= 0 && !inStrip ? handCards(w.player) : "";
-          return `<div class="ask">${q("Your move")}${cards}${produceK >= 0 ? produceBlock(p, w, produceK, selected) : stagedBlock(w, stagedK)}
-            <p class="sub">Cancel or <kbd>Esc</kbd> for your other moves; another card or building previews in its place.</p></div>`;
-        }
         const produce = canProduce ? `<div class="grp" data-group="p"><b>Produce<kbd>1–${p.hand.length}</kbd> <span class="dim">${inStrip ? "pick a card from your hand, under the market" : `pick one to preview it · limit ${handLimit(p)}`}</span></b>
           ${inStrip ? "" : handCards(w.player)}${produceK >= 0 ? produceBlock(p, w, produceK, selected) : ""}</div>` : "";
         const sellG = g("Sell", "s", groups.sell);
@@ -543,6 +535,15 @@ export function mountScreen(host, hooks) {
         // The jumps ride on the heading's line, which has the room.
         const tableG = jumps.length ? `<div class="grp jumps" data-group="x"><b class="sr-only">In the table, where each row says what it is worth to you:</b>
           ${jumps.map(([k, label, last]) => `<button class="jump" data-jump="${k}" aria-label="${label}, in the table"><span class="arr" aria-hidden="true">← </span>${short[k]}${last ? ' <span class="warn">· last</span>' : ""}<kbd>${k.toUpperCase()}</kbd></button>`).join("")}</div>` : "";
+        // One decision at a time: while a card or a purchase is previewed the desk
+        // shows just that, so it fits; the order book stays live for switching,
+        // and Cancel or Esc brings the rest back. Everything above the hand stays
+        // where it was, so the cards do not move under a double-click.
+        if (produceK >= 0 || stagedK >= 0) {
+          const top = produceK >= 0 ? (full ? `${advice}${sellG}${produce}` : produce) : stagedBlock(w, stagedK);
+          return `<div class="ask"><div class="q-row">${q("Your move")}${tableG}</div>${top}
+            <p class="sub">Cancel or <kbd>Esc</kbd> for your other moves; another card or building previews in its place.</p></div>`;
+        }
         const first = full ? `${advice}${sellG}${produce}` : `${produce}${sellG}`;
         return `<div class="ask"><div class="q-row">${q("Your move")}${tableG}</div>
           ${first}${g("Upgrade", "", groups.upgrade)}${g("", "", groups.other)}</div>`;
@@ -798,7 +799,7 @@ ${st.over && !resultsHidden ? resultsBox() : ""}${helpTab !== null ? helpBox() :
     }
     host.querySelector(".fulllog")?.addEventListener("toggle", e => { logOpen = e.target.open; });
     // Only a person's click is a choice; the toggle event also fires as the open attribute is parsed.
-    host.querySelector(".owned > summary")?.addEventListener("click", e => { ownOpen = !e.target.parentElement.open; });
+    host.querySelector(".owned > summary")?.addEventListener("click", e => { ownOpen = !e.currentTarget.parentElement.open; });
 
     if (touring) return;
     if (mine() && tourFor.has(st.ask.player) && helpTab === null) return runTour(st.ask.player);
@@ -1028,7 +1029,9 @@ ${st.over && !resultsHidden ? resultsBox() : ""}${helpTab !== null ? helpBox() :
     if (b.dataset.select) {
       // A double-click produces at once: the first click previewed the card, the
       // second (the browser counts it even though the card was redrawn) commits it.
-      if (e.detail >= 2) return produceNow(b.dataset.select);
+      // Only if the second click lands on the card the first selected: the redraw
+      // moves the cards, and a different one may now be under the pointer.
+      if (e.detail >= 2 && b.dataset.select === selected) return produceNow(b.dataset.select);
       return select(b.dataset.select);
     }
     if (b.hasAttribute("data-unselect")) { selected = null; return render(); }
@@ -1097,7 +1100,8 @@ ${st.over && !resultsHidden ? resultsBox() : ""}${helpTab !== null ? helpBox() :
       if (selected) { selected = null; return render(); }
       if (staged) { staged = null; return render(); }
     }
-    if (e.key === "?") { helpTab = helpTab === null ? 0 : null; return render(); }
+    if (e.key === "?" && !inInput) { helpTab = helpTab === null ? 0 : null; return render(); }
+    if (failure) return;   // after an engine error nothing answers until the game is reloaded
     if (helpTab !== null) return;
     if (e.key === "Enter" && curtain) { e.preventDefault(); curtain = false; viewer = st.ask.player; lastSig = null; return render(); }
     const w = st.ask;
@@ -1110,7 +1114,7 @@ ${st.over && !resultsHidden ? resultsBox() : ""}${helpTab !== null ? helpBox() :
       if (k === "ArrowUp" || k === "ArrowDown") { e.preventDefault(); return nudgeBid((k === "ArrowUp" ? 1 : -1) * (e.shiftKey ? 5 : 1)); }
       if (!inInput && (k === "+" || k === "=")) { e.preventDefault(); return nudgeBid(1); }
       if (!inInput && (k === "-" || k === "_")) { e.preventDefault(); return nudgeBid(-1); }
-      if ((k === "p" || k === "P") && w.canPass) { e.preventDefault(); bidValue = null; return hooks.submit("pass"); }
+      if (!inInput && (k === "p" || k === "P") && w.canPass) { e.preventDefault(); bidValue = null; return hooks.submit("pass"); }
       if (k === "Escape" && w.canBack) { e.preventDefault(); bidValue = null; return hooks.submit("back"); }
       return;
     }

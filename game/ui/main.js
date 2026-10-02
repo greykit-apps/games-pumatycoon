@@ -106,6 +106,8 @@ function toSetup() {
 }
 
 function start(opts) {
+  generation++;
+  busy = false;
   const seed = (Date.now() ^ (Math.random() * 0x7fffffff)) | 0;
   st = newGame({ players: opts.players, options: opts.options, seed });
   trace = { v: 1, started: new Date().toISOString(), seed, setup: { players: opts.players, options: opts.options, seed }, answers: [] };
@@ -117,6 +119,8 @@ function start(opts) {
 }
 
 function openScreen() {
+  // A rematch opens a new screen over the old one: stop the old one's listeners first.
+  if (screen) screen.stop();
   host.onclick = null;
   host.onchange = null;
   screen = mountScreen(host, {

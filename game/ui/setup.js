@@ -86,8 +86,8 @@ export function mountSetup(host, { onStart, onResume, onHelp }) {
       <h2>Optional rules</h2>
       <label class="opt"><input type="checkbox" data-opt="missions"${s.options.missions ? " checked" : ""}><span>Mission cards<small>Each player is dealt two secret missions and keeps one, scored at the end.</small></span></label>
       <label class="opt"><input type="checkbox" data-opt="suddenDeath"${s.options.suddenDeath ? " checked" : ""}><span>Sudden death<small>A player holding $1,000 may end the game and win.</small></span></label>
-      <label class="opt"><input type="checkbox" data-opt="beginner"${s.options.beginner ? " checked" : ""}><span>Beginners<small>No advanced buildings: only the six commodity buildings.</small></span></label>
-      <label class="opt"><input type="checkbox" data-opt="basicSetup"${s.options.basicSetup ? " checked" : ""}><span>Basic buildings by player count<small>One commodity building per player (four at five) on offer; the rest of the row from the advanced stack.</small></span></label>
+      <label class="opt"><input type="checkbox" data-opt="beginner"${s.options.beginner ? " checked" : ""}><span>Beginners<small>No advanced buildings: only the four commodity buildings on offer at the start.</small></span></label>
+      <label class="opt${s.options.beginner ? " off" : ""}"><input type="checkbox" data-opt="basicSetup"${s.options.basicSetup && !s.options.beginner ? " checked" : ""}${s.options.beginner ? " disabled" : ""}><span>Basic buildings by player count<small>One commodity building per player (four at five) on offer; the rest of the row from the advanced stack.</small></span></label>
       <h2>Ending</h2>
       <label class="opt"><input type="radio" name="endRule" value="printed"${s.options.endRule !== "revised" ? " checked" : ""}><span>As printed<small>The last town bought or the last railroad auctioned ends the game, after the round.</small></span></label>
       <label class="opt"><input type="radio" name="endRule" value="revised"${s.options.endRule === "revised" ? " checked" : ""}><span>Designer's revision (2019)<small>The game ends when two of the three are all owned: towns, railroads, buildings. Longer games.</small></span></label>
@@ -134,6 +134,8 @@ export function mountSetup(host, { onStart, onResume, onHelp }) {
   };
   host.onchange = e => {
     if (e.target.matches("[data-seat]")) { read(); rename(s.seats); save(s); render(); }
+    // Beginners and the per-player building setup do not combine (the rulebook never does).
+    if (e.target.matches('[data-opt="beginner"]')) { read(); if (s.options.beginner) s.options.basicSetup = false; save(s); render(); }
   };
   host.onkeydown = null;
   render();

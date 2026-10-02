@@ -1,5 +1,6 @@
 import { table, give, act, waiting, eq, assert } from "./harness.js";
 import { step } from "../../engine/machine.js";
+import { botAnswer } from "../../engine/bots.js";
 import { scoreOf, standings, railVP, missionVP } from "../../engine/rules.js";
 import { MAYOR_COUNTS_ITSELF, SUDDEN_DEATH_AT, FULL_TIE, RAILROADS_EXHAUSTED } from "../../engine/state.js";
 
@@ -152,5 +153,20 @@ export const TESTS = [
     act(st, { back: true });
     eq(waiting(st, "action").player, 0);
     eq(st.players[0].hand.length, 3, "nothing played");
+  }],
+
+  ["bots: in the final round a bot turns its cash into points", () => {
+    // A dear building and nothing else that scores: not worth $30 mid-game,
+    // but on the last turn the VP beats cash that scores nothing.
+    const st = table({ seats: ["bot", "bot", "bot"] });
+    st.railOffer = [null, null];
+    st.townOffer = null;
+    st.bldOffer = ["blackmarket", null, null, null];
+    give(st, 0, { cash: 35, hand: ["pp52"], goods: { wheat: 2 } });
+    const before = botAnswer(st, st.ask);
+    eq(before.a === "buy", false, "mid-game the $30 is worth more kept");
+    st.endTrigger = { round: st.round, by: 2, gone: ["towns"] };
+    const last = botAnswer(st, st.ask);
+    eq(last.a, "buy", "the last turn buys the point");
   }],
 ];

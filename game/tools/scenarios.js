@@ -34,6 +34,8 @@ export const SCENARIOS = [
   { name: "setup: each player is dealt 3 Price & Production cards", layer: "rules", status: "ported" },
   { name: "setup: every price starts at the bottom of its track", layer: "rules", status: "ported" },
   { name: "setup: each player starts with $10", layer: "rules", status: "ported" },
+  { name: "setup: Beginners and the per-player building setup do not combine: four tiles on offer", layer: "rules", status: "ported" },
+  { name: "bots: in the final round a bot turns its cash into points", layer: "rules", status: "ported" },
   { name: "setup: railroad lines removed by player count", layer: "rules", status: "ported" },
   { name: "setup: two railroads face up", layer: "rules", status: "ported" },
   { name: "setup: town deck in VP order, 2s on top", layer: "rules", status: "ported" },

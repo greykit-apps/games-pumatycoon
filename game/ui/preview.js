@@ -85,8 +85,9 @@ export function townPreview(st, i) {
   const c = townCost(p, st.townOffer);
   const t = TOWN[st.townOffer];
   const pair = p.rails.length > p.towns.length ? 2 : 0;
+  const bonus = fxValues(p, "vpPerTown").reduce((a, b) => a + b, 0);   // Governor's Mansion
   return {
-    ...c, vp: t.vp, pair,
+    ...c, vp: t.vp, pair, bonus,
     have: p.goods[c.good], tokens: tokens(p),
     canSpecific: p.goods[c.good] >= c.need, canAny: tokens(p) >= c.any,
   };

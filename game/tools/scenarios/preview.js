@@ -51,6 +51,12 @@ export const TESTS = [
     give(st, 0, { goods: { wheat: 1, coal: 3 }, blds: ["brickworks"] });
     const pv = townPreview(st, 0);
     eq([pv.need, pv.any, pv.have, pv.tokens, pv.canSpecific, pv.canAny], [1, 3, 1, 4, true, true], "Brick Works off both");
+    // the Governor's Mansion's VP per town is part of what building it scores
+    give(st, 0, { goods: { wheat: 2 }, blds: ["governor"], towns: [], rails: [] });
+    const g = townPreview(st, 0);
+    const before = publicScore(st, 0);
+    act(st, { a: "town", pay: "specific" });
+    eq(g.vp + g.pair + g.bonus, publicScore(st, 0) - before, "the preview's points are the points the town scores");
   }],
 
   ["screen: market moves add up to the change and name who made them", () => {
