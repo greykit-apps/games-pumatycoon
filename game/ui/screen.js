@@ -144,7 +144,7 @@ export function mountScreen(host, hooks) {
         <span class="tk-delta ${dir}" role="cell"><span aria-hidden="true">${dir === "up" ? "▲" : dir === "down" ? "▼" : "·"}${m.delta ? Math.abs(m.delta) : ""}</span><span class="sr-only">${said}</span></span>
         <span class="tk-by" role="cell">${by}</span>
         <span class="tk-scale" role="cell" aria-label="$${price} on a $${t.min} to $${t.max} track"><span class="lo" aria-hidden="true">${t.min}</span>${scale}<span class="hi" aria-hidden="true">${t.max}</span></span>
-        ${held !== null ? `<span class="tk-hold" role="cell">${held ? `${held} <span class="dim">= ${money(held * price)}</span>` : '<span class="dim">—</span>'}</span>` : ""}
+        ${held !== null ? `<span class="tk-hold${held ? "" : " none"}" role="cell">${held ? `<b>${held}</b><span class="tk-worth">${money(held * price)}</span>` : "<b>0</b>"}</span>` : ""}
       </div>`;
     }
     return `<section class="ticker" role="table" aria-label="The market">

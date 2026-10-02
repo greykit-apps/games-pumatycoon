@@ -81,7 +81,11 @@ h2 .dim{letter-spacing:.04em;text-transform:none;font-weight:400}
 .tk-scale i.at{height:14px;background:var(--c)}
 .tk-scale .lo,.tk-scale .hi{font-size:var(--fs-xs);color:var(--dim);min-width:18px}
 .tk-scale .lo{text-align:right;margin-right:4px} .tk-scale .hi{margin-left:4px}
-.tk-hold{text-align:right;color:var(--text)}
+/* What you hold is read as often as the price, so it is set as large. */
+.tk-hold{display:flex;flex-direction:column;align-items:flex-end;line-height:1.1}
+.tk-hold b{font-size:var(--fs-xl);font-weight:700;color:var(--text)}
+.tk-hold .tk-worth{font-size:var(--fs-xs);color:var(--dim)}
+.tk-hold.none b{color:var(--dim);font-weight:400}
 .tk-row.tick-up{animation:pt-tick-up 1.1s cubic-bezier(.16,1,.3,1)}
 .tk-row.tick-down{animation:pt-tick-down 1.1s cubic-bezier(.16,1,.3,1)}
 @keyframes pt-tick-up{from{background:color-mix(in oklab,var(--up) 24%,transparent)}to{background:transparent}}
