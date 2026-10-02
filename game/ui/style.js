@@ -334,8 +334,9 @@ table.standings tr.just{animation:pt-just 2.2s cubic-bezier(.16,1,.3,1) 1}
 .ask .grp[data-group=s] .row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}
 .ask .grp[data-group=s] button{white-space:nowrap;overflow:hidden;padding:4px 6px;font-size:12.5px}
 .ask .endwarn{margin:0;font-size:var(--fs-s);color:var(--warn)}
-.ask .grp.jumps{flex-direction:row;flex-wrap:wrap;align-items:center;gap:6px}
-.ask .grp.jumps>b{margin-right:4px}
+.ask .q-row{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.ask .grp.jumps{flex-direction:row;flex-wrap:wrap;align-items:center;gap:4px}
+.ask .grp.jumps .jump{min-height:26px;padding:2px 7px;font-size:var(--fs-s)}
 .ask .jump{color:var(--ink)}
 .ask .jump .arr{color:var(--accent)}
 .ask .jump .warn{color:var(--warn)}
@@ -377,7 +378,7 @@ table.tf td button{min-width:40px;min-height:28px;text-align:center;padding:2px 
 .hand.strip .pp{min-height:66px}
 .hand.strip .pp .half{padding:4px 12px;gap:2px}
 .hand.strip .pp .ico{width:24px;height:24px}
-.hand.strip .pp .pp-warn{position:absolute;right:6px;top:5px;padding:0 6px;border:1px solid color-mix(in oklab,var(--warn) 45%,transparent);border-radius:2px}
+.hand.strip .pp .pp-warn{position:absolute;right:6px;bottom:4px;padding:0 6px;border:1px solid color-mix(in oklab,var(--warn) 45%,transparent);border-radius:2px}
 .ask .sub kbd{font:inherit;font-size:10px;color:var(--dim);border:1px solid var(--line);border-radius:2px;padding:0 4px}
 .hand.strip.hidden{display:flex;align-items:center;min-height:72px;border:1px dashed var(--line);padding:0 14px}
 .hand.strip.hidden p{margin:0;font-size:var(--fs-s)}
@@ -402,6 +403,26 @@ button.pp.live .pp-key{color:var(--accent)}
 button.pp{cursor:pointer}
 button.pp.live:hover,button.pp.live:focus-visible{border-color:var(--accent);background:var(--panel2)}
 button.pp[aria-pressed=true]{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent);background:var(--panel)}
+/* A hand card's popup: what producing with it would do, buildings named. */
+.cardpop{position:fixed;z-index:25;width:min(400px,calc(100vw - 16px));background:var(--panel);border:1px solid var(--accent);border-radius:3px;
+  padding:9px 12px;box-shadow:0 10px 30px rgba(0,0,0,.6);pointer-events:none;font-size:var(--fs-s);color:var(--text);line-height:1.45}
+.cardpop p{margin:0 0 3px}
+.cardpop p:last-child{margin-bottom:0}
+.cardpop .pop-t{color:var(--accent);font-weight:700;margin-bottom:5px}
+.cardpop .dim{color:var(--dim);display:inline-block;min-width:82px}
+.cardpop p.dim{display:block;min-width:0}
+.cardpop .pop-b{color:var(--vp);border:1px solid color-mix(in oklab,var(--vp) 40%,transparent);border-radius:2px;padding:0 5px}
+.cardpop .warn{color:var(--warn)}
+@media (hover:none){.cardpop{display:none}}
+/* What you own: compact lines, the effect in the tile's own words. */
+.owned{border-top:1px solid var(--line);padding-top:8px}
+.owned summary{cursor:pointer;color:var(--ink);font-size:var(--fs-xs);letter-spacing:.14em;text-transform:uppercase;font-weight:700}
+.owned summary .dim{letter-spacing:.04em;text-transform:none;font-weight:400;margin-left:6px}
+.owned ul{list-style:none;margin:5px 0 0;padding:0;display:flex;flex-direction:column;gap:2px;font-size:var(--fs-s);color:var(--ink);line-height:1.35}
+.owned li b{color:var(--text);font-weight:600}
+.owned .badge{display:inline-block;font-size:10px;border:1px solid var(--accent);color:var(--accent);border-radius:2px;padding:0 4px;margin-right:6px;vertical-align:1px}
+.owned .ow-pts{margin:6px 0 0;font-size:var(--fs-s);color:var(--vp)}
+.owned > p.dim{margin:6px 0 0;font-size:var(--fs-s)}
 .mission{font-size:var(--fs-s);color:var(--ink);margin:8px 0 0;line-height:1.5}
 .mission b{color:var(--text)}
 .mission .m-now{display:block;color:var(--dim);margin-top:2px}

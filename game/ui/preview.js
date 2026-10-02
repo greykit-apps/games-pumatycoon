@@ -8,6 +8,7 @@ import { MISSIONS } from "../data/missions.js";
 import { CARD, bonusOptions } from "../engine/machine.js";
 import {
   RAIL, TOWN, lineOf, fxValues, tokens, storageLimit, productionMax, clampPrice, townCost, face, bType, publicScore,
+  hasFx, handLimit,
 } from "../engine/rules.js";
 
 /** Selling q of g now: what it pays and where the price is left. */
@@ -43,6 +44,25 @@ export function cardPreview(st, i, cardId) {
     take, choose, prod: card.prod, bonus, bonusChoice: bonuses.length > 1,
     gain, after, limit, over: Math.max(0, after - limit),
     rises, heldGain: rises.reduce((a, r) => a + r.value, 0),
+  };
+}
+
+/** Everything producing with a card would do for player i, with the
+ * buildings that change it named: which P building lifts how many you take,
+ * the B buildings' bonuses (one is used), the Trading Floor's purchase, the
+ * prices and what they add to your holdings, storage, and the draw after.
+ * The card's popup on the screen is this, worded. */
+export function cardEffects(st, i, cardId) {
+  const p = st.players[i];
+  const pv = cardPreview(st, i, cardId);
+  const max = productionMax(p);
+  const pb = p.blds.find(b => face(b.id, b.side).fx.prodMax === max);
+  return {
+    ...pv, max,
+    prodBld: pb && max > 3 ? { id: pb.id, side: pb.side } : null,
+    bonuses: bonusOptions(st, i),
+    tradingFloor: hasFx(p, "tradingFloor"),
+    draw: handLimit(p),
   };
 }
 

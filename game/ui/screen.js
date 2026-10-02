@@ -43,7 +43,7 @@ import { startTour } from "./tour.js";
 import { HAND_STRIP, SHORT } from "./style.js";
 import {
   sellPreview, cardPreview, railPreview, townPreview, buyPreview, marketMoves, cheapest, lastTurnEntries, auctionSeats, quickBids, endClock, standing,
-  secretsShown, holders, missionProgress,
+  secretsShown, holders, missionProgress, cardEffects,
 } from "./preview.js";
 
 const VIEW_KEY = "pumatycoon_view_v1";
@@ -72,7 +72,8 @@ export function mountScreen(host, hooks) {
   let selected = null;        // the hand card being previewed before producing
   let staged = null;
   let tfPick = null;          // the Trading Floor cell ("from|good") whose quantities are showing          // canon() of the purchase being previewed before it is made
-  let recapOpen = false;      // the routine lines of "since your turn" are shown, not folded
+  let recapOpen = false;
+  let ownOpen = null;         // "what you own": null follows the layout (open beside a hand row), else the player's choice      // the routine lines of "since your turn" are shown, not folded
   let prevTurn = null;
   let logOpen = false;
   let lastSig = null;         // the question last drawn, to tell a new one from a redraw
@@ -114,6 +115,18 @@ export function mountScreen(host, hooks) {
   /* Whose hand the strip shows: the viewer's; in hot seat while bots play, a
    * hidden placeholder of the same height, so the table never jumps. */
   const stripFor = () => (stripQuery && stripQuery.matches && humans().length ? (me() !== null ? me() : "hidden") : null);
+  /* A card's popup: what producing with it would do for you now, buildings
+   * named. It lives outside the redrawn host, like the announcer, so a bot's
+   * move redrawing the screen does not leave it orphaned. */
+  let pop = document.getElementById("pt-cardpop");
+  if (!pop) {
+    pop = document.createElement("div");
+    pop.id = "pt-cardpop";
+    pop.className = "cardpop";
+    pop.setAttribute("role", "tooltip");
+    pop.hidden = true;
+    document.body.appendChild(pop);
+  }
   const humans = () => st.players.map((p, i) => (p.seat === "human" ? i : -1)).filter(i => i >= 0);
   const sees = i => { if (curtain) return false; const s = secretsShown(st, viewer); return s === "all" || s === i; };
   /* Whose public view the table takes (their holdings, their "since your
@@ -368,7 +381,10 @@ export function mountScreen(host, hooks) {
     if (!all.length && !last) return "";
     // Folded, the strip keeps what scored (railroads won, towns built, the end) and counts the rest:
     // the market above already shows every price that moved and who moved it.
-    const shown = recapOpen ? all.slice(-5) : shortQuery && shortQuery.matches ? [] : all.filter(e => RECAP_BIG.has(e.k)).slice(-3);
+    // Folded on a desktop (the desk holds the hand or what you own below it); a
+    // phone, where the desk is not pinned, keeps the scoring lines in view.
+    const folded = (shortQuery && shortQuery.matches) || (stripQuery && stripQuery.matches);
+    const shown = recapOpen ? all.slice(-5) : folded ? [] : all.filter(e => RECAP_BIG.has(e.k)).slice(-3);
     const hidden = all.length - shown.length;
     const gain = base.gain > 0 ? ` <span class="vpc">+${base.gain} VP</span>` : "";
     const toggle = recapOpen
@@ -524,11 +540,12 @@ export function mountScreen(host, hooks) {
           groups.buy.length && ["b", "Buy a building", clk.ends.bld],
           groups.town.length && ["t", `Build ${esc(townName(st.townOffer))}`, clk.ends.town],
         ].filter(Boolean);
-        const tableG = jumps.length ? `<div class="grp jumps" data-group="x"><b title="Each row in the table says what it is worth to you">Table</b>
+        // The jumps ride on the heading's line, which has the room.
+        const tableG = jumps.length ? `<div class="grp jumps" data-group="x"><b class="sr-only">In the table, where each row says what it is worth to you:</b>
           ${jumps.map(([k, label, last]) => `<button class="jump" data-jump="${k}" aria-label="${label}, in the table"><span class="arr" aria-hidden="true">← </span>${short[k]}${last ? ' <span class="warn">· last</span>' : ""}<kbd>${k.toUpperCase()}</kbd></button>`).join("")}</div>` : "";
         const first = full ? `${advice}${sellG}${produce}` : `${produce}${sellG}`;
-        return `<div class="ask">${q("Your move")}
-          ${first}${tableG}${g("Upgrade", "", groups.upgrade)}${g("", "", groups.other)}</div>`;
+        return `<div class="ask"><div class="q-row">${q("Your move")}${tableG}</div>
+          ${first}${g("Upgrade", "", groups.upgrade)}${g("", "", groups.other)}</div>`;
       }
 
       case "take": {
@@ -617,12 +634,43 @@ export function mountScreen(host, hooks) {
       const pv = k >= 0 ? cardPreview(st, v, id) : null;
       const tag = k >= 0 ? "button" : "div";
       const hint = pv ? hintAttr({ g: Object.fromEntries(pv.rises.map(r => [r.good, r.to])) }) : "";
-      return `<${tag} class="pp${k >= 0 ? " live" : ""}"${k >= 0 ? ` data-select="${id}" aria-pressed="${selected === id}" aria-label="Card ${n + 1}: preview producing with it"${hint}` : ""}>
+      return `<${tag} class="pp${k >= 0 ? " live" : ""}" data-card="${id}" data-n="${n + 1}"${k >= 0 ? ` data-select="${id}" aria-pressed="${selected === id}" aria-label="Card ${n + 1}: preview producing with it"${hint}` : ""}>
         <span class="pp-key" aria-hidden="true">${n + 1}</span>
         <span class="half prod"><span class="lab">${pv ? (pv.choose ? `take ${pv.take} of` : "take all") : "production"}</span><span class="icons">${goodsIcons(c.prod, 28)}</span></span>
         <span class="half price"><span class="lab">prices rise</span><span class="icons">${goodsIcons(c.price, 28)}</span></span>
         ${pv && pv.over ? `<span class="pp-warn">⚠ discard ${pv.over}</span>` : ""}</${tag}>`;
     }).join("")}</div>`;
+  }
+
+  /* What you own and what it does: your buildings with their effects (the
+   * tile's own words), your railroad lines and what the next card of each
+   * adds, your towns, and where your points come from. Open by default when
+   * the desk has room (the hand is up in its row); a summary line otherwise. */
+  function owned() {
+    const v = me();
+    if (v === null || st.over || selected || staged) return "";   // one decision at a time
+    if (st.ask && st.ask.player === v && !["action", "keepMission", "startGoods", "bid"].includes(st.ask.kind)) return "";   // mid-move
+    const p = st.players[v];
+    const sc = scoreOf(st, v);
+    const lines = {};
+    for (const r of p.rails) lines[lineOf(r)] = (lines[lineOf(r)] || 0) + 1;
+    const open = ownOpen ?? stripFor() === v;
+    const count = [p.blds.length && `${p.blds.length} building${p.blds.length > 1 ? "s" : ""}`, p.rails.length && `${p.rails.length} railroad${p.rails.length > 1 ? "s" : ""}`, p.towns.length && `${p.towns.length} town${p.towns.length > 1 ? "s" : ""}`].filter(Boolean).join(", ") || "nothing yet";
+    const pts = [["towns", sc.towns], ["railroads", sc.rails], ["buildings", sc.buildings], ["pairs", sc.pairs], ["bonuses", sc.bonus]].filter(([, x]) => x).map(([k, x]) => `${k} ${x}`).join(" · ");
+    const blds = p.blds.map(b => {
+      const t = bType(b.id);
+      const up = b.side === 0 && t.sides.length > 1 ? ` <span class="dim">· upgrades for ${money(t.sides[1].cost)}</span>` : "";
+      return `<li>${t.tag ? `<span class="badge">${t.tag}</span>` : ""}<b>${esc(bldName(b.id, b.side))}</b> <span class="ow-fx">${esc(effectText(b.id, b.side))}</span>${up}</li>`;
+    }).join("");
+    const rails = Object.entries(lines).map(([l, k]) => {
+      const vp = RAIL[l].vp;
+      return `<li><b>${esc(lineName(l))}</b> ×${k} <span class="vpc">${vp[k - 1]} VP</span>${k < 4 ? ` <span class="dim">· the next card +${vp[k] - vp[k - 1]}</span>` : ""}</li>`;
+    }).join("");
+    const towns = p.towns.length ? `<li><b>Towns</b> ${p.towns.map(t => `${esc(townName(t))} <span class="vpc">${TOWN[t].vp}</span>`).join(", ")}${p.towns.length !== p.rails.length ? ` <span class="dim">· ${p.towns.length > p.rails.length ? "a railroad" : "a town"} would make another pair (+2)</span>` : ""}</li>` : "";
+    const body = p.blds.length || p.rails.length || p.towns.length
+      ? `<ul>${blds}${rails}${towns}</ul>${pts ? `<p class="ow-pts">Points from ${pts}</p>` : ""}`
+      : '<p class="dim">Buildings, railroads and towns you get appear here, with what they do.</p>';
+    return `<details class="owned"${open ? " open" : ""}><summary>What you own <span class="dim">${count}</span></summary>${body}</details>`;
   }
 
   /* The hand as a row under the market, on a wide window. */
@@ -672,7 +720,7 @@ export function mountScreen(host, hooks) {
     for (const k of ["select", "stage", "tfpick", "jump", "player", "pick", "helptab", "bidat"]) if (d[k] !== undefined) return `${k}:${d[k]}`;
     for (const k of ["help", "speed", "debug", "newgame", "bidgo", "bidpass", "bidback", "unselect", "pickgo", "openlog", "lift", "tourreplay", "helpclose", "closeresults", "unstage", "recap", "rematch"]) if (el.hasAttribute(`data-${k}`)) return k;
     if (el.matches("[data-bid]")) return "bid";
-    if (el.matches("summary")) return "summary";
+    if (el.matches("summary")) return `summary:${el.parentElement.className}`;
     return null;
   }
   function findKey(key) {
@@ -687,6 +735,7 @@ export function mountScreen(host, hooks) {
 
   function render() {
     const prevKey = keyOf(document.activeElement);
+    hidePop();
     const sig = askSig();
     const arrived = sig !== lastSig;
     lastSig = sig;
@@ -734,7 +783,7 @@ export function mountScreen(host, hooks) {
         <div class="log">${lines.map(l => `<div><span class="r">${l.r}</span>${esc(l.text)}</div>`).join("")}</div></details>
     </section>
     <aside class="side" aria-label="Your desk">
-      ${st.tc && st.tc.auc && !failure && !st.over ? `${wallet()}${auctionBox()}${hand()}` : curtain && !failure ? curtainBox() : `${wallet()}${recap()}${askBox()}${hand()}`}
+      ${st.tc && st.tc.auc && !failure && !st.over ? `${wallet()}${auctionBox()}${hand()}${owned()}` : curtain && !failure ? curtainBox() : `${wallet()}${recap()}${askBox()}${hand()}${owned()}`}
     </aside>
   </div>
 </div>
@@ -748,6 +797,8 @@ ${st.over && !resultsHidden ? resultsBox() : ""}${helpTab !== null ? helpBox() :
       if (arrived) box?.classList.add("arrive");
     }
     host.querySelector(".fulllog")?.addEventListener("toggle", e => { logOpen = e.target.open; });
+    // Only a person's click is a choice; the toggle event also fires as the open attribute is parsed.
+    host.querySelector(".owned > summary")?.addEventListener("click", e => { ownOpen = !e.target.parentElement.open; });
 
     if (touring) return;
     if (mine() && tourFor.has(st.ask.player) && helpTab === null) return runTour(st.ask.player);
@@ -867,9 +918,50 @@ ${st.over && !resultsHidden ? resultsBox() : ""}${helpTab !== null ? helpBox() :
     for (const g of h.take || []) host.querySelector(`.tk-row[data-g="${g}"]`)?.classList.add("hint");
     for (const r of h.rows || []) host.querySelector(`[data-row="${r}"]`)?.classList.add("hint");
   }
-  const onOver = e => { const el = e.target.closest("[data-hint]"); if (el) showHint(el); };
-  const onOut = e => { const el = e.target.closest("[data-hint]"); if (el && !el.contains(e.relatedTarget)) clearHint(); };
-  const onFocus = e => { const el = e.target.closest("[data-hint]"); if (el) showHint(el); else clearHint(); };
+  /* The card popup: built from the engine's own numbers (preview.js cardEffects). */
+  function cardPop(card) {
+    const v = me();
+    if (v === null || !st.players[v].hand.includes(card.dataset.card)) return hidePop();
+    const fx = cardEffects(st, v, card.dataset.card);
+    const named = (b) => esc(bldName(b.id ?? b.bld, b.side ?? st.players[v].blds.find(x => x.id === b.bld)?.side ?? 0));
+    const lines = [];
+    lines.push(`<p><span class="dim">You take</span> ${fx.choose ? `${fx.take} of` : "all"} ${goodsIcons(fx.prod, 15)}${fx.prodBld ? ` <span class="pop-b">${named(fx.prodBld)}: up to ${fx.max}</span>` : fx.choose ? ' <span class="dim">(3 without a P building)</span>' : ""}</p>`);
+    // One entry per B building; a choice of commodity (Machine Shop) is "of your choice".
+    const byBld = new Map();
+    for (const b of fx.bonuses) (byBld.get(b.bld) || byBld.set(b.bld, []).get(b.bld)).push(b);
+    const bonus = [...byBld.values()].map(list => {
+      const what = list.length > 1 ? `+${list[0].goods.length} ${icon("any", 15, "any commodity")} of your choice` : `+${goodsIcons(list[0].goods, 15)}`;
+      return `${what} <span class="pop-b">${named(list[0])}</span>`;
+    });
+    if (bonus.length) lines.push(`<p><span class="dim">Bonus</span> ${bonus.length > 1 ? `one of: ${bonus.join(", ")}` : bonus[0]}</p>`);
+    if (fx.tradingFloor) lines.push('<p><span class="dim">First</span> <span class="pop-b">Trading Floor</span>: you may buy one commodity from one player at today\'s price</p>');
+    lines.push(`<p><span class="dim">Prices rise</span> ${fx.rises.map(r => `${icon(r.good, 14, GOOD_NAME[r.good])} ${money(r.from)}→${money(r.to)}`).join(" ")}${fx.heldGain ? ` <span class="up">+${money(fx.heldGain)} on what you hold</span>` : ""}</p>`);
+    lines.push(fx.over ? `<p class="warn">⚠ Storage ${fx.after} of ${fx.limit}: you would discard ${fx.over}</p>` : `<p><span class="dim">Storage</span> ${fx.after} of ${fx.limit}</p>`);
+    lines.push(`<p class="dim">Then you draw back up to ${fx.draw} cards.</p>`);
+    pop.innerHTML = `<p class="pop-t">Card ${card.dataset.n}: producing with it</p>${lines.join("")}`;
+    pop.hidden = false;
+    const r = card.getBoundingClientRect();
+    const pw = pop.offsetWidth, ph = pop.offsetHeight;
+    let top = r.top - ph - 8;
+    if (top < 8) top = Math.min(innerHeight - ph - 8, r.bottom + 8);
+    const left = Math.max(8, Math.min(innerWidth - pw - 8, r.left + r.width / 2 - pw / 2));
+    pop.style.left = `${left}px`;
+    pop.style.top = `${top}px`;
+  }
+  function hidePop() { pop.hidden = true; }
+
+  const onOver = e => {
+    const el = e.target.closest("[data-hint]"); if (el) showHint(el);
+    const card = e.target.closest(".pp[data-card]"); if (card) cardPop(card);
+  };
+  const onOut = e => {
+    const el = e.target.closest("[data-hint]"); if (el && !el.contains(e.relatedTarget)) clearHint();
+    const card = e.target.closest(".pp[data-card]"); if (card && !card.contains(e.relatedTarget)) hidePop();
+  };
+  const onFocus = e => {
+    const el = e.target.closest("[data-hint]"); if (el) showHint(el); else clearHint();
+    const card = e.target.closest(".pp[data-card]"); if (card) cardPop(card); else hidePop();
+  };
   host.addEventListener("pointerover", onOver);
   host.addEventListener("pointerout", onOut);
   host.addEventListener("focusin", onFocus);
@@ -1077,6 +1169,7 @@ ${st.over && !resultsHidden ? resultsBox() : ""}${helpTab !== null ? helpBox() :
       host.removeEventListener("pointerout", onOut);
       host.removeEventListener("focusin", onFocus);
       host.removeEventListener("input", onInput);
+      hidePop();
       stripQuery?.removeEventListener("change", onStrip);
       shortQuery?.removeEventListener("change", onStrip);
       window.removeEventListener("resize", onStrip);
