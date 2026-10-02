@@ -87,3 +87,47 @@ export function marketMoves(st, baseline) {
   }
   return out;
 }
+
+/** The n cheapest commodities player i can spend (lowest price first; ties in
+ * commodity order), not counting what is already set aside in `chosen`. The
+ * one-click "pay with my cheapest" and "discard the cheapest" use it. */
+export function cheapest(st, i, n, chosen = {}) {
+  const p = st.players[i];
+  const pool = [];
+  for (const g of GOODS) for (let k = 0; k < p.goods[g] - (chosen[g] || 0); k++) pool.push(g);
+  pool.sort((a, b) => st.prices[a] - st.prices[b] || GOODS.indexOf(a) - GOODS.indexOf(b));
+  return pool.slice(0, n);
+}
+
+/** The auction in progress, one entry per seat in bidding order from the
+ * opener: each seat's latest bid, whether it is out, and whose bid is asked.
+ * Bounded by the number of seats however long the bidding runs. */
+export function auctionSeats(st) {
+  const a = st.tc && st.tc.auc;
+  if (!a) return null;
+  const last = {};
+  if (a.seq !== undefined) for (const e of st.log) if (e.n >= a.seq && e.k === "bid" && !e.pass) last[e.p] = e.amount;
+  const order = Array.from({ length: st.n }, (_, k) => (a.opener + k) % st.n);
+  return order.map(i => ({
+    i, bid: last[i] ?? null, out: a.out.includes(i), high: i === a.bidder,
+    asked: !!(st.ask && st.ask.kind === "bid" && st.ask.player === i),
+  }));
+}
+
+/** The one-press raises beside the main bid: a step or two over the minimum
+ * and a jump, never past what the bidder holds. */
+export function quickBids(lo, hi) {
+  return [...new Set([lo + 1, lo + 2, lo + 5].map(v => Math.min(v, hi)))].filter(v => v > lo);
+}
+
+/** The log entries of player i's most recent finished turn. */
+export function lastTurnEntries(st, i) {
+  const turns = [];
+  st.log.forEach((e, k) => { if (e.k === "turn") turns.push(k); });
+  for (let t = turns.length - 1; t >= 0; t--) {
+    if (st.log[turns[t]].p !== i) continue;
+    if (t === turns.length - 1 && st.turn === i && !st.over) continue;   // the turn in progress
+    return st.log.slice(turns[t] + 1, t + 1 < turns.length ? turns[t + 1] : st.log.length);
+  }
+  return [];
+}

@@ -129,3 +129,43 @@ export function recapLines(st, sinceN, viewer) {
   }
   return out;
 }
+
+/** One line saying what a player's own last turn did, and whether it was one
+ * of the moves that score (a railroad won, a town built). */
+export function lastMoveLine(entries, i, players) {
+  const parts = [];
+  let big = false;
+  const gl = arr => {
+    const c = {};
+    for (const g of arr) c[g] = (c[g] || 0) + 1;
+    return Object.entries(c).map(([g, k]) => `${GOOD_NAME[g]}${k > 1 ? ` ×${k}` : ""}`).join(", ");
+  };
+  let discards = 0;
+  for (let k = 0; k < entries.length; k++) {
+    const e = entries[k];
+    if (e.k === "produce" && e.p === i) {
+      const next = entries.slice(k + 1).find(x => x.k === "prices");
+      const moved = next ? Object.entries(next.moved).map(([g, d]) => `${GOOD_NAME[g]} $${next.prices[g] - d}→$${next.prices[g]}`) : [];
+      parts.push(`produced ${gl([...e.take, ...(e.bonus ? e.bonus.goods : [])])}${moved.length ? ` · ${moved.join(", ")}` : ""}`);
+    } else if (e.k === "sell" && e.p === i) {
+      parts.push(`sold ${e.q} ${GOOD_NAME[e.good]} for $${e.q * e.price}${e.exp ? " (Export +$3)" : ""} · ${GOOD_NAME[e.good]} $${e.before}→$${e.after}`);
+    } else if (e.k === "tradingFloor" && e.p === i) {
+      parts.push(`bought ${e.qty} ${GOOD_NAME[e.good]} from ${players[e.from].name} for $${e.qty * e.price}`);
+    } else if (e.k === "won") {
+      if (e.p === i) { parts.push(`won the ${railName(e.rail)} for $${e.paid}`); big = true; }
+      else parts.push(`lost the ${railName(e.rail)} auction to ${players[e.p].name} ($${e.paid})`);
+    } else if (e.k === "town" && e.p === i) {
+      parts.push(`built ${townName(e.town)}`); big = true;
+    } else if (e.k === "buy" && e.p === i) {
+      parts.push(`bought ${bldName(e.bld)} for $${e.cost}`);
+    } else if (e.k === "upgrade" && e.p === i) {
+      parts.push(`upgraded to ${bldName(e.bld, 1)} for $${e.cost}`);
+    } else if (e.k === "discard" && e.p === i) {
+      discards++;
+    } else if (e.k === "pass" && e.p === i) {
+      parts.push("passed");
+    }
+  }
+  if (discards) parts.push(`discarded ${discards} for storage`);
+  return parts.length ? { text: `You ${parts.join("; then ")}`, big } : null;
+}

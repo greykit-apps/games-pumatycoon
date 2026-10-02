@@ -25,7 +25,12 @@ import { HELP_TABS } from "./help.js";
 const SAVE_KEY = "pumatycoon_game_v1";
 const PREFS_KEY = "pumatycoon_prefs_v1";
 const TRACE_KEY = "pumatycoon_trace_v1";
-const SPEEDS = { slow: 1100, normal: 450, fast: 90 };
+/* Bots are paced by the move, not by the answer: one beat before each turn's
+ * action, a shorter one before each bid, and none for the quiet steps inside
+ * a move (which commodities to take, which bonus, each discard), so a bot's
+ * turn reads as one thing happening rather than several pauses. */
+const SPEEDS = { slow: 1300, normal: 650, fast: 120 };
+const BEAT = { action: 1, bid: 0.45, keepMission: 0.4, startGoods: 0.4 };
 
 const store = {
   get(k) { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } },
@@ -116,6 +121,7 @@ function openScreen() {
   host.onchange = null;
   screen = mountScreen(host, {
     submit: a => advance(a),
+    submitMany: list => advance(list[0], list.slice(1)),
     newGame: () => toSetup(),
     debugDump: downloadDump,
     speedName: () => prefs.speed,
@@ -126,8 +132,11 @@ function openScreen() {
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
-/** Step the engine until a human must answer; bots answer a beat apart. */
-async function advance(answer) {
+/** Step the engine until a human must answer; bots answer a beat apart.
+ * `queued` are further answers from the same person (a one-click "pay with my
+ * cheapest" is several answers); each is used only while that person is still
+ * the one being asked, and the first refusal drops the rest. */
+async function advance(answer, queued = []) {
   if (busy) return;
   busy = true;
   const gen = generation;
@@ -143,8 +152,11 @@ async function advance(answer) {
       screen.update(st, r.events);
       if (r.refused) break;
       const w = st.ask;
+      if (w && queued.length && ask && w.player === ask.player && w.kind === ask.kind && st.players[w.player].seat === "human") { a = queued.shift(); continue; }
+      queued = [];
       if (!w || st.players[w.player].seat !== "bot") break;
-      await sleep(SPEEDS[prefs.speed] ?? SPEEDS.normal);
+      const beat = BEAT[w.kind] ?? 0;
+      if (beat) await sleep((SPEEDS[prefs.speed] ?? SPEEDS.normal) * beat);
       if (gen !== generation) return;
       a = botAnswer(st, w);
     }

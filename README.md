@@ -36,10 +36,16 @@ at play time.
 - **Autosave and resume**, mid-auction included.
 - **A trading-terminal screen**: a market ticker with each price's move since
   your last turn and who made it, an order book of railroads, the town and
-  buildings showing what each is worth to you, live public standings, an
-  auction ladder, and a "since your turn" recap. Every choice previews what it
+  buildings showing what each is worth to you, live public standings, your
+  cash pinned at the top of your desk, and a "since your turn" recap. An
+  auction is one box that never grows (the high bid, each seat's last bid,
+  your bid), so the Bid button sits still from round to round and a run of
+  raises is a run of Enter presses. Every choice previews what it
   would do (proceeds, price moves, storage overflow, VP) before you commit,
-  and producing takes a deliberate second click.
+  and producing takes a deliberate second click. Paying a town's any-mix or
+  discarding for storage is one click ("pay with my cheapest"), your own
+  last move is echoed back with what it earned and moved, and at the storage
+  limit the screen says the way out and puts it first.
 - **Guidance for new players**: a one-minute walkthrough that spotlights each
   part of the table at the first move (on until a browser has seen it once,
   replayable from the help), and the box waiting for your answer breathes
@@ -57,7 +63,8 @@ list is below.
 | `S` `A` `B` `T` | jump to Sell, Auction, Buy or the Town (a jump never commits) |
 | `A` on a sale | sell all |
 | `Esc` | put the previewed card back |
-| `Enter` | take the keyboard from the curtain; place a bid |
+| `Enter` | take the keyboard from the curtain |
+| `Enter`, `↑` `↓` (`Shift` ±5), `P`, `Esc` | in an auction: bid the amount shown (the minimum unless changed), walk it, pass, take back an unopened auction |
 | `?` | how to play; `Esc` closes it |
 | `Enter` / `→`, `←`, `Esc` | next, back and end, in the walkthrough |
 

@@ -3,7 +3,8 @@
  * and checks the preview made beforehand against what happened. */
 
 import { table, give, act, eq } from "./harness.js";
-import { sellPreview, cardPreview, railPreview, townPreview, marketMoves } from "../../ui/preview.js";
+import { sellPreview, cardPreview, railPreview, townPreview, marketMoves, cheapest, lastTurnEntries, auctionSeats, quickBids } from "../../ui/preview.js";
+import { lastMoveLine } from "../../ui/text.js";
 import { tokens } from "../../engine/rules.js";
 
 export const TESTS = [
@@ -62,5 +63,59 @@ export const TESTS = [
     eq(m.wheat.delta, st.prices.wheat - baseline.prices.wheat);
     eq(Object.values(m.wheat.by).reduce((a, b) => a + b, 0), m.wheat.delta, "the movers sum to the change");
     eq([m.wheat.by[0], m.wheat.by[1]], [2, -2], "P0's card +2, P1's sale -2");
+  }],
+  ["screen: pay with my cheapest picks the cheapest and the engine takes every step", () => {
+    const st = table();
+    st.townOffer = "bridgewater";                          // any 4
+    give(st, 0, { goods: { wheat: 1, coal: 2, luxury: 3 } });
+    st.prices.wheat = 2; st.prices.coal = 5; st.prices.luxury = 9;
+    act(st, { a: "town", pay: "any" });
+    const pick = cheapest(st, 0, st.ask.left, st.ask.chosen);
+    eq(pick, ["wheat", "coal", "coal", "luxury"], "cheapest first");
+    for (const g of pick) act(st, g);
+    eq(st.players[0].towns, ["bridgewater"]);
+    eq(st.players[0].goods.luxury, 2, "the dear ones kept");
+  }],
+
+  ["screen: your last move names what you did and the prices it moved", () => {
+    const st = table();
+    give(st, 0, { hand: ["pp52"], goods: {} });
+    act(st, { a: "produce", card: "pp52" });
+    act(st, ["wood", "wood", "goods"]);
+    // now P1's turn: P0's last turn is finished
+    const line = lastMoveLine(lastTurnEntries(st, 0), 0, st.players);
+    eq(line.big, false);
+    eq(line.text, "You produced Wood ×2, Goods · Goods $3→$4, Luxury $3→$4");
+    give(st, 1, { goods: { iron: 4 }, cash: 0 });
+    st.prices.iron = 13;
+    act(st, { a: "sell", good: "iron" });
+    act(st, { q: 4 });
+    eq(lastMoveLine(lastTurnEntries(st, 1), 1, st.players).text, "You sold 4 Iron for $52 · Iron $13→$9");
+  }],
+
+  ["screen: the auction box holds one entry per seat however long the bidding runs", () => {
+    const st = table({ n: 4 });
+    for (const i of [0, 1, 2, 3]) give(st, i, { cash: 60 });
+    act(st, { a: "auction", slot: 0 });
+    eq(auctionSeats(st).map(x => [x.i, x.bid, x.asked]), [[0, null, true], [1, null, false], [2, null, false], [3, null, false]], "before the opening bid");
+    act(st, st.ask.lo);                                     // P0 opens
+    let bids = 1;
+    // Three times round the table, P3 passing on the first lap.
+    for (let k = 0; st.tc.auc && k < 8; k++) {
+      const who = st.ask.player;
+      if (who === 3) act(st, "pass"); else { act(st, st.ask.lo); bids++; }
+    }
+    const seats = auctionSeats(st);
+    eq(seats.length, 4, "one per seat, after " + bids + " bids");
+    eq(seats.map(x => x.out), [false, false, false, true]);
+    const high = seats.find(x => x.high);
+    eq(high.bid, st.tc.auc.high, "the high seat shows the high bid");
+    eq(seats.filter(x => x.asked).map(x => x.i), [st.ask.player]);
+  }],
+
+  ["screen: the quick bids raise over the minimum and never past your cash", () => {
+    eq(quickBids(8, 30), [9, 10, 13]);
+    eq(quickBids(8, 10), [9, 10], "capped at what you hold, no repeats");
+    eq(quickBids(8, 8), [], "only the minimum is possible");
   }],
 ];
