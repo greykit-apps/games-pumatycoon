@@ -992,6 +992,12 @@ ${st.over && !resultsHidden ? resultsBox() : ""}${helpTab !== null ? helpBox() :
     if (staged) host.querySelector(".ask .preview [data-answer]")?.focus();
   }
 
+  function produceNow(card) {
+    const w = st.ask;
+    const k = w && w.kind === "action" ? w.options.findIndex(o => o.a === "produce" && o.card === card) : -1;
+    if (k >= 0) answer(k);
+  }
+
   function select(card) {
     staged = null;
     selected = selected === card ? null : card;
@@ -1019,7 +1025,12 @@ ${st.over && !resultsHidden ? resultsBox() : ""}${helpTab !== null ? helpBox() :
     if (b.hasAttribute("data-lift")) { curtain = false; viewer = st.ask.player; lastSig = null; return render(); }
     if (b.hasAttribute("data-openlog")) { logOpen = true; render(); host.querySelector(".fulllog")?.scrollIntoView({ block: "start" }); return; }
     if (b.dataset.player !== undefined) { const i = Number(b.dataset.player); openPlayers.has(i) ? openPlayers.delete(i) : openPlayers.add(i); return render(); }
-    if (b.dataset.select) return select(b.dataset.select);
+    if (b.dataset.select) {
+      // A double-click produces at once: the first click previewed the card, the
+      // second (the browser counts it even though the card was redrawn) commits it.
+      if (e.detail >= 2) return produceNow(b.dataset.select);
+      return select(b.dataset.select);
+    }
     if (b.hasAttribute("data-unselect")) { selected = null; return render(); }
     if (b.dataset.answer !== undefined) return answer(Number(b.dataset.answer));
     if (b.dataset.many) { let list; try { list = JSON.parse(b.dataset.many); } catch (err) { return; } if (list.length) return hooks.submitMany(list); return; }

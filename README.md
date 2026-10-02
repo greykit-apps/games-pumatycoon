@@ -77,7 +77,7 @@ list is below.
 
 | Key | |
 |---|---|
-| `1`–`5` | preview producing with that card; `Enter` on **Produce** commits |
+| `1`–`5` | preview producing with that card; `Enter` on **Produce** commits (or double-click a card) |
 | `S` `A` `B` `T` | jump to Sell, or to the railroads, buildings or town in the table (a jump never commits); arrows walk the list |
 | `A` on a sale | sell all |
 | `Esc` | put the previewed card or purchase back |
