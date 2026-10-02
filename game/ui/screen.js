@@ -636,9 +636,9 @@ export function mountScreen(host, hooks) {
       const hint = pv ? hintAttr({ g: Object.fromEntries(pv.rises.map(r => [r.good, r.to])) }) : "";
       return `<${tag} class="pp${k >= 0 ? " live" : ""}" data-card="${id}" data-n="${n + 1}"${k >= 0 ? ` data-select="${id}" aria-pressed="${selected === id}" aria-label="Card ${n + 1}: preview producing with it"${hint}` : ""}>
         <span class="pp-key" aria-hidden="true">${n + 1}</span>
-        <span class="half prod"><span class="lab">${pv ? (pv.choose ? `take ${pv.take} of` : "take all") : "production"}</span><span class="icons">${goodsIcons(c.prod, 28)}</span></span>
+        <span class="half prod"><span class="lab">${pv ? (pv.choose ? `take ${pv.take} of` : "take all") : "production"}${pv && pv.over ? `<span class="pp-warn"> · ⚠ discard ${pv.over}</span>` : ""}</span><span class="icons">${goodsIcons(c.prod, 28)}</span></span>
         <span class="half price"><span class="lab">prices rise</span><span class="icons">${goodsIcons(c.price, 28)}</span></span>
-        ${pv && pv.over ? `<span class="pp-warn">⚠ discard ${pv.over}</span>` : ""}</${tag}>`;
+        </${tag}>`;
     }).join("")}</div>`;
   }
 
