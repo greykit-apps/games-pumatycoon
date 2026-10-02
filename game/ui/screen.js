@@ -924,21 +924,24 @@ ${st.over && !resultsHidden ? resultsBox() : ""}${helpTab !== null ? helpBox() :
     if (v === null || !st.players[v].hand.includes(card.dataset.card)) return hidePop();
     const fx = cardEffects(st, v, card.dataset.card);
     const named = (b) => esc(bldName(b.id ?? b.bld, b.side ?? st.players[v].blds.find(x => x.id === b.bld)?.side ?? 0));
-    const lines = [];
-    lines.push(`<p><span class="dim">You take</span> ${fx.choose ? `${fx.take} of` : "all"} ${goodsIcons(fx.prod, 15)}${fx.prodBld ? ` <span class="pop-b">${named(fx.prodBld)}: up to ${fx.max}</span>` : fx.choose ? ' <span class="dim">(3 without a P building)</span>' : ""}</p>`);
-    // One entry per B building; a choice of commodity (Machine Shop) is "of your choice".
+    // A two-column list: a label, then one fact per line; the building that
+    // changes a fact is named on its own line beneath it.
+    const row = (label, ...vals) => `<dt>${label}</dt><dd>${vals.filter(Boolean).join("")}</dd>`;
+    const by = text => `<span class="pop-by">${text}</span>`;
+    const rows = [];
+    rows.push(row("Take", `<span class="pop-v">${fx.choose ? `${fx.take} of ` : "all "}${goodsIcons(fx.prod, 16)}</span>`,
+      fx.prodBld ? by(`${named(fx.prodBld)} lets you take up to ${fx.max}`) : fx.choose ? by("3 at most without a P building") : ""));
+    // One entry per B building; a choice of commodity (Machine Shop) is "of your choice". One B counts.
     const byBld = new Map();
     for (const b of fx.bonuses) (byBld.get(b.bld) || byBld.set(b.bld, []).get(b.bld)).push(b);
-    const bonus = [...byBld.values()].map(list => {
-      const what = list.length > 1 ? `+${list[0].goods.length} ${icon("any", 15, "any commodity")} of your choice` : `+${goodsIcons(list[0].goods, 15)}`;
-      return `${what} <span class="pop-b">${named(list[0])}</span>`;
-    });
-    if (bonus.length) lines.push(`<p><span class="dim">Bonus</span> ${bonus.length > 1 ? `one of: ${bonus.join(", ")}` : bonus[0]}</p>`);
-    if (fx.tradingFloor) lines.push('<p><span class="dim">First</span> <span class="pop-b">Trading Floor</span>: you may buy one commodity from one player at today\'s price</p>');
-    lines.push(`<p><span class="dim">Prices rise</span> ${fx.rises.map(r => `${icon(r.good, 14, GOOD_NAME[r.good])} ${money(r.from)}→${money(r.to)}`).join(" ")}${fx.heldGain ? ` <span class="up">+${money(fx.heldGain)} on what you hold</span>` : ""}</p>`);
-    lines.push(fx.over ? `<p class="warn">⚠ Storage ${fx.after} of ${fx.limit}: you would discard ${fx.over}</p>` : `<p><span class="dim">Storage</span> ${fx.after} of ${fx.limit}</p>`);
-    lines.push(`<p class="dim">Then you draw back up to ${fx.draw} cards.</p>`);
-    pop.innerHTML = `<p class="pop-t">Card ${card.dataset.n}: producing with it</p>${lines.join("")}`;
+    const bonus = [...byBld.values()].map(list => `<span class="pop-v">+${list.length > 1 ? `${list[0].goods.length} ${icon("any", 16, "any commodity")} of your choice` : goodsIcons(list[0].goods, 16)}</span>${by(named(list[0]))}`);
+    if (bonus.length) rows.push(row("Bonus", ...bonus, bonus.length > 1 ? '<span class="dim pop-note">only one of these counts</span>' : ""));
+    if (fx.tradingFloor) rows.push(row("First", '<span class="pop-v">buy one commodity from one player at today\'s price</span>', by("Trading Floor")));
+    rows.push(row("Prices", ...fx.rises.map(r => `<span class="pop-v">${icon(r.good, 15, GOOD_NAME[r.good])} ${GOOD_NAME[r.good]} <span class="pop-num">${money(r.from)} → ${money(r.to)}</span>${r.to - r.from < r.by ? ' <span class="dim">(at the top)</span>' : ""}</span>`),
+      fx.heldGain ? `<span class="pop-v up">+${money(fx.heldGain)} on what you hold</span>` : ""));
+    rows.push(row("Storage", fx.over ? `<span class="pop-v warn">${fx.after} of ${fx.limit}: discard ${fx.over}</span>` : `<span class="pop-v">${fx.after} of ${fx.limit}</span>`));
+    rows.push(row("Then", `<span class="pop-v">draw back up to ${fx.draw} cards</span>`));
+    pop.innerHTML = `<p class="pop-t">Card ${card.dataset.n} · producing with it</p><dl>${rows.join("")}</dl>`;
     pop.hidden = false;
     const r = card.getBoundingClientRect();
     const pw = pop.offsetWidth, ph = pop.offsetHeight;

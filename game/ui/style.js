@@ -403,16 +403,21 @@ button.pp.live .pp-key{color:var(--accent)}
 button.pp{cursor:pointer}
 button.pp.live:hover,button.pp.live:focus-visible{border-color:var(--accent);background:var(--panel2)}
 button.pp[aria-pressed=true]{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent);background:var(--panel)}
-/* A hand card's popup: what producing with it would do, buildings named. */
-.cardpop{position:fixed;z-index:25;width:min(400px,calc(100vw - 16px));background:var(--panel);border:1px solid var(--accent);border-radius:3px;
-  padding:9px 12px;box-shadow:0 10px 30px rgba(0,0,0,.6);pointer-events:none;font-size:var(--fs-s);color:var(--text);line-height:1.45}
-.cardpop p{margin:0 0 3px}
-.cardpop p:last-child{margin-bottom:0}
-.cardpop .pop-t{color:var(--accent);font-weight:700;margin-bottom:5px}
-.cardpop .dim{color:var(--dim);display:inline-block;min-width:82px}
-.cardpop p.dim{display:block;min-width:0}
-.cardpop .pop-b{color:var(--vp);border:1px solid color-mix(in oklab,var(--vp) 40%,transparent);border-radius:2px;padding:0 5px}
+/* A hand card's popup: a two-column list, one fact a line, the building
+ * that changes a fact named beneath it. */
+.cardpop{position:fixed;z-index:25;width:min(340px,calc(100vw - 16px));background:var(--panel);border:1px solid var(--accent);border-radius:3px;
+  padding:10px 12px 11px;box-shadow:0 10px 30px rgba(0,0,0,.6);pointer-events:none;font-size:var(--fs-s);color:var(--text);line-height:1.4}
+.cardpop .pop-t{margin:0 0 8px;color:var(--accent);font-weight:700;font-size:var(--fs-xs);letter-spacing:.12em;text-transform:uppercase}
+.cardpop dl{margin:0;display:grid;grid-template-columns:62px minmax(0,1fr);gap:7px 10px}
+.cardpop dt{color:var(--dim);font-size:var(--fs-xs);letter-spacing:.08em;text-transform:uppercase;padding-top:2px}
+.cardpop dd{margin:0;display:flex;flex-direction:column;gap:2px;min-width:0}
+.cardpop .pop-v{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+.cardpop .pop-num{margin-left:auto;font-weight:600}
+.cardpop .pop-by{color:var(--vp);font-size:var(--fs-xs)}
+.cardpop .pop-by::before{content:"↳ ";color:var(--dim)}
 .cardpop .warn{color:var(--warn)}
+.cardpop .pop-note{font-size:var(--fs-xs);color:var(--dim)}
+.cardpop .up{color:var(--up)}
 @media (hover:none){.cardpop{display:none}}
 /* What you own: compact lines, the effect in the tile's own words. */
 .owned{border-top:1px solid var(--line);padding-top:8px}
