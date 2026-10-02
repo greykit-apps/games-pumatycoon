@@ -4,6 +4,7 @@
  * Tested headlessly in game/tools/scenarios/preview.js. */
 
 import { GOODS, TRACK } from "../data/commodities.js";
+import { MISSIONS } from "../data/missions.js";
 import { CARD, bonusOptions } from "../engine/machine.js";
 import {
   RAIL, TOWN, lineOf, fxValues, tokens, storageLimit, productionMax, clampPrice, townCost, face, bType, publicScore,
@@ -116,6 +117,53 @@ export function standing(st, i) {
   const others = vp.map((x, j) => [x, j]).filter(([, j]) => j !== i).sort((a, b) => b[0] - a[0]);
   const [best, who] = others[0] || [mine, i];
   return { vp: mine, place, tied, of: st.n, gap: mine - best, rival: who };
+}
+
+/** Hot seat (rulebook p.11: money, hand and mission are secret): whose
+ * secrets the desk may show. One human: theirs, always. No humans: all, a
+ * spectator's screen. Two or more: only the human being asked, and only
+ * when they are the one at the keyboard; the moment their move hands over
+ * to a bot, nobody's, so the next human never sees the last one's. */
+export function secretsShown(st, viewer) {
+  const hs = st.players.map((p, i) => (p.seat === "human" ? i : -1)).filter(i => i >= 0);
+  if (st.over || hs.length === 0) return "all";
+  if (hs.length === 1) return hs[0];
+  const w = st.ask;
+  return w && w.player === viewer && st.players[w.player].seat === "human" ? viewer : null;
+}
+
+/** How much of commodity g the others hold (public, p.11), and who holds most. */
+export function holders(st, g, except = null) {
+  let total = 0, top = null;
+  st.players.forEach((p, j) => {
+    if (j === except) return;
+    total += p.goods[g];
+    if (p.goods[g] && (top === null || p.goods[g] > st.players[top].goods[g])) top = j;
+  });
+  return { total, top, topQty: top === null ? 0 : st.players[top].goods[g] };
+}
+
+const MEASURE = {
+  railroads: p => p.rails.length, towns: p => p.towns.length,
+  buildings: p => p.blds.length, tokens: p => GOODS.reduce((a, g) => a + p.goods[g], 0),
+};
+/** A mission's standing, were the game to end now. Counts only what anyone
+ * can count: a Most Money mission says so rather than leak who is richest. */
+export function missionProgress(st, i) {
+  const id = st.players[i].mission;
+  const m = id && MISSIONS.find(x => x.id === id);
+  if (!m) return null;
+  if (m.per) {
+    const n = st.players[i].goods[m.per];
+    return { kind: "per", held: n, vp: n * m.vp };
+  }
+  if (m.most === "money") return { kind: "secret" };
+  const f = MEASURE[m.most];
+  const mine = f(st.players[i]);
+  let rival = null;
+  st.players.forEach((q, j) => { if (j !== i && (rival === null || f(q) > f(st.players[rival]))) rival = j; });
+  const theirs = f(st.players[rival]);
+  return { kind: "most", mine, rival, theirs, state: mine > theirs ? "ahead" : mine === theirs ? "tied" : "behind", vp: mine > theirs ? m.vp : 0 };
 }
 
 /** Price moves since a baseline: net change per commodity and who caused it. */
