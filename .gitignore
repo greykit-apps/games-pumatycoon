@@ -5,3 +5,6 @@
 # so neither one can slip past `git add -A`.
 source/
 sources/
+
+# Design context for local tooling. Kept on disk, not published.
+.impeccable.md

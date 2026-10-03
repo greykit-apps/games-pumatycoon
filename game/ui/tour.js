@@ -45,7 +45,7 @@ const STEPS = [
   { at: ".ask", short: true, title: "Your move",
     body: "When the game is waiting for you, this box breathes. Producing and selling are here; auctions, buildings and the town are pressed in the table on the left, and the box points to them. Every live control is a legal move and says what it would do, and anything that spends shows you the result before a second press makes it. Above it, \"Since your turn\" lists what the others did while you waited, and at the very top of the desk is your cash. In an auction this box becomes the bidding: Enter bids the minimum, the arrow keys change it, P passes." },
   { at: ".clock", title: "The end",
-    body: "When the last town is built or the last railroad is sold (or under the designer's revision, two of towns, railroads and buildings are all gone), the round is finished and the points are counted. This count in the header shows what is left, and turns amber when one more purchase would end it. Good luck." },
+    body: "When the last town is built or the last railroad is sold (or with the Long ending, two of towns, railroads and buildings are all gone), the round is finished and the points are counted. This count in the header shows what is left, and turns amber when one more purchase would end it. Good luck." },
 ];
 
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));

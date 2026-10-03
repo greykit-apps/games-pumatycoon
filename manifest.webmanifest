@@ -1,7 +1,7 @@
 {
   "name": "PumaTycoon",
   "short_name": "PumaTycoon",
-  "description": "Produce, sell into a moving market, and outbid your rivals for the railroads. A faithful port of the Raccoon Tycoon rules in original vector art.",
+  "description": "Produce, sell into a moving market, and outbid your rivals for the railroads. A trading game for 2–5 players, against bots or friends.",
   "start_url": ".",
   "scope": "./",
   "display": "standalone",
