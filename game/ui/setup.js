@@ -58,7 +58,7 @@ export function mountSetup(host, { onStart, onResume, onHelp }) {
   <div class="setup">
     <section class="pitch">
       <p>Produce commodities, sell into a market everyone moves, and outbid your rivals for the railroads. The most points when the towns or the railroads run out wins.</p>
-      <p class="note">A port of <i>Raccoon Tycoon</i> for 2–5 players, any mix of humans and bots. About 30 rounds.</p>
+      <p class="note">For 2–5 players, any mix of humans and bots. About 30 rounds.</p>
     </section>
     <section class="pane">
       <h2>Seats <span class="dim">in seating order; a random seat starts</span></h2>
@@ -89,8 +89,8 @@ export function mountSetup(host, { onStart, onResume, onHelp }) {
       <label class="opt"><input type="checkbox" data-opt="beginner"${s.options.beginner ? " checked" : ""}><span>Beginners<small>No advanced buildings: only the four commodity buildings on offer at the start.</small></span></label>
       <label class="opt${s.options.beginner ? " off" : ""}"><input type="checkbox" data-opt="basicSetup"${s.options.basicSetup && !s.options.beginner ? " checked" : ""}${s.options.beginner ? " disabled" : ""}><span>Basic buildings by player count<small>One commodity building per player (four at five) on offer; the rest of the row from the advanced stack.</small></span></label>
       <h2>Ending</h2>
-      <label class="opt"><input type="radio" name="endRule" value="printed"${s.options.endRule !== "revised" ? " checked" : ""}><span>As printed<small>The last town bought or the last railroad auctioned ends the game, after the round.</small></span></label>
-      <label class="opt"><input type="radio" name="endRule" value="revised"${s.options.endRule === "revised" ? " checked" : ""}><span>Designer's revision (2019)<small>The game ends when two of the three are all owned: towns, railroads, buildings. Longer games.</small></span></label>
+      <label class="opt"><input type="radio" name="endRule" value="printed"${s.options.endRule !== "revised" ? " checked" : ""}><span>Standard<small>The last town bought or the last railroad auctioned ends the game, after the round.</small></span></label>
+      <label class="opt"><input type="radio" name="endRule" value="revised"${s.options.endRule === "revised" ? " checked" : ""}><span>Long<small>The game ends when two of the three are all owned: towns, railroads, buildings. Longer games.</small></span></label>
     </section>
   </div>
 </div>`;

@@ -1,5 +1,5 @@
 /* How to play, in the game's own words: a paraphrase of the rules the
- * engine plays, never the rulebook's text. */
+ * engine plays. */
 
 import { SKIN } from "../data/skin.js";
 
@@ -28,7 +28,7 @@ export const HELP_TABS = [
 <li>2 VP for every town you can pair with a railroad card.</li>
 <li>Your mission, if missions are in play.</li>
 </ul>
-<p>The game ends when the last town is built or the last railroad auctioned (or, under the designer's revision, when two of towns, railroads and buildings are all owned). The round is played out so everyone has had the same number of turns.</p>`],
+<p>The game ends when the last town is built or the last railroad auctioned (or, with the Long ending, when two of towns, railroads and buildings are all owned). The round is played out so everyone has had the same number of turns.</p>`],
   ["Keys", `
 <ul>
 <li>Hover over a card (or focus it) for what producing with it would do, buildings named</li>
@@ -42,6 +42,22 @@ export const HELP_TABS = [
 <li><b>?</b> — this help; <b>Esc</b> closes it</li>
 <li>In the walkthrough: <b>Enter</b> or <b>→</b> next, <b>←</b> back, <b>Esc</b> to end it</li>
 </ul>`],
-  ["About", `
-<p>${SKIN.game} is a port of <i>Raccoon Tycoon</i> by Glenn Drover (Forbidden Games, 2018), with original artwork and renamed places. Where the rulebook is silent, the game's choice is listed in the README under <i>What's approximated</i>, beside the designer's and publisher's own rulings that settled the rest.</p>`],
+  ["Fine print", `
+<p>A few rules can be read more than one way. Here they play like this:</p>
+<ul>
+<li>If everyone else passes, the opener wins the auction at their opening bid.</li>
+<li>Winning bids go to the bank. The Auction House's $5 arrives after the auction, so it cannot help pay the bid; it pays its owner on their own auctions too.</li>
+<li>Commodities never run out. When the Price &amp; Production deck does, the discards are shuffled into a new one.</li>
+<li>A bigger hand from the Smuggler or Black Market fills at your next production, not when you buy it.</li>
+<li>A building works from the moment it is bought, so a Construction Company allows its own second purchase.</li>
+<li>Freight Company's second sale must be a different commodity.</li>
+<li>A Trading Floor purchase pays the other player the market price. It is not a sale: no price drop, no Trading Firm income, no Export Company rise.</li>
+<li>Trading Firm income is paid by the bank, and a Trading Firm pays on its owner's own sales too.</li>
+<li>Brick Works takes one off either way of paying for a town. Mayor's Office counts itself among your buildings.</li>
+<li>The Machine Shop / Water Mill is in the advanced stack.</li>
+<li>A tie for "most" on a mission scores nothing. A tie on both points and money is shared.</li>
+<li>Sudden Death is offered at the start of your own turn, while you hold $1,000.</li>
+<li>In a two-player game, which towns are removed is random.</li>
+<li>"The last railroad is auctioned" means none are left to deal and none are on offer.</li>
+</ul>`],
 ];

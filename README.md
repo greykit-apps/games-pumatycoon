@@ -1,233 +1,162 @@
 # PumaTycoon
 
 **Produce, sell into a market you and your rivals keep moving, and outbid
-them for the railroads.** A faithful port of the *Raccoon Tycoon* rules,
-drawn in original vector art, with every card transcribed from photographs
-of the printed ones.
+them for the railroads.** A trading game for 2–5 players: against bots,
+against friends sharing one screen, or any mix of the two.
 
-Inspired by *Raccoon Tycoon: The Gilded Age in the Land of Astoria* (Glenn
-Drover, Forbidden Games, 2018). Rules and card contents are reimplemented as
-functional data; the name, artwork and printed cards remain theirs. Nothing
-here is scanned: the icons are original drawings, the cards are
-hand-transcribed tables, and the places and railroads carry new names
-(below).
+**Play it at <https://greykit.com/games/pumatycoon/>.** It runs in the
+browser, with nothing to install and no account.
 
-![Round 15 with four players: the market across the top, each price on its track beside what the others hold and what you hold; the standings beside it, every player's commodities on a line under their row; your hand as a row of cards beneath, the second card's popup open (take all three, the Lumber Yard's bonus wood, the Trading Floor's purchase first, Luxury $10 to $13), and the market previewing that move; the railroads, the town and the buildings in the row below; on the right your $30, Sell, an upgrade, and what you own](screenshots/table.png)
+![A four-player game in progress: the market across the top, the standings beside it, your hand of cards below with one card's preview open, the railroads, town and buildings in the row beneath, and your cash and actions on the right](screenshots/table.png)
 
-![An auction for the Ocelot Line: one box holds the $6 high bid, each seat's last bid (one out), and your bid, with the minimum raise on the big button, one-press raises beside it, and its price per VP](screenshots/auction.png)
+![An auction for a railroad: the high bid, each player's last bid, and your bid on a large button with one-press raises beside it](screenshots/auction.png)
 
-## Play
+## How it plays
 
-<https://greykit.com/games/pumatycoon/>
+On your turn you take one action:
 
-No install. Vanilla ES modules, no build step, no dependencies, no network
-at play time.
+- **Produce**: play a card from your hand. Take commodities from its
+  Production half, then every price in its Price half goes up.
+- **Sell**: sell any amount of one commodity at its current price. The price
+  then drops $1 for every unit sold.
+- **Auction**: put a railroad up for bids. Lose the auction and you act again.
+- **Buy a building**, or upgrade a commodity building you already own.
+- **Build a town**, paid for in commodities.
 
-### What it plays
+Every producer pushes prices up and every seller pushes them down, so the
+market is yours to move, and everyone else's.
 
-- **The whole box, 2–5 seats.** Six commodity markets, the 54 Price &
-  Production cards, 24 railroads, 16 towns, 6 commodity buildings and 21
-  advanced ones, with the 2-player rules (railroad and town removal, the
-  one-bid auction) when two sit down.
-- **Any mix of humans and bots**, bots at three skill levels, hot seat
-  between humans that keeps each player's money, hand and mission secret, as
-  the rulebook requires: they show only while that player is being asked,
-  never while bots play, and a curtain covers the desk (only the desk: the
-  table is public and stays readable) when the keyboard changes hands. In an
-  auction the handover is a line in the auction box, so a bidding war between
-  two people is Enter, Enter.
-- **Every optional rule in the box**, chosen at setup: Mission cards, Sudden
-  Death at $1,000, the beginners' game without advanced buildings, and the
-  basic-buildings-by-player-count setup.
-- **Two endings**: the printed one (last town or last railroad) and the
-  designer's 2019 revision (two of towns, railroads and buildings all owned).
-- **Autosave and resume**, mid-auction included.
-- **A trading-terminal screen**: a market ticker with each price's move since
-  your last turn and who made it, what the others hold of each
-  commodity and who holds most, an order book of railroads, the town and
-  buildings showing what each is worth to you, live public standings, your
-  cash pinned at the top of your desk, and a "since your turn" recap, laid
-  out as aligned tiles, floating over a night scene of Cougar Country, that
-  fit a laptop-height window without scrolling
-  (the market beside the standings, the railroads, town and buildings
-  beneath, and under them the log as a trade blotter, newest first, with
-  the moves since your turn marked; on a wide window the hand runs under
-  the market). The town tile says what values follow it, since the town
-  deck is dealt in order. Auctions,
-  buildings and the town are pressed in the table, where each row says what
-  it is worth to you; the desk holds producing, selling and every preview. An
-  auction is one box that never grows (the high bid, each seat's last bid,
-  your bid), so the Bid button sits still from round to round and a run of
-  raises is a run of Enter presses. Every choice previews what it
-  would do (proceeds, price moves, storage overflow, VP) before you commit,
-  and producing, buying a building or building a town from its own
-  commodity takes a deliberate second press. The header counts down the
-  end (what is left of the towns and railroads, amber when one purchase
-  would finish it), your place and gap to the leader sit beside your cash,
-  your mission says what it is worth now (a Most Money mission says it
-  cannot be known: money is secret), and the final screen says where you
-  finished, with a one-press rematch. Paying a town's any-mix or
-  discarding for storage is one click ("pay with my cheapest"), your own
-  last move is echoed back with what it earned and moved, and at the storage
-  limit the screen says the way out and puts it first.
-- **Guidance for new players**: a one-minute walkthrough that spotlights each
-  part of the table at the first move (on until a browser has seen it once,
-  replayable from the help; in hot seat each further human gets a short tour
-  of their own desk at their first move), and the box waiting for your answer breathes
-  gently so it is never lost on a busy screen.
+The game ends when the last town is built or the last railroad is auctioned.
+The round is played out so everyone has the same number of turns, then the
+points are counted:
 
-Where the rulebook is silent and the game has had to decide, the decision is
-declared in the code beside the rule and held by a named scenario test; the
-list is below.
+- each town's points
+- each railroad line's points, read from its card by how many of that line
+  you own
+- 1 point per building, plus the end-game bonuses some buildings give
+- 2 points for every town you can pair with a railroad card
+- your mission, if missions are in play
 
-### Controls
+The most points wins. A tie goes to whoever has more money.
+
+**New to it?** Leave the walkthrough on at setup and the game gives a
+one-minute tour of the table at your first move. Press `?` at any time for
+the rules, the scoring and the keys.
+
+## Setting up
+
+- **2–5 seats**, each a human or a bot. Bots play at Easy, Normal or Hard. A
+  random seat starts.
+- **Humans share one screen.** Each player's money, hand and mission stay
+  hidden until they take the keyboard; a curtain covers the private part of
+  the screen between turns, and `Enter` lifts it. In an auction the handover
+  is a line in the bidding box, so a bidding war between two people is just
+  `Enter`, `Enter`.
+- **Optional rules**:
+  - *Mission cards*: each player is dealt two secret missions and keeps one,
+    scored at the end.
+  - *Sudden death*: a player holding $1,000 may end the game and win.
+  - *Beginners*: no advanced buildings, only the four commodity buildings on
+    offer at the start.
+  - *Basic buildings by player count*: one commodity building per player on
+    offer, the rest of the row from the advanced stack. Can't be combined
+    with Beginners.
+- **Ending**: *Standard* ends at the last town or the last railroad. *Long*
+  runs until two of the three (towns, railroads, buildings) are all owned.
+- **Two players** play with their own rules automatically: some railroads
+  and towns are removed, and each auction is one bid each.
+
+A game is about 30 rounds.
+
+## Reading the screen
+
+The market runs across the top: six prices, each on its track, with how far
+it has moved since your last turn and who moved it. Beside it are the
+standings. Below sit the railroads, the town and the buildings, each showing
+what it is worth to you, and under those the log, newest move first.
+
+Your desk is on the right: your cash, your actions, and a recap of what
+happened since your turn. Your hand of cards sits beneath the market.
+
+Nothing happens by surprise. Every choice shows what it would do (the money,
+the price moves, the points) before you commit, and anything that spends
+takes a second press. The header counts down to the end of the game and
+turns amber when a single purchase would finish it.
+
+## Controls
 
 | Key | |
 |---|---|
 | `1`–`5` | preview producing with that card; `Enter` on **Produce** commits (or double-click a card) |
-| `S` `A` `B` `T` | jump to Sell, or to the railroads, buildings or town in the table (a jump never commits); arrows walk the list |
-| `A` on a sale | sell all |
-| `Esc` | put the previewed card or purchase back |
-| `Enter` | take the keyboard from the curtain |
-| `Enter`, `↑` `↓` (`Shift` ±5), `P`, `Esc` | in an auction: bid the amount shown (the minimum unless changed), walk it, pass, take back an unopened auction |
+| `S` | jump to Sell |
+| `A` `B` `T` | jump to the railroads, buildings or town; the arrow keys walk the list. A jump never commits |
+| `A` while selling | sell all |
+| `Esc` | put back the card or purchase you're previewing |
+| `Enter` | take the keyboard when it's passed to you |
+| `Enter` | in an auction: bid the amount shown (the minimum, unless you change it) |
+| `↑` `↓` | in an auction: change your bid by $1, or $5 with `Shift` |
+| `P` | in an auction: pass |
+| `Esc` | in an auction: take back an auction you haven't opened yet |
 | `?` | how to play; `Esc` closes it |
 | `Enter` / `→`, `←`, `Esc` | next, back and end, in the walkthrough |
 
-Everything else is a button, and a button is live only when it answers the
-question the game is asking. Hovering or focusing a choice lights the market
-rows it would move and marks the new price on each track. Focus survives
-every redraw, a new question takes focus itself, and moves are announced to
-screen readers, gathered while you wait and read when your turn comes.
+Everything else is a button, and a button is only live when it answers the
+question the game is asking. Hovering over a choice lights up the prices it
+would move. Moves are announced to screen readers, and the ones made while
+you wait are read out when your turn comes.
 
-## Names
+## Fine print
 
-The skin lives in `game/data/skin.js` alone; the rules never read it.
-Commodity and building names are the box's own: they describe what a thing
-is or does.
+A few rules can be read more than one way. Here they play like this:
 
-| Printed | PumaTycoon | | Printed | PumaTycoon |
-|---|---|---|---|---|
-| Skunk Works Railroad | Bobcat Line | | Molehill | Pebble Creek |
-| Sly Fox Railroad | Lynx Line | | Bridgewater | Pounce Bridge |
-| Fat Cat Railroad | Ocelot Line | | Beaver Ford | Fern Hollow |
-| Big Bear Railroad | Jaguar Line | | Black Friar | Cinder Gap |
-| Top Dog Railroad | Panther Line | | Newgate | Pawford |
-| Tycoon Railroad | Puma Line | | Foxwoods | Pinecrest |
-| Land of Astoria | Cougar Country | | Marketshire | Tradewind |
-| | | | Trinity | Three Pines |
-| | | | Badger Downs | Dustwhisker |
-| | | | Dunmoor | Ashridge |
-| | | | Wild Grove | Timberhaunt |
-| | | | Bishop's Glen | Ironclaw Glen |
-| | | | Land's End | Far Prowl |
-| | | | River Ridge | Silverrun |
-| | | | Canterbury Woods | Tallpine Woods |
-| | | | Drover Crossing | Stalker's Ford |
-
-## What's approximated
-
-**Settled by the designer or publisher**, on BoardGameGeek, and played as
-ruled (cited beside the code in `game/engine/state.js`):
-
-- Opening an auction is a bid of at least the card's minimum; if everyone
-  else passes, the opener's bid wins.
-- Winning bids go to the bank. The Auction House's $5 is paid after the
-  auction and cannot fund the bid.
-- Commodity tokens are unlimited.
-- The Machine Shop / Water Mill tile is shuffled into the advanced stack.
+- Opening an auction is a bid of at least the railroad's minimum. If everyone
+  else passes, the opener wins it at that bid.
+- Winning bids go to the bank. The Auction House's $5 arrives after the
+  auction, so it can't help pay the bid. It pays its owner on their own
+  auctions too.
+- A price never leaves its track: rises stop at the top, sales stop at the
+  bottom.
+- Commodities never run out.
+- When the Price & Production deck runs out, the discards are shuffled into
+  a new one.
 - Cottage Industry and Factory never take more than the card shows.
-- A Mission "most" tie scores nothing.
-- Trading Firm income is paid by the bank.
-
-**Decided here**, each a named constant in `game/engine/state.js` pinned by a
-scenario:
-
-| Decision | Reading |
-|---|---|
-| `PRICE_CLAMP` | A price never leaves its printed track: rises stop at the top, sales stop at the bottom. |
-| `DECK_EXHAUSTED` | An empty Price & Production deck is refilled by shuffling the discards. |
-| `DRAW_ONLY_AFTER_PRODUCTION` | A bigger hand limit (Smuggler, Black Market) fills at the next production, not on purchase. |
-| `TRADING_FLOOR_IS_A_SALE` | A Trading Floor purchase pays the other player the market price; it is not a sale, so no price drop, no Trading Firm, no Export raise. |
-| `FREIGHT_SECOND_SALE` | Freight Company's second sale is of a different commodity. |
-| `BENEFIT_FROM_PURCHASE` | A tile works from the moment it is bought, so a Construction Company allows its own second purchase. |
-| `BRICK_WORKS_APPLIES_TO` | Brick Works takes one off either way of paying for a town. |
-| `COMMISSION_ON_OWN_AUCTION` | The Auction House pays on its owner's own auctions too. |
-| `FIRM_ON_OWN_SALE` | A Trading Firm pays on its owner's own sales too. |
-| `MAYOR_COUNTS_ITSELF` | Mayor's Office counts itself among your buildings. |
-| `TWO_PLAYER_TOWN_REMOVAL` | Which town of each value leaves a 2-player game is random. |
-| `RAILROADS_EXHAUSTED` | "The last railroad is auctioned" means the deck and both offer spots are empty. |
-| `SUDDEN_DEATH_WHEN` | Sudden Death is offered at the start of your own turn when you hold $1,000. |
-| `FULL_TIE` | A tie on VP and money is shared. |
-| `BEGINNER_FULL_ROW` | Beginners and the per-player building setup do not combine: Beginners deals its four basic tiles. |
+- A bigger hand from the Smuggler or Black Market fills at your next
+  production, not when you buy it.
+- A building works from the moment it's bought, so a Construction Company
+  allows its own second purchase.
+- Freight Company's second sale must be a different commodity.
+- A Trading Floor purchase pays the other player the market price. It is not
+  a sale: no price drop, no Trading Firm income, no Export Company rise.
+- Trading Firm income is paid by the bank, and a Trading Firm pays on its
+  owner's own sales too.
+- Brick Works takes one off either way of paying for a town.
+- Mayor's Office counts itself among your buildings.
+- The Machine Shop / Water Mill is in the advanced stack.
+- A tie for "most" on a mission scores nothing.
+- Sudden Death is offered at the start of your own turn, while you hold
+  $1,000.
+- In a two-player game, which towns are removed is random.
+- "The last railroad is auctioned" means none are left to deal and none are
+  on offer.
+- A tie on both points and money is shared.
 
 ## Bots
 
-A bot values every legal answer in victory points, a dollar being worth less
-the more of them it already holds, and takes the best after a jitter hashed
-from the position (never from the game's random stream). In the final round
-a dollar is worth only its tie-break (or the Bank's VP), so a bot's last turn
-turns its cash into points. Skill sets the
-jitter and how well it values railroads and towns. Measured head to head with
-`node game/tools/sim.js --ladder 300`, 300 games a pairing on 2–5 seats,
-seats alternating:
+Bots weigh every move in points and take the best one. A lower skill adds
+more noise to that judgement and reads railroads and towns less well: Hard
+beats Normal about six games in ten, and beats Easy about 85% of the time.
+In the final round a bot turns its cash into points.
 
-| | wins |
-|---|---|
-| Normal vs Easy | 72% |
-| Hard vs Normal | 62% |
-| Hard vs Easy | 85% |
+**Bot speed** in the header sets how long the bots take over each move.
 
-Bots read every player's money. Money is secret at the table, but every
-transaction that moves it is public, so a careful player can count it.
+Bots can see everyone's money. At the table money is secret, but every move
+that changes it is public, so a careful player can keep count too.
 
-## The repository
+## Saving
 
-```
-index.html            the game
-game/engine/          the rules: one step() function over plain-JSON state → game/README.md
-game/data/            the transcribed tables, and the skin
-game/ui/              the screen, drawn from the pending request and nothing else
-game/tools/           check-all.js, sim.js, replay-dump.js, the scenario ledger and tests
-tools/                repo-level checks (photos, assets) and the icon renderer
-docs/history/         the build plan
-icon.svg              the icon; og.png, the favicons and apple-touch-icon.png are rendered from it
-```
-
-## Running locally
-
-ES modules need an HTTP server; opening the file directly will not work.
-From the repository root:
-
-```bash
-python3 -m http.server 8000
-```
-
-Then open <http://localhost:8000/>.
-
-## Checks
-
-```bash
-node tools/check-no-photos.js          # no reference photograph is tracked or staged
-node tools/check-assets.js             # every file index.html points at exists
-node game/tools/check-all.js           # the tables, the rule tests, the scenario ledger
-node game/tools/sim.js 10              # every player count x every option set, bots and random humans
-node game/tools/sim.js --skill 200     # hard bots must beat easy ones
-```
-
-All of them run in CI (`.gitlab-ci.yml`, stage `validate`) and gate the
-deploy. Node 20, no `npm install`.
-
-**Reference photographs never enter the repo.** `source/` holds photographs
-of the rulebook and every card for transcription. It is gitignored, and
-`check-no-photos.js` runs first in CI against the fresh clone to refuse any
-route by which a photograph could ship, a symlinked `source/` included.
-
-## Deploying
-
-Merging to `main` deploys. The CI `deploy` job rsyncs the repository to
-DreamHost at `greykit.com/games/pumatycoon/` with `--delete-excluded`,
-leaving out `.git`, `.claude`, `tools`, `screenshots` and `source`. Credentials are
-protected group variables, so only `main` can deploy.
+The game saves itself after every move, mid-auction included. Close the
+tab, come back later, and it opens where you left off. The save lives in
+this browser only, and starting a new game replaces it.
 
 ## Other Puma games
 
@@ -239,5 +168,4 @@ protected group variables, so only `main` can deploy.
 
 ## Credits
 
-Game design and code by shandower, with AI assistance from Claude.
-Original game by Glenn Drover. MIT licensed.
+Made by shandower, with AI assistance from Claude. MIT licensed.
