@@ -34,21 +34,7 @@ export const CSS = `
   ${Object.entries(COLORS).map(([g, c]) => `--c-${g}:${c};`).join("")}}
 *{box-sizing:border-box}
 html{color-scheme:dark}
-/* Scrollbars in the terminal's colours: a thin steel thumb on the panel's
- * ground (lit on hover in Safari). scrollbar-color is inherited, so the html rule
- * reaches the stage, the desk, the log and the dialogs; the -webkit- rules
- * are for Safari, which ignores the standard properties. */
-html{scrollbar-color:#2a3a5e var(--bg)}
-*{scrollbar-width:thin}
-.side{scrollbar-color:#2a3a5e #070a14}
-.veil .box{scrollbar-color:#2a3a5e var(--panel)}
-::-webkit-scrollbar{width:10px;height:10px}
-::-webkit-scrollbar-track{background:var(--bg)}
-.side::-webkit-scrollbar-track{background:#070a14}
-.veil .box::-webkit-scrollbar-track{background:var(--panel)}
-::-webkit-scrollbar-thumb{background:#2a3a5e;border:2px solid transparent;background-clip:padding-box;border-radius:5px}
-::-webkit-scrollbar-thumb:hover{background:var(--lit);background-clip:padding-box}
-::-webkit-scrollbar-corner{background:transparent}
+/* scrollbars: the greykit.games canon's (title.js, @gk-title) */
 body{margin:0;background:var(--bg);color:var(--ink);font:var(--fs-m)/1.5 ui-monospace,Menlo,Consolas,monospace;font-variant-numeric:tabular-nums}
 button{font:inherit;color:var(--text);background:var(--panel2);border:1px solid var(--line);border-radius:2px;
   padding:5px 10px;cursor:pointer;min-height:32px;text-align:left}
@@ -277,8 +263,7 @@ tr.st-detail b{color:var(--text);font-weight:600;margin-right:6px}
 tr.st-detail ul{margin:2px 0 0;padding-left:18px}
 
 /* ---- the log, a blotter beside the order book ---- */
-.tape{border:1px solid var(--line);background:var(--panel);max-height:240px;overflow-y:auto;font-size:var(--fs-xs);line-height:1.45;padding:4px 0;scrollbar-color:#2a3a5e var(--panel)}
-.tape::-webkit-scrollbar-track{background:var(--panel)}
+.tape{border:1px solid var(--line);background:var(--panel);max-height:240px;overflow-y:auto;font-size:var(--fs-xs);line-height:1.45;padding:4px 0}
 .tape > div{display:grid;grid-template-columns:30px minmax(0,1fr);padding:1px 10px 1px 0;color:var(--ink)}
 .tape > div.t0{border-bottom:1px solid var(--hair);padding-bottom:3px;margin-bottom:2px}
 .tape > div:last-child{border-bottom:0}
