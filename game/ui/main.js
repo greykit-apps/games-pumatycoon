@@ -1,5 +1,5 @@
-/* Boot: a saved game if there is one, the setup screen if not, and the loop
- * between the screen and the engine.
+/* Boot: the boot sequence, then the title screen, and the loop between the
+ * screen and the engine.
  *
  * The screen collects an answer to the pending request and calls submit();
  * submit() steps the engine, saves, and hands the state to the screen. Bots
@@ -18,9 +18,10 @@ import { SPRITES, SCENE } from "./art.js";
 import { newGame, SAVE_VERSION } from "../engine/state.js";
 import { step } from "../engine/machine.js";
 import { botAnswer } from "../engine/bots.js";
-import { mountSetup } from "./setup.js";
+import { mountSetup, quickStartOpts } from "./setup.js";
 import { mountScreen } from "./screen.js";
 import { HELP_TABS } from "./help.js";
+import { runBoot, mountTitle } from "./title.js";
 
 const SAVE_KEY = "pumatycoon_game_v1";
 const PREFS_KEY = "pumatycoon_prefs_v1";
@@ -41,6 +42,8 @@ const store = {
 const host = document.querySelector("[data-pumatycoon-game]");
 injectCSS(document);
 document.body.insertAdjacentHTML("afterbegin", SPRITES + SCENE);
+/* everything is in the modules already: the boot has nothing to wait for but itself */
+const boot = runBoot({ lines: ["reload <b>" + location.pathname.replace(/index\.html$/, "") + "</b>", "opening the market"] });
 
 const prefs = { speed: "normal", ...(store.get(PREFS_KEY) || {}) };
 let st = null;
@@ -69,44 +72,82 @@ function downloadDump() {
   setTimeout(() => URL.revokeObjectURL(url), 5000);
 }
 
-function setupHelp() {
-  let tab = 0;
-  const veil = document.createElement("div");
-  veil.className = "veil";
-  veil.setAttribute("role", "dialog");
-  veil.setAttribute("aria-modal", "true");
-  const draw = () => {
-    veil.innerHTML = `<div class="box help"><div class="row"><h1>How to play</h1><span style="flex:1"></span><button data-x aria-label="Close">✕</button></div>
-      <div class="tabs">${HELP_TABS.map(([t], k) => `<button data-t="${k}" aria-pressed="${k === tab}">${t}</button>`).join("")}</div><div>${HELP_TABS[tab][1]}</div></div>`;
-  };
-  const close = () => { veil.remove(); document.removeEventListener("keydown", esc); };
-  const esc = e => { if (e.key === "Escape") close(); };
-  veil.onclick = e => {
-    const b = e.target.closest("button");
-    if (!b) { if (e.target === veil) close(); return; }
-    if (b.hasAttribute("data-x")) return close();
-    if (b.dataset.t !== undefined) { tab = Number(b.dataset.t); draw(); }
-  };
-  document.addEventListener("keydown", esc);
-  draw();
-  document.body.appendChild(veil);
-}
+const SPEED_NAMES = [["slow", "Slow"], ["normal", "Normal"], ["fast", "Fast"]];
+const ABOUT = `<p>PumaTycoon: Based on the board game Raccoon Tycoon by Glenn Drover (2018). Developed entirely with Claude Code.</p>
+<p class="gk-credit">Built by <a href="https://greykit.com/" target="_blank" rel="noopener">greykit.com</a></p>`;
 
-function toSetup() {
+let title = null;
+let setupKeys = null;   // Custom game's Escape, on the document: focus is on the body after every redraw
+/** Off whatever screen is up: the race loop stops, and the setup screen's
+ * handlers, which it hangs on the host itself, go with it. */
+function leave() {
   generation++;
   if (screen) screen.stop();
   screen = null;
   busy = false;
+  if (title) title.unmount();
+  title = null;
+  host.onclick = host.onchange = host.onkeydown = null;
+  host.classList.remove("on-title");
+  if (setupKeys) setupKeys.abort();
+  setupKeys = null;
+}
+
+function toTitle() {
+  leave();
   const saved = loadGame();
+  host.classList.add("on-title");
+  title = mountTitle(host, {
+    name: "PumaTycoon",
+    items: [
+      saved && { act: "resume", label: "Resume game", key: "R", meta: `Round ${saved.round} \u00b7 ${saved.players.length} players` },
+      { act: "new", label: "New quick game", key: "N" },
+      { act: "custom", label: "Custom game", key: "C", meta: "seats and rules" },
+      "gap",
+      { act: "settings", label: "Settings", key: "S" },
+      { act: "help", label: "Help", key: "?" },
+      { act: "about", label: "About", key: "A" }
+    ],
+    primary: saved ? "resume" : "new",
+    help: HELP_TABS,
+    about: ABOUT,
+    settings: {
+      html: () => "<h3>Bot speed</h3><div class='gk-row'>" + SPEED_NAMES.map(([v, l]) => "<button data-speed='" + v + "' aria-pressed='" + (prefs.speed === v) + "'>" + l + "</button>").join("") +
+        "</div><p class='gk-note'>How long the bots take over each move. Bot speed in the game's top bar changes it too.</p>",
+      onClick: (b, sheet) => {
+        if (!b.dataset.speed) return;
+        prefs.speed = b.dataset.speed;
+        store.set(PREFS_KEY, prefs);
+        sheet.refresh();
+      }
+    },
+    onAct: async (act, ui) => {
+      if (act === "resume" && saved) { leave(); st = saved; openScreen(); advance(); return; }
+      if (act === "custom") { toSetup(); return; }
+      if (act === "new") {
+        if (saved && !await ui.confirm("Start a new game? The game in progress will be replaced.", "Start a new game")) return;
+        start(quickStartOpts());
+      }
+    }
+  });
+  return title;
+}
+
+function toSetup() {
+  leave();
   mountSetup(host, {
     onStart: opts => start(opts),
-    onResume: saved ? () => { st = saved; openScreen(); advance(); } : null,
-    onHelp: setupHelp,
+    replacing: !!loadGame(),
+    onBack: () => toTitle().reveal(),
   });
+  setupKeys = new AbortController();
+  document.addEventListener("keydown", e => {
+    if (e.key === "Escape" && !e.ctrlKey && !e.metaKey && !e.altKey) { e.preventDefault(); toTitle().reveal(); }
+  }, { signal: setupKeys.signal });
 }
 
 function start(opts) {
-  generation++;
+  leave();
   busy = false;
   const seed = (Date.now() ^ (Math.random() * 0x7fffffff)) | 0;
   st = newGame({ players: opts.players, options: opts.options, seed });
@@ -126,7 +167,7 @@ function openScreen() {
   screen = mountScreen(host, {
     submit: a => advance(a),
     submitMany: list => advance(list[0], list.slice(1)),
-    newGame: () => toSetup(),
+    newGame: () => toTitle().reveal(),
     // The same seats, in the same order, and the same rules; a new seed deals a new game.
     rematch: () => (trace && st && trace.seed === st.seed && trace.setup ? start({ players: trace.setup.players, options: trace.setup.options }) : toSetup()),
     debugDump: downloadDump,
@@ -174,6 +215,8 @@ async function advance(answer, queued = []) {
   }
 }
 
+/* the title goes in under the boot, so the boot's fade reveals it */
+const t = toTitle();
 const saved = loadGame();
-if (saved) { st = saved; openScreen(); advance(); }
-else toSetup();
+await boot.finish([saved ? `game in progress: round ${saved.round}` : "no game in progress"]);
+t.reveal();

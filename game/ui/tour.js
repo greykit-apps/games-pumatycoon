@@ -51,6 +51,11 @@ const STEPS = [
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
 /** Run the tour. Resolves when it ends, by finishing or by Esc / Skip. */
+/* the tour running now, if any, so leaving the table can end it: its key
+ * handler swallows every key until it is over */
+let running = null;
+export function stopTour() { if (running) running(); }
+
 export function startTour({ short = false, name = "" } = {}) {
   return new Promise(resolve => {
     let i = 0;
@@ -114,6 +119,7 @@ export function startTour({ short = false, name = "" } = {}) {
     }
 
     function end() {
+      running = null;
       markSeen();
       window.removeEventListener("resize", place);
       window.removeEventListener("scroll", place, true);
@@ -139,6 +145,7 @@ export function startTour({ short = false, name = "" } = {}) {
     window.addEventListener("resize", place);
     window.addEventListener("scroll", place, true);
     document.addEventListener("keydown", onKey, true);
+    running = end;
     show();
   });
 }
