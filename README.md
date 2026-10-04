@@ -45,6 +45,10 @@ the rules, the scoring and the keys.
 
 ## Setting up
 
+The title screen's **New quick game** starts straight away with the seats and
+rules you used last: the first time, you against two bots. **Custom game**
+sets them:
+
 - **2–5 seats**, each a human or a bot. Bots play at Easy, Normal or Hard. A
   random seat starts.
 - **Humans share one screen.** Each player's money, hand and mission stay
@@ -147,7 +151,9 @@ more noise to that judgement and reads railroads and towns less well: Hard
 beats Normal about six games in ten, and beats Easy about 85% of the time.
 In the final round a bot turns its cash into points.
 
-**Bot speed** in the header sets how long the bots take over each move.
+**Bot speed** in the header, or in **Settings** on the title screen, sets how
+long the bots take over each move. **Menu** in the header goes back to the
+title screen.
 
 Bots can see everyone's money. At the table money is secret, but every move
 that changes it is public, so a careful player can keep count too.
@@ -155,8 +161,9 @@ that changes it is public, so a careful player can keep count too.
 ## Saving
 
 The game saves itself after every move, mid-auction included. Close the
-tab, come back later, and it opens where you left off. The save lives in
-this browser only, and starting a new game replaces it.
+tab, come back later, and **Resume game** on the title screen picks it up
+where you left off. The save lives in this browser only, and starting a new
+game replaces it.
 
 ## Other Puma games
 

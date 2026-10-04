@@ -7,6 +7,7 @@
  * for the one thing waiting on you. */
 
 import { COLORS } from "./art.js";
+import { TITLE_CSS } from "./title.js";
 
 export const TOKENS = {
   bg: "#05070f", panel: "#0a0e1a", panelAlt: "#0d1424", border: "#1b2540", borderLit: "#47609c",
@@ -98,6 +99,8 @@ h2 .dim{letter-spacing:.04em;text-transform:none;font-weight:400}
   body:has(.pt.game) .scene :is(.s-line,.s-body,.s-win,.s-lamp,.s-beam,.s-near,.s-smoke,.s-haze){display:none}
 }
 [data-pumatycoon-game]{position:relative;z-index:1}
+/* the title screen is the whole window: no frame round it */
+[data-pumatycoon-game].on-title{display:block;padding:0}
 @media (min-width:901px){
   :root{--gut:clamp(0px,calc((100dvh - 740px) / 3),32px);--gutx:clamp(0px,calc((100vw - 1500px) / 4),64px)}
   [data-pumatycoon-game]{min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:var(--gut) var(--gutx)}
@@ -506,9 +509,6 @@ table.score td.vp{color:var(--vp);font-weight:700}
 
 /* ---- setup ---- */
 .setup{flex:1;padding:28px 32px 40px;max-width:1180px;width:100%;display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:28px 48px;align-content:start}
-.setup .pitch{grid-column:1/-1;max-width:760px}
-.setup .pitch p{margin:0;color:var(--text);font-size:var(--fs-l);line-height:1.5}
-.setup .pitch .note{font-size:var(--fs-s);margin-top:8px}
 .setup .pane{display:flex;flex-direction:column;gap:10px;min-width:0}
 .seat{display:grid;grid-template-columns:minmax(0,1fr) 92px 92px 34px;gap:6px;align-items:center}
 .seat input{min-width:0}
@@ -582,6 +582,6 @@ export function injectCSS(doc) {
   if (doc.getElementById("pt-game-css")) return;
   const s = doc.createElement("style");
   s.id = "pt-game-css";
-  s.textContent = CSS;
+  s.textContent = CSS + TITLE_CSS;
   doc.head.appendChild(s);
 }

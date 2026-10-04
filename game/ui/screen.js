@@ -39,7 +39,7 @@ import {
   GOOD_NAME, railName, lineName, townName, bldName, effectText, upgradeText, missionText, logLines, recapEntries, RECAP_BIG, describeLog, lastMoveLine, agree, possessive,
 } from "./text.js";
 import { HELP_TABS } from "./help.js";
-import { startTour } from "./tour.js";
+import { startTour, stopTour } from "./tour.js";
 import { HAND_STRIP, SHORT } from "./style.js";
 import {
   sellPreview, cardPreview, railPreview, townPreview, buyPreview, marketMoves, cheapest, lastTurnEntries, auctionSeats, quickBids, endClock, standing,
@@ -799,7 +799,7 @@ export function mountScreen(host, hooks) {
     <span class="turn">${st.phase === "turn" || st.over ? `Round ${st.round} · ` : ""}${turnName}</span>${end}${clock()}<span class="grow"></span>
     <button data-help aria-label="How to play">?</button>
     <button data-speed title="How long the bots take over each move; press to change">Bot speed: ${hooks.speedName()}</button>
-    <button data-newgame>New game</button></header>
+    <button data-newgame title="Back to the title screen. This game stays saved until another is started.">Menu</button></header>
   <div class="main">
     <section class="stage" aria-label="The table">
       <div class="band1">
@@ -933,7 +933,7 @@ ${st.over && !resultsHidden ? resultsBox() : ""}${helpTab !== null ? helpBox() :
       <table class="score"><thead><tr><th>Player</th><th>Towns</th><th>Rail</th><th>Bldg</th><th>Pairs</th><th>Bonus</th><th>Mission</th><th>VP</th><th>Cash</th></tr></thead><tbody>${rows}</tbody></table>
       <div><h2>The closing market</h2><div class="final-market">${GOODS.map(g => `<span>${icon(g, 16, GOOD_NAME[g])} ${money(st.prices[g])}</span>`).join("")}</div></div>
       <p class="note">${st.round} rounds. Ties go to the most money.</p>
-      <div class="row"><button class="primary" data-rematch title="The same seats and rules, a new deal">Rematch</button><button data-newgame>New game</button><button data-closeresults>Look at the table</button></div></div></div>`;
+      <div class="row"><button class="primary" data-rematch title="The same seats and rules, a new deal">Rematch</button><button data-newgame>Menu</button><button data-closeresults>Look at the table</button></div></div></div>`;
   }
 
   function helpBox() {
@@ -1230,6 +1230,7 @@ ${st.over && !resultsHidden ? resultsBox() : ""}${helpTab !== null ? helpBox() :
     queueTour() { tourFor = new Set(humans()); },
     fail(e) { failure = e; render(); console.error(e); },
     stop() {
+      stopTour();
       document.removeEventListener("keydown", onKey);
       host.removeEventListener("pointerover", onOver);
       host.removeEventListener("pointerout", onOut);

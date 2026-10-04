@@ -1,8 +1,7 @@
-/* The new-game screen: two to five seats, each a human or a bot of a
- * chosen skill, and the box's optional rules. The last setup is remembered
- * per browser. */
+/* Custom game: two to five seats, each a human or a bot of a chosen skill,
+ * and the box's optional rules. The last setup is remembered per browser,
+ * and the title screen's New quick game starts from it. */
 
-import { SKIN } from "../data/skin.js";
 import { tourSeen } from "./tour.js";
 
 const SETUP_KEY = "pumatycoon_setup_v1";
@@ -44,7 +43,13 @@ function save(s) { try { localStorage.setItem(SETUP_KEY, JSON.stringify(s)); } c
 
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
-export function mountSetup(host, { onStart, onResume, onHelp }) {
+/** New quick game: the remembered seats and rules, as the Start button would send them. */
+export function quickStartOpts() {
+  const s = load();
+  return { players: rename(s.seats).map(x => ({ ...x })), options: { ...s.options }, tour: !tourSeen() };
+}
+
+export function mountSetup(host, { onStart, replacing, onBack }) {
   const s = load();
   // On until this browser has seen the walkthrough once; the player's choice after that.
   let tour = !tourSeen();
@@ -52,14 +57,9 @@ export function mountSetup(host, { onStart, onResume, onHelp }) {
   function render() {
     host.innerHTML = `
 <div class="pt">
-  <header class="top"><svg width="22" height="22" viewBox="0 0 100 100" aria-hidden="true"><use href="#pt-mark"/></svg>
-    <h1>${esc(SKIN.game)}</h1><span class="grow"></span>
-    <button data-help>How to play</button></header>
+  <header class="top"><button data-back aria-label="Back to the title screen">&larr;</button>
+    <h1>Custom game</h1><span class="grow"></span></header>
   <div class="setup">
-    <section class="pitch">
-      <p>Produce commodities, sell into a market everyone moves, and outbid your rivals for the railroads. The most points when the towns or the railroads run out wins.</p>
-      <p class="note">For 2–5 players, any mix of humans and bots. About 30 rounds.</p>
-    </section>
     <section class="pane">
       <h2>Seats <span class="dim">in seating order; a random seat starts</span></h2>
       <div class="seats">${s.seats.map((p, i) => `
@@ -76,8 +76,7 @@ export function mountSetup(host, { onStart, onResume, onHelp }) {
       <p class="note">Humans share this screen: each one's money, hand and mission stay hidden until they take the keyboard.</p>
       <div class="go">
         <button class="primary" data-start>Start the game</button>
-        ${onResume ? "<button data-resume>Back to the game</button>" : ""}
-        ${onResume ? '<span class="note" style="margin:0">Starting a new game replaces the saved one.</span>' : ""}
+        ${replacing ? '<span class="note" style="margin:0">Starting a new game replaces the saved one.</span>' : ""}
       </div>
     </section>
     <section class="pane">
@@ -114,7 +113,7 @@ export function mountSetup(host, { onStart, onResume, onHelp }) {
   host.onclick = e => {
     const b = e.target.closest("button");
     if (!b) return;
-    if (b.hasAttribute("data-help")) return onHelp && onHelp();
+    if (b.hasAttribute("data-back")) return onBack && onBack();
     read();
     if (b.hasAttribute("data-add")) {
       s.seats.push({ name: "", seat: "bot", skill: 1 });
@@ -125,9 +124,6 @@ export function mountSetup(host, { onStart, onResume, onHelp }) {
     if (b.hasAttribute("data-start")) {
       save(s);
       return onStart({ players: s.seats.map(x => ({ ...x })), options: { ...s.options }, tour });
-    } else if (b.hasAttribute("data-resume")) {
-      save(s);
-      return onResume();
     }
     save(s);
     render();
