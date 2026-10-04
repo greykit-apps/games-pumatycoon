@@ -92,6 +92,7 @@ export function mountSetup(host, { onStart, onResume, onHelp }) {
       <label class="opt"><input type="radio" name="endRule" value="printed"${s.options.endRule !== "revised" ? " checked" : ""}><span>Standard<small>The last town bought or the last railroad auctioned ends the game, after the round.</small></span></label>
       <label class="opt"><input type="radio" name="endRule" value="revised"${s.options.endRule === "revised" ? " checked" : ""}><span>Long<small>The game ends when two of the three are all owned: towns, railroads, buildings. Longer games.</small></span></label>
     </section>
+    <div class="note gk-credit">Built by <a href="https://greykit.com/" target="_blank" rel="noopener">greykit.com</a></div>
   </div>
 </div>`;
   }

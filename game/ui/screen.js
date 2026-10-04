@@ -941,7 +941,8 @@ ${st.over && !resultsHidden ? resultsBox() : ""}${helpTab !== null ? helpBox() :
       <div class="row"><h1>How to play</h1><span style="flex:1"></span><button data-helpclose aria-label="Close">✕</button></div>
       <div class="tabs" role="tablist">${HELP_TABS.map(([t], k) => `<button role="tab" aria-selected="${k === helpTab}" aria-pressed="${k === helpTab}" data-helptab="${k}">${t}</button>`).join("")}</div>
       <div role="tabpanel">${HELP_TABS[helpTab][1]}</div>
-      <div class="row"><button data-tourreplay>Replay the walkthrough</button><span style="flex:1"></span><button class="ghost" data-debug title="Save this game, and every answer that led to it, as a file for a bug report">Save a debug file</button></div></div></div>`;
+      <div class="row"><button data-tourreplay>Replay the walkthrough</button><span style="flex:1"></span><button class="ghost" data-debug title="Save this game, and every answer that led to it, as a file for a bug report">Save a debug file</button></div>
+      <div class="note gk-credit">Built by <a href="https://greykit.com/" target="_blank" rel="noopener">greykit.com</a></div></div></div>`;
   }
 
   /* ---------- the market hint: what a choice would move, shown before it is made ---------- */

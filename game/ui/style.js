@@ -66,6 +66,9 @@ h2{font-size:var(--fs-xs);letter-spacing:.14em;text-transform:uppercase;color:va
 h2 .dim{letter-spacing:.04em;text-transform:none;font-weight:400}
 .dim{color:var(--dim)}
 .note{color:var(--dim);font-size:var(--fs-s);margin:6px 0 0}
+/* greykit.games canon §1 — the credit, on setup and in both help boxes */
+.gk-credit a{color:var(--steel)}
+.setup .gk-credit{grid-column:1/-1;margin:0}
 .up{color:var(--up)}
 .vpc{color:var(--vp)}
 .ico{display:inline-block;vertical-align:-4px;flex:none}

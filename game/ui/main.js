@@ -77,7 +77,8 @@ function setupHelp() {
   veil.setAttribute("aria-modal", "true");
   const draw = () => {
     veil.innerHTML = `<div class="box help"><div class="row"><h1>How to play</h1><span style="flex:1"></span><button data-x aria-label="Close">✕</button></div>
-      <div class="tabs">${HELP_TABS.map(([t], k) => `<button data-t="${k}" aria-pressed="${k === tab}">${t}</button>`).join("")}</div><div>${HELP_TABS[tab][1]}</div></div>`;
+      <div class="tabs">${HELP_TABS.map(([t], k) => `<button data-t="${k}" aria-pressed="${k === tab}">${t}</button>`).join("")}</div><div>${HELP_TABS[tab][1]}</div>
+      <div class="note gk-credit">Built by <a href="https://greykit.com/" target="_blank" rel="noopener">greykit.com</a></div></div>`;
   };
   const close = () => { veil.remove(); document.removeEventListener("keydown", esc); };
   const esc = e => { if (e.key === "Escape") close(); };
