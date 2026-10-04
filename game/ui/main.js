@@ -21,7 +21,7 @@ import { botAnswer } from "../engine/bots.js";
 import { mountSetup, quickStartOpts } from "./setup.js";
 import { mountScreen } from "./screen.js";
 import { HELP_TABS } from "./help.js";
-import { runBoot, mountTitle } from "./title.js";
+import { runBoot, mountTitle, bootReloadLine } from "./title.js";
 
 const SAVE_KEY = "pumatycoon_game_v1";
 const PREFS_KEY = "pumatycoon_prefs_v1";
@@ -59,7 +59,7 @@ const host = document.querySelector("[data-pumatycoon-game]");
 injectCSS(document);
 document.body.insertAdjacentHTML("afterbegin", SPRITES + SCENE);
 /* everything is in the modules already: the boot has nothing to wait for but itself */
-const boot = runBoot({ lines: ["reload <b>" + location.pathname.replace(/index\.html$/, "") + "</b>", "opening the market"] });
+const boot = runBoot({ lines: [bootReloadLine(), "opening the market"] });
 
 const prefs = { speed: "normal", ...(store.get(PREFS_KEY) || {}) };
 let st = null;
