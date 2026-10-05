@@ -21,7 +21,7 @@ import { botAnswer } from "../engine/bots.js";
 import { mountSetup, quickStartOpts } from "./setup.js";
 import { mountScreen } from "./screen.js";
 import { HELP_TABS } from "./help.js";
-import { runBoot, mountTitle } from "./title.js";
+import { runBoot, mountTitle, bootReloadLine } from "./title.js";
 
 const SAVE_KEY = "pumatycoon_game_v1";
 const PREFS_KEY = "pumatycoon_prefs_v1";
@@ -39,11 +39,27 @@ const store = {
   del(k) { try { localStorage.removeItem(k); } catch (e) { /* no storage */ } },
 };
 
+/* Settings' "Forget everything" (games-meta STANDARD.md): every key PumaTycoon
+ * owns, found by its prefix so a key added later is not one this misses, and
+ * only those -- every game on greykit.com shares one origin, so one storage. */
+function forgetEverything() {
+  for (const area of ["localStorage", "sessionStorage"]) {
+    try {
+      const s = window[area];
+      for (let i = s.length - 1; i >= 0; i--) {
+        const k = s.key(i);
+        if (k && k.startsWith("pumatycoon")) s.removeItem(k);
+      }
+    } catch (e) { /* no storage */ }
+  }
+  location.reload();
+}
+
 const host = document.querySelector("[data-pumatycoon-game]");
 injectCSS(document);
 document.body.insertAdjacentHTML("afterbegin", SPRITES + SCENE);
 /* everything is in the modules already: the boot has nothing to wait for but itself */
-const boot = runBoot({ lines: ["reload <b>" + location.pathname.replace(/index\.html$/, "") + "</b>", "opening the market"] });
+const boot = runBoot({ lines: [bootReloadLine(), "opening the market"] });
 
 const prefs = { speed: "normal", ...(store.get(PREFS_KEY) || {}) };
 let st = null;
@@ -113,8 +129,15 @@ function toTitle() {
     about: ABOUT,
     settings: {
       html: () => "<h3>Bot speed</h3><div class='gk-row'>" + SPEED_NAMES.map(([v, l]) => "<button data-speed='" + v + "' aria-pressed='" + (prefs.speed === v) + "'>" + l + "</button>").join("") +
-        "</div><p class='gk-note'>How long the bots take over each move. Bot speed in the game's top bar changes it too.</p>",
-      onClick: (b, sheet) => {
+        "</div><p class='gk-note'>How long the bots take over each move. Bot speed in the game's top bar changes it too.</p>" +
+        "<h3>This browser</h3><div class='gk-row'><button data-act='forget'>Forget everything</button></div>" +
+        "<p class='gk-note'>Clears everything PumaTycoon keeps in this browser: the game in progress, your setup, bot speed, the board's view, and the tour.</p>",
+      onClick: async (b, sheet) => {
+        if (b.dataset.act === "forget") {
+          if (!await sheet.confirm("Forget everything PumaTycoon has saved in this browser: the game in progress, your setup, bot speed, the board's view, the tour? This cannot be undone.", "Forget everything")) return;
+          forgetEverything();
+          return;
+        }
         if (!b.dataset.speed) return;
         prefs.speed = b.dataset.speed;
         store.set(PREFS_KEY, prefs);
