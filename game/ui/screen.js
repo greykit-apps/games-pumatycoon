@@ -147,15 +147,15 @@ export function mountScreen(host, hooks) {
 
   /* Three buildings add a question to a move: Freight Company a second sale,
    * Construction Company a second purchase, the Trading Floor a purchase
-   * before producing. Each is asked only when its owner has ticked it beside
-   * the move; unticked, the screen answers no (autoAnswer), so the move is
-   * still one press. Per player, kept with the game's view. */
+   * before producing. Each is asked, as its owner bought it to be, until they
+   * untick it beside the move; unticked, the screen answers no (autoAnswer),
+   * so the move is one press again. Per player, kept with the game's view. */
   const FOLLOW = {
     freight: { fx: "extraSell", kind: "moreSell", no: { a: "done" }, label: "Freight Company: offer a second sale" },
     construction: { fx: "extraBuy", kind: "moreBuy", no: { a: "done" }, label: "Construction Company: offer a second purchase" },
     floor: { fx: "tradingFloor", kind: "tradingFloor", no: { none: true }, label: "Trading Floor: offer a purchase as I produce" },
   };
-  const following = (i, k) => !!(view.follow && view.follow[i] && view.follow[i][k]);
+  const following = (i, k) => (view.follow && view.follow[i] && view.follow[i][k]) ?? true;
   function followToggle(i, k) {
     if (!hasFx(st.players[i], FOLLOW[k].fx)) return "";
     const on = following(i, k);
@@ -1325,7 +1325,7 @@ ${st.over && !resultsHidden ? resultsBox() : ""}${helpTab !== null ? helpBox() :
       announce(events);
       sfx.events(events, viewer);
     },
-    /* The answer to a follow-up its owner has not ticked (FOLLOW), or undefined to ask it. */
+    /* The answer to a follow-up its owner has unticked (FOLLOW), or undefined to ask it. */
     autoAnswer(w) {
       for (const [k, f] of Object.entries(FOLLOW)) if (w.kind === f.kind && !following(w.player, k)) return f.no;
       return undefined;
