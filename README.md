@@ -18,7 +18,7 @@ The game ends when the last town is built or the last railroad is auctioned, and
 
 | Key | |
 |---|---|
-| `1`–`5` | preview producing with that card |
+| `1`–`5` | produce with that card |
 | `S` | jump to Sell |
 | `A` `B` `T` | jump to the railroads, buildings or town |
 | `Enter` | commit, take the keyboard, or bid |

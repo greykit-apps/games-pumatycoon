@@ -5,7 +5,7 @@
 
 import { GOODS, TRACK } from "../data/commodities.js";
 import { MISSIONS } from "../data/missions.js";
-import { CARD, bonusOptions } from "../engine/machine.js";
+import { CARD, bonusOptions, takeOptions } from "../engine/machine.js";
 import {
   RAIL, TOWN, lineOf, fxValues, tokens, storageLimit, productionMax, clampPrice, townCost, face, bType, publicScore,
   hasFx, handLimit,
@@ -20,6 +20,24 @@ export function sellPreview(st, i, g, q, exp = false) {
   let firm = 0;
   for (const f of fxValues(p, "firm")) if (f.includes(g)) firm += q;
   return { price, proceeds: q * price, firm, after: clampPrice(g, price - q), before };
+}
+
+/** The one-press sale of g: all of it, with the Export Company's bump when
+ * player i owns one (it raises the price before the sale, so it never pays
+ * less). The answer to the engine's "how many". */
+export function sellAll(st, i, g) {
+  const exp = hasFx(st.players[i], "exportBump");
+  return exp ? { q: st.players[i].goods[g], exp: true } : { q: st.players[i].goods[g] };
+}
+
+/** A card that takes some of its commodities: every choice the engine
+ * offers, worth the most at today's prices first (ties in the engine's
+ * order). The first is the one a second click on the card takes. */
+export function takeChoices(st, i, cardId) {
+  return takeOptions(st, i, cardId)
+    .map((goods, k) => ({ goods, k, worth: goods.reduce((a, g) => a + st.prices[g], 0) }))
+    .sort((a, b) => b.worth - a.worth || a.k - b.k)
+    .map(({ goods, worth }) => ({ goods, worth }));
 }
 
 /** Producing with a card: what is taken, what rises, and whether storage overflows. */

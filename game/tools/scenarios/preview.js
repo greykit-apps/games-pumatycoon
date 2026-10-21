@@ -2,9 +2,9 @@
  * the move it previews would teach the wrong rule. Each test makes the move
  * and checks the preview made beforehand against what happened. */
 
-import { table, give, act, eq, assert } from "./harness.js";
+import { table, give, act, eq, assert, turnOf } from "./harness.js";
 import { sellPreview, cardPreview, railPreview, townPreview, marketMoves, cheapest, lastTurnEntries, auctionSeats, quickBids, buyPreview, endClock, standing,
-  secretsShown, holders, missionProgress, cardEffects } from "../../ui/preview.js";
+  secretsShown, holders, missionProgress, cardEffects, sellAll, takeChoices } from "../../ui/preview.js";
 import { lastMoveLine, describeLog } from "../../ui/text.js";
 import { rename } from "../../ui/setup.js";
 import { tokens, storageLimit, publicScore } from "../../engine/rules.js";
@@ -72,6 +72,38 @@ export const TESTS = [
     eq(Object.values(m.wheat.by).reduce((a, b) => a + b, 0), m.wheat.delta, "the movers sum to the change");
     eq([m.wheat.by[0], m.wheat.by[1]], [2, -2], "P0's card +2, P1's sale -2");
   }],
+  ["screen: a one-press sale is all of it, with the Export bump, and the engine takes it", () => {
+    const st = table();
+    give(st, 0, { goods: { wood: 1, iron: 3 }, cash: 0 });
+    st.prices.wood = 4; st.prices.iron = 5;
+    eq(sellAll(st, 0, "wood"), { q: 1 }, "one unit is still a whole sale");
+    act(st, { a: "sell", good: "wood" });
+    eq(st.ask.kind, "sellQty", "the engine still asks how many");
+    act(st, sellAll(st, 0, "wood"));
+    eq([st.players[0].goods.wood, st.players[0].cash], [0, 4]);
+    turnOf(st, 0);
+    give(st, 0, { blds: ["export"] });
+    const all = sellAll(st, 0, "iron");
+    eq(all, { q: 3, exp: true }, "the Export Company's $3 when owned");
+    const pv = sellPreview(st, 0, "iron", all.q, all.exp);
+    act(st, { a: "sell", good: "iron" });
+    act(st, all);
+    eq([st.players[0].goods.iron, st.players[0].cash - 4, st.prices.iron], [0, pv.proceeds, pv.after], "the button's numbers are the sale's");
+  }],
+
+  ["screen: a card's take choices are every engine choice, most valuable first", () => {
+    const st = table();
+    give(st, 0, { hand: ["pp52"] });
+    st.prices.wood = 2; st.prices.goods = 9;
+    const choices = takeChoices(st, 0, "pp52");
+    const engine = (act(st, { a: "produce", card: "pp52" }), st.ask.options.filter(o => !o.back));
+    eq(choices.map(c => c.goods.join()).sort(), engine.map(o => o.join()).sort(), "the same choices as the engine's, each once");
+    for (let k = 1; k < choices.length; k++) assert(choices[k - 1].worth >= choices[k].worth, "worth the most first");
+    eq(choices[0].worth, choices[0].goods.reduce((a, g) => a + st.prices[g], 0));
+    act(st, choices[0].goods);
+    assert(st.ask === null || st.ask.kind !== "take", "the first choice is a legal take");
+  }],
+
   ["screen: pay with my cheapest picks the cheapest and the engine takes every step", () => {
     const st = table();
     st.townOffer = "bridgewater";                          // any 4

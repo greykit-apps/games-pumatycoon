@@ -78,6 +78,8 @@ export const SCENARIOS = [
   { name: "screen: a railroad preview shows its next copy's VP and a pair", layer: "screen", status: "ported" },
   { name: "screen: a town preview shows both ways of paying and what you hold", layer: "screen", status: "ported" },
   { name: "screen: market moves add up to the change and name who made them", layer: "screen", status: "ported" },
+  { name: "screen: a one-press sale is all of it, with the Export bump, and the engine takes it", layer: "screen", status: "ported" },
+  { name: "screen: a card's take choices are every engine choice, most valuable first", layer: "screen", status: "ported" },
   { name: "screen: pay with my cheapest picks the cheapest and the engine takes every step", layer: "screen", status: "ported" },
   { name: "screen: your last move names what you did and the prices it moved", layer: "screen", status: "ported" },
   { name: "screen: the auction box holds one entry per seat however long the bidding runs", layer: "screen", status: "ported" },

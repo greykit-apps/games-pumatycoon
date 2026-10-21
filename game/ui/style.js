@@ -389,9 +389,12 @@ table.standings tr.just{animation:pt-just 2.2s cubic-bezier(.16,1,.3,1) 1}
 .ask .grp[data-group=s] button{white-space:nowrap;overflow:hidden;padding:4px 6px;font-size:12.5px}
 /* a sale is one press: the commodity's button sells all of it, the "…" beside it opens the smaller sales */
 .sellitem{display:flex;min-width:0}
-.sellitem>button:first-child{flex:1;min-width:0;min-height:44px}
+.sellitem>button:first-child{flex:1;min-width:0;min-height:44px;display:flex;flex-direction:column;justify-content:center;gap:0;line-height:1.25}
+.sellitem .si-top{display:flex;align-items:center;gap:6px}
+.sellitem .si-top b{color:var(--text);font-size:var(--fs-m)}
+.sellitem .si-sub{font-size:var(--fs-xs);color:var(--dim);overflow:hidden;text-overflow:ellipsis}
 .sellitem:has(.sell-more)>button:first-child{border-top-right-radius:0;border-bottom-right-radius:0}
-.ask .grp[data-group=s] .sell-more{flex:none;width:26px;padding:0;text-align:center;justify-content:center;border:1px solid var(--line);border-left:0;
+.ask .grp[data-group=s] .sell-more{flex:none;width:22px;padding:0;text-align:center;justify-content:center;border:1px solid var(--line);border-left:0;
   border-top-left-radius:0;border-bottom-left-radius:0;color:var(--dim);background:var(--panel2)}
 .ask .grp[data-group=s] .sell-more[aria-expanded=true]{color:var(--accent);border-color:var(--accent)}
 .ask .grp[data-group=s] .row.sell-fewer{display:flex;flex-wrap:wrap;gap:4px;align-items:center;padding:6px;border:1px solid var(--line);background:var(--panel)}
@@ -474,7 +477,21 @@ table.tf td button{min-width:40px;min-height:28px;text-align:center;padding:2px 
 button.pp.live .pp-key{color:var(--accent)}
 button.pp{cursor:pointer}
 button.pp.live:hover,button.pp.live:focus-visible{border-color:var(--accent);background:var(--panel2)}
-button.pp[aria-pressed=true]{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent);background:var(--panel)}
+button.pp[aria-expanded=true]{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent);background:var(--panel)}
+/* A card that takes some of its commodities: its choices, beside it. Under
+ * the card in the hand row (placed by the screen), in the flow on the desk.
+ * Each choice produces in one press; the first is worth the most today. */
+.hand-strip{position:relative}
+.takepick{display:flex;flex-direction:column;gap:6px;padding:10px;background:var(--panel);border:1px solid var(--accent);border-radius:3px}
+.hand-strip .takepick{position:absolute;z-index:20;top:calc(100% - 2px);left:0;width:max-content;max-width:100%;box-shadow:0 10px 30px rgba(0,0,0,.6)}
+.takepick .tp-t{margin:0;font-size:var(--fs-s);color:var(--text);font-weight:700}
+.takepick .tp-t .dim{font-weight:400;margin-left:6px}
+.takepick .tp-row{display:flex;flex-wrap:wrap;gap:6px;align-items:stretch}
+.takepick .tp-row button{min-height:44px;display:inline-flex;align-items:center;gap:6px}
+.takepick .tp-row button.best{border-color:var(--accent)}
+.takepick .tp-row button.best .dim::after{content:" · most";color:var(--accent)}
+.takepick .combo{display:inline-flex;gap:2px}
+.takepick .tp-x{font-size:var(--fs-xs);color:var(--dim)}
 /* A hand card's popup: a two-column list, one fact a line, the building
  * that changes a fact named beneath it. */
 .cardpop{position:fixed;z-index:25;width:min(340px,calc(100vw - 16px));background:var(--panel);border:1px solid var(--accent);border-radius:3px;
