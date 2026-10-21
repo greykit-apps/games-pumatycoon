@@ -327,6 +327,10 @@ await intro.finish({
   more: [saved ? `game in progress: round ${saved.round}` : "no game in progress"],
   title: host.querySelector(".gk-title"),
   name: "lines",
+  /* much quicker than canon's (600, 700, 3000, 4200): the name is down
+   * within a second of the boot, and the hand starts landing as its last
+   * line does, with no pause between them (as PumaTriage's) */
+  timing: { name: 0, step: 220, menu: 380, done: 1400 },
   toggles: SOUND_TOGGLES,
   tick: menuTick,
   onContinue: () => sfx.unlock(),
