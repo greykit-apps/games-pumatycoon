@@ -23,13 +23,14 @@ The game ends when the last town is built or the last railroad is auctioned, and
 | `A` `B` `T` | jump to the railroads, buildings or town |
 | `Enter` | commit, take the keyboard, or bid |
 | `P` | pass in an auction |
+| `M` | sound on and off |
 | `?` | rules, scoring and every key |
 
 Everything else is a button.
 
 ## Saves
 
-The game saves after every move, in the browser's `localStorage` under keys starting `pumatycoon_`. **Settings → Forget everything** clears them.
+The game saves after every move, in the browser's `localStorage` under keys starting `pumatycoon_`. Sound on or off is kept there too. **Settings → Forget everything** clears them.
 
 ## Credits
 

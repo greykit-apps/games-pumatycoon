@@ -28,6 +28,7 @@
  * human that human is the viewer throughout; with none, the screen is a
  * spectator's and shows everything. */
 
+import * as sfx from "./sfx.js";
 import { GOODS, TRACK } from "../data/commodities.js";
 import { SKIN } from "../data/skin.js";
 import { CARD, canon } from "../engine/machine.js";
@@ -798,6 +799,7 @@ export function mountScreen(host, hooks) {
   <header class="top"><svg width="22" height="22" viewBox="0 0 100 100" aria-hidden="true"><use href="#pt-mark"/></svg><h1>${esc(SKIN.game)}</h1>
     <span class="turn">${st.phase === "turn" || st.over ? `Round ${st.round} · ` : ""}${turnName}</span>${end}${clock()}<span class="grow"></span>
     <button data-help aria-label="How to play">?</button>
+    <button data-sound class="snd" aria-label="Sound" aria-pressed="${!sfx.isMuted()}" title="Sound (M)"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path class="on" d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/><path class="off" d="M16 9.5l5 5M21 9.5l-5 5"/></svg></button>
     <button data-speed title="How long the bots take over each move; press to change">Bot speed: ${hooks.speedName()}</button>
     <button data-newgame title="Back to the title screen. This game stays saved until another is started.">Menu</button></header>
   <div class="main">
@@ -1037,6 +1039,7 @@ ${st.over && !resultsHidden ? resultsBox() : ""}${helpTab !== null ? helpBox() :
     if (!o) return;
     staged = staged === canon(o) ? null : canon(o);
     selected = null;
+    if (staged) sfx.play("tick");
     render();
     if (staged) host.querySelector(".ask .preview [data-answer]")?.focus();
   }
@@ -1050,6 +1053,7 @@ ${st.over && !resultsHidden ? resultsBox() : ""}${helpTab !== null ? helpBox() :
   function select(card) {
     staged = null;
     selected = selected === card ? null : card;
+    if (selected) sfx.play("select");
     render();
     host.querySelector(".preview [data-answer]")?.focus();
   }
@@ -1069,6 +1073,7 @@ ${st.over && !resultsHidden ? resultsBox() : ""}${helpTab !== null ? helpBox() :
     if (b.hasAttribute("data-unstage")) { staged = null; return render(); }
     if (b.dataset.jump) { const t = jumpTarget(b.dataset.jump); if (t) { t.focus(); t.scrollIntoView({ block: "nearest" }); } return; }
     if (b.hasAttribute("data-speed")) { hooks.cycleSpeed(); return render(); }
+    if (b.hasAttribute("data-sound")) { sfx.toggleMute(); hooks.soundChanged(); return; }
     if (b.hasAttribute("data-debug")) return hooks.debugDump();
     if (b.hasAttribute("data-closeresults")) { resultsHidden = true; return render(); }
     if (b.hasAttribute("data-lift")) { curtain = false; viewer = st.ask.player; lastSig = null; return render(); }
@@ -1115,7 +1120,9 @@ ${st.over && !resultsHidden ? resultsBox() : ""}${helpTab !== null ? helpBox() :
   /* Arrow keys walk the main bid; the input and the button stay in step. */
   function nudgeBid(d) {
     const w = st.ask;
-    bidValue = Math.max(w.lo, Math.min(w.hi, (bidValue ?? w.lo) + d));
+    const was = bidValue ?? w.lo;
+    bidValue = Math.max(w.lo, Math.min(w.hi, was + d));
+    if (bidValue !== was) sfx.play("tick");
     const input = host.querySelector("[data-bid]");
     if (input) input.value = bidValue;
     syncBidLabel();
@@ -1225,6 +1232,7 @@ ${st.over && !resultsHidden ? resultsBox() : ""}${helpTab !== null ? helpBox() :
       tfPick = null;
       render();
       announce(events);
+      sfx.events(events, viewer);
     },
     help() { helpTab = 0; render(); },
     queueTour() { tourFor = new Set(humans()); },

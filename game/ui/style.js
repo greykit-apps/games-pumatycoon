@@ -137,6 +137,11 @@ h2 .dim{letter-spacing:.04em;text-transform:none;font-weight:400}
 }
 .top{display:flex;align-items:center;gap:12px;padding:8px 16px;border-bottom:1px solid var(--line);flex-wrap:wrap;background:var(--panel)}
 .top .grow{flex:1}
+/* the Sound button (games-meta STANDARD.md §8): a speaker, its waves while on, a cross while off */
+.top .snd{display:inline-flex;align-items:center;justify-content:center}
+.top .snd svg{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.top .snd[aria-pressed="true"] .off,.top .snd[aria-pressed="false"] .on{display:none}
+.top .snd[aria-pressed="false"]{color:var(--dim)}
 .top .turn{color:var(--text)}
 .top .clock{color:var(--body);font-size:var(--fs-s);border:1px solid var(--line);border-radius:2px;padding:1px 8px}
 .top .clock b{font-weight:700}

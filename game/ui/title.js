@@ -1419,4 +1419,5 @@ function gktChit(ac, out, { gain = 0.4 } = {}) {
 }
 /* @gk-table-end */
 
-export { TITLE_CSS, runBoot, titleHTML, decodeTitle, mountTitle, bootReloadLine, startIntro, gkIntegrate, gkTable };
+export { TITLE_CSS, runBoot, titleHTML, decodeTitle, mountTitle, bootReloadLine, startIntro, gkIntegrate, gkTable,
+  gkBootSound, gktFlick, gktDeal, gktChit };
