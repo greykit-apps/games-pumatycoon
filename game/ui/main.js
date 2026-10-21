@@ -14,14 +14,16 @@
  * game/tools/replay-dump.js re-runs headlessly. */
 
 import { injectCSS } from "./style.js";
-import { SPRITES, SCENE } from "./art.js";
+import { SPRITES, SCENE, icon } from "./art.js";
+import { CARDS } from "../data/cards.js";
 import { newGame, SAVE_VERSION } from "../engine/state.js";
 import { step } from "../engine/machine.js";
 import { botAnswer } from "../engine/bots.js";
 import { mountSetup, quickStartOpts } from "./setup.js";
 import { mountScreen } from "./screen.js";
 import { HELP_TABS } from "./help.js";
-import { runBoot, mountTitle, bootReloadLine } from "./title.js";
+import { startIntro, mountTitle, bootReloadLine, gkIntegrate, gkTable } from "./title.js";
+import { tableScene } from "./tablescene.js";
 
 const SAVE_KEY = "pumatycoon_game_v1";
 const PREFS_KEY = "pumatycoon_prefs_v1";
@@ -58,8 +60,11 @@ function forgetEverything() {
 const host = document.querySelector("[data-pumatycoon-game]");
 injectCSS(document);
 document.body.insertAdjacentHTML("afterbegin", SPRITES + SCENE);
-/* everything is in the modules already: the boot has nothing to wait for but itself */
-const boot = runBoot({ lines: [bootReloadLine(), "opening the market"] });
+/* everything is in the modules already: the boot has nothing to wait for but
+ * itself. The integrated intro (games-meta STANDARD.md §14) as a silent game
+ * takes it: no boot sound, and no hold, since there is no sound for a press
+ * to let play -- the boot goes straight into the table. */
+const intro = startIntro({ lines: [bootReloadLine(), "opening the market"], bootSound: false });
 
 const prefs = { speed: "normal", ...(store.get(PREFS_KEY) || {}) };
 let st = null;
@@ -93,6 +98,7 @@ const ABOUT = `<p>PumaTycoon: Based on the board game Raccoon Tycoon by Glenn Dr
 <p class="gk-credit">Built by <a href="https://greykit.com/" target="_blank" rel="noopener">greykit.com</a></p>`;
 
 let title = null;
+let introDone = false;
 let setupKeys = null;   // Custom game's Escape, on the document: focus is on the body after every redraw
 /** Off whatever screen is up: the race loop stops, and the setup screen's
  * handlers, which it hangs on the host itself, go with it. */
@@ -115,6 +121,9 @@ function toTitle() {
   host.classList.add("on-title");
   title = mountTitle(host, {
     name: "PumaTycoon",
+    lines: ["Puma", "Tycoon"],
+    sub: "Produce \u00b7 Sell \u00b7 Outbid",
+    scene: tableScene,
     items: [
       saved && { act: "resume", label: "Resume game", key: "R", meta: `Round ${saved.round} \u00b7 ${saved.players.length} players` },
       { act: "new", label: "New quick game", key: "N" },
@@ -153,7 +162,39 @@ function toTitle() {
       }
     }
   });
+  /* The table (games-meta STANDARD.md §15): the name set down like a box's
+   * lid, the menu dealt as a hand of cards -- PumaTycoon's box has a deck --
+   * and the market charting behind. The first title's credit is laid out by
+   * the intro's finish(); every title after that does it here. Silent: no
+   * deal, chit or flick sounds. */
+  const t = host.querySelector(".gk-title");
+  if (introDone) gkIntegrate(t);
+  gkTable(t, { box: ["2\u20135 players", "bots or hot seat", "six commodities"], tilt: true });
+  dressCards(t);
   return title;
+}
+
+/* The hand is dealt from the game's own deck: each card in the title's hand
+ * is a Price & Production card, red over blue as the printed card -- the item
+ * on the production half with that card's commodities under it, its meta on
+ * the price half with the prices it raises. A different card each time the
+ * hand is dealt. The icons are pictures only: a card's name is its item. */
+function dressCards(t) {
+  const deck = CARDS.slice();
+  const icons = gs => `<span class="pt-icons" aria-hidden="true">${gs.map(g => icon(g, 18)).join("")}</span>`;
+  for (const b of t.querySelectorAll(".gk-menu > button")) {
+    const c = deck.splice(Math.random() * deck.length | 0, 1)[0];
+    const lbl = b.querySelector(".gk-lbl"), meta = b.querySelector(".gk-meta");
+    const prod = document.createElement("span"), price = document.createElement("span");
+    prod.className = "pt-half pt-prod";
+    price.className = "pt-half pt-price";
+    prod.append(lbl);
+    prod.insertAdjacentHTML("beforeend", icons(c.prod));
+    if (meta) price.append(meta);
+    price.insertAdjacentHTML("beforeend", icons(c.price));
+    b.querySelector("kbd").after(prod, price);
+    b.classList.add("pt-card");
+  }
 }
 
 function toSetup() {
@@ -238,8 +279,14 @@ async function advance(answer, queued = []) {
   }
 }
 
-/* the title goes in under the boot, so the boot's fade reveals it */
-const t = toTitle();
+/* the title goes in under the boot, so the boot's fade reveals it; the
+ * intro then sets the name down and deals the hand */
+toTitle();
 const saved = loadGame();
-await boot.finish([saved ? `game in progress: round ${saved.round}` : "no game in progress"]);
-t.reveal();
+await intro.finish({
+  more: [saved ? `game in progress: round ${saved.round}` : "no game in progress"],
+  title: host.querySelector(".gk-title"),
+  name: "lines",
+  hold: "never",
+});
+introDone = true;
