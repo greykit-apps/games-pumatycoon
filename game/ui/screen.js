@@ -268,7 +268,7 @@ export function mountScreen(host, hooks) {
     const kS = st.ask && st.ask.kind === "action" ? liveIndex(o => o.a === "town" && o.pay === "specific") : -1;
     const kA = st.ask && st.ask.kind === "action" ? liveIndex(o => o.a === "town" && o.pay === "any") : -1;
     const pay = (k, inner, ok, label, hint, attr = "answer") => (k >= 0
-      ? `<span class="ob-pay ok"><button data-${attr}="${k}" aria-label="${esc(label)}"${hintAttr(hint)}>${inner}</button></span>`
+      ? `<span class="ob-pay ok"><button data-${attr}="${k}"${attr === "stage" ? ` aria-pressed="${staged === canon(st.ask.options[k])}"` : ""} aria-label="${esc(label)}"${hintAttr(hint)}>${inner}${attr === "stage" && staged === canon(st.ask.options[k]) ? '<span class="again">again to build</span>' : ""}</button></span>`
       : `<span class="ob-pay${ok ? " ok" : ""}">${inner}</span>`);
     const name = townName(st.townOffer);
     return `<div class="ob-row town" data-row="town">
@@ -302,6 +302,7 @@ export function mountScreen(host, hooks) {
       <span class="ob-name">${t.tag ? `<span class="badge">${t.tag}</span>` : ""}${esc(f.printed)}</span>
       <span class="ob-fx"${up ? ` title="${esc(up)}"` : ""}>${esc(effectText(inst, 0))}${up ? `<span class="dim upg"> · ${esc(up)}</span>` : ""}</span>
       <span class="ob-cost">${money(f.cost)}</span>
+      ${on ? `<span class="ob-again">Click again to buy for ${money(f.cost)}<kbd>⏎</kbd> <span class="dim">· Esc cancels</span></span>` : ""}
     </${tag}>`;
   }
 
@@ -503,7 +504,7 @@ export function mountScreen(host, hooks) {
         <div class="pv-row"><span class="dim">You pay</span> ${pv.need} ${icon(pv.good, 16)} ${GOOD_NAME[pv.good]} <span class="dim">of your ${pv.have}, worth ${money(pv.need * st.prices[pv.good])} today</span></div>
         <div class="pv-row"><span class="dim">Scores</span> <span class="vpc">+${pv.vp} VP${pv.pair ? `, +${pv.pair} for a pair` : ""}${pv.bonus ? `, +${pv.bonus} from your buildings` : ""}</span></div>
         ${endClock(st).ends.town ? warn("The last town: building it ends the game after this round.") : ""}
-        <div class="row"><button class="primary" data-answer="${k}"${hintAttr({ rows: ["town"] })}>Build it</button><button class="ghost" data-unstage>Cancel<kbd>Esc</kbd></button></div></div>`;
+        <div class="row"><button class="primary commit" data-answer="${k}"${hintAttr({ rows: ["town"] })}>Build it</button><button class="ghost" data-unstage>Cancel<kbd>Esc</kbd></button></div></div>`;
     }
     const pv = buyPreview(st, v, o);
     const hint = o.a === "buy" ? hintAttr({ rows: [`bld-${o.slot}`] }) : "";
@@ -513,7 +514,7 @@ export function mountScreen(host, hooks) {
       <div class="pv-row"><span class="dim">Costs</span> ${money(pv.cost)} <span class="dim">· leaves you</span> <b>${money(pv.left)}</b></div>
       <div class="pv-row"><span class="dim">Scores</span> ${pv.vp ? `<span class="vpc">+${pv.vp} VP</span>` : '<span class="dim">no more VP</span>'}${pv.storage[1] !== pv.storage[0] ? ` <span class="dim">· storage ${pv.storage[0]} → ${pv.storage[1]}</span>` : ""}</div>
       ${pv.ends ? warn("The last building: buying it ends the game after this round.") : ""}
-      <div class="row"><button class="primary" data-answer="${k}"${hint}>${pv.up ? "Upgrade" : "Buy"} for ${money(pv.cost)}</button><button class="ghost" data-unstage>Cancel<kbd>Esc</kbd></button></div></div>`;
+      <div class="row"><button class="primary commit" data-answer="${k}"${hint}>${pv.up ? "Upgrade" : "Buy"} for ${money(pv.cost)}</button><button class="ghost" data-unstage>Cancel<kbd>Esc</kbd></button></div></div>`;
   }
 
   /* A move made in one press is the answers it takes, each named with the
@@ -571,7 +572,7 @@ export function mountScreen(host, hooks) {
     const who = humans().length > 1 ? `${esc(p.name)} · ` : "";
     const q = text => `<p class="q" tabindex="-1">${who}${text}</p>`;
     const g = (title, key, items, note = "") => (items.length ? `<div class="grp" data-group="${key || ""}"><b>${title}${key ? `<kbd>${key.toUpperCase()}</kbd>` : ""}</b>${note ? `<p class="endwarn">⚠ ${note}</p>` : ""}<div class="row">${items.join("")}</div></div>` : "");
-    const stageBtn = (idx, label, extra = "") => `<button data-stage="${idx}" aria-pressed="${staged === canon(O[idx])}"${extra}>${label}</button>`;
+    const stageBtn = (idx, label, extra = "") => { const on = staged === canon(O[idx]); return `<button data-stage="${idx}" aria-pressed="${on}"${extra}>${label}${on ? '<span class="again">again to confirm</span>' : ""}</button>`; };
     const stagedK = staged ? O.findIndex(o => o && canon(o) === staged) : -1;
     const under = kinds => (stagedK >= 0 && kinds.includes(O[stagedK].a) && !(O[stagedK].a === "town" && O[stagedK].pay !== "specific") ? stagedBlock(w, stagedK) : "");
 
@@ -1122,14 +1123,18 @@ ${st.over && !resultsHidden ? resultsBox() : ""}${helpTab !== null ? helpBox() :
     return host.querySelector({ a: ".ob-row.rail.live", b: ".ob-row.bld.live", t: ".ob-row.town button" }[key] || "x");
   }
 
+  /* Spending is two presses on the same thing: the first previews the
+   * purchase, the second makes it. Focus stays where it was, so Enter twice
+   * on a row does the same as two clicks; Esc or Cancel puts it back. */
   function stage(k) {
     const o = st.ask && st.ask.options && st.ask.options[k];
     if (!o) return;
-    staged = staged === canon(o) ? null : canon(o);
+    if (staged === canon(o)) return answer(k);
+    staged = canon(o);
     picking = null;
-    if (staged) sfx.play("tick");
+    sellOpen = null;
+    sfx.play("tick");
     render();
-    if (staged) host.querySelector(".ask .preview [data-answer]")?.focus();
   }
 
   host.onclick = e => {

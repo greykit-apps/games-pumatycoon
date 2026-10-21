@@ -235,8 +235,14 @@ h2 .dim{letter-spacing:.04em;text-transform:none;font-weight:400}
 .ob-row.rail .ob-name{grid-area:name} .ob-row.rail .ob-ladder{grid-area:ladder} .ob-row.rail .ob-cost{grid-area:cost} .ob-row.rail .ob-you{grid-area:you}
 .ob-row.town{grid-template-columns:minmax(0,1fr) auto auto;grid-template-areas:"name pay1 pay2" "vp vp vp"}
 .ob-row.town .ob-name{grid-area:name} .ob-row.town .ob-vp{grid-area:vp} .ob-row.town .ob-pay:nth-of-type(3){grid-area:pay1} .ob-row.town .ob-pay:nth-of-type(4){grid-area:pay2}
-.ob-row.bld{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"name cost" "fx fx"}
-.ob-row.bld .ob-name{grid-area:name} .ob-row.bld .ob-cost{grid-area:cost} .ob-row.bld .ob-fx{grid-area:fx}
+.ob-row.bld{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"name cost" "fx fx" "again again"}
+.ob-row.bld .ob-name{grid-area:name} .ob-row.bld .ob-cost{grid-area:cost} .ob-row.bld .ob-fx{grid-area:fx} .ob-row.bld .ob-again{grid-area:again}
+/* a purchase previewed: its row says the next press on it buys */
+button.ob-row.live[aria-pressed=true]{background:#0d2028;outline:1px solid var(--accent);outline-offset:-1px}
+.ob-again{color:var(--accent);font-weight:600;font-size:var(--fs-s);margin-top:2px}
+.ob-again kbd,.again kbd{font:inherit;font-size:10px;color:var(--dim);border:1px solid var(--line);border-radius:2px;padding:0 4px;margin-left:6px}
+button .again{display:block;font-size:var(--fs-xs);color:var(--accent);font-weight:600}
+.preview .row .commit{flex:1;min-height:44px;font-size:var(--fs-m);justify-content:center;text-align:center}
 .ob-name{color:var(--text);font-weight:600;font-size:var(--fs-s)}
 .ob-cost{color:var(--text);font-weight:700;text-align:right}
 .ob-ladder{color:var(--dim);letter-spacing:.02em}
