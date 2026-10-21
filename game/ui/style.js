@@ -497,7 +497,9 @@ button.pp[aria-expanded=true]{border-color:var(--accent);box-shadow:0 0 0 1px va
 .takepick .tp-row button.best{border-color:var(--accent)}
 .takepick .tp-row button.best .dim::after{content:" · most";color:var(--accent)}
 .takepick .combo{display:inline-flex;gap:2px}
-.takepick .tp-x{font-size:var(--fs-xs);color:var(--dim)}
+.takepick .tp-x{font-size:var(--fs-s);color:var(--dim)}
+.takepick kbd{font:inherit;font-size:10px;color:var(--dim);border:1px solid var(--line);border-radius:2px;padding:0 4px;margin-left:6px}
+@media (hover:none){.takepick kbd,.ob-again kbd{display:none}}
 /* A hand card's popup: a two-column list, one fact a line, the building
  * that changes a fact named beneath it. */
 .cardpop{position:fixed;z-index:25;width:min(340px,calc(100vw - 16px));background:var(--panel);border:1px solid var(--accent);border-radius:3px;

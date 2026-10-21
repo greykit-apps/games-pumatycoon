@@ -468,7 +468,7 @@ export function mountScreen(host, hooks) {
     const choices = takeChoices(st, i, id).map((c, k) => `<button${stepsAttr([prod, { kind: "take", answer: c.goods }])}${k === 0 ? ' class="best"' : ""} aria-label="Produce, taking ${c.goods.map(x => GOOD_NAME[x]).join(", ")}, worth ${money(c.worth)} today${k === 0 ? ", the most" : ""}"${hintAttr({ g: rise, take: c.goods })}><span class="combo">${goodsIcons(c.goods)}</span> <span class="dim">${money(c.worth)}</span></button>`).join("");
     return `<div class="takepick" role="group" aria-label="Card ${n}: which ${pv.take} to take" data-n="${n}">
       <p class="tp-t">Take ${pv.take} of card ${n} <span class="dim">most valuable today first · click the card again for the first</span></p>
-      <div class="tp-row">${choices}<button class="ghost tp-x" data-unselect aria-label="Put the card back">Esc</button></div></div>`;
+      <div class="tp-row">${choices}<button class="ghost tp-x" data-unselect>Put back<kbd>Esc</kbd></button></div></div>`;
   }
 
   /* What makes a mission easy or hard to judge, for the choice of one. */
