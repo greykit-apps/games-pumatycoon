@@ -259,7 +259,8 @@ function openScreen() {
   host.onchange = null;
   screen = mountScreen(host, {
     submit: a => advance(a),
-    submitMany: list => advance(list[0], list.slice(1)),
+    submitMany: list => advance(list[0], list.slice(1).map(answer => ({ answer }))),
+    submitSteps: steps => advance(steps[0].answer, steps.slice(1)),
     newGame: () => toTitle().reveal(),
     // The same seats, in the same order, and the same rules; a new seed deals a new game.
     rematch: () => (trace && st && trace.seed === st.seed && trace.setup ? start({ players: trace.setup.players, options: trace.setup.options }) : toSetup()),
@@ -274,9 +275,15 @@ function openScreen() {
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 /** Step the engine until a human must answer; bots answer a beat apart.
- * `queued` are further answers from the same person (a one-click "pay with my
- * cheapest" is several answers); each is used only while that person is still
- * the one being asked, and the first refusal drops the rest. */
+ * `queued` are further answers from the same person, each `{ answer, kind }`:
+ * one press can be several answers (a whole sale is "sell wood" then "all
+ * of it"; "pay with my cheapest" is one commodity at a time). Each is used
+ * only while that person is still the one being asked, and only for the
+ * question it was meant for -- `kind` names it, or without one the same kind
+ * as the last -- and the first that does not fit drops the rest, as does a
+ * refusal. Then the screen may answer a follow-up the person has said not to
+ * be asked (screen.autoAnswer): only straight after one of their own answers,
+ * never for a question that was already waiting. */
 async function advance(answer, queued = []) {
   if (busy) return;
   busy = true;
@@ -285,6 +292,7 @@ async function advance(answer, queued = []) {
   try {
     for (;;) {
       const ask = st.ask;
+      const answered = a !== undefined;
       const r = step(st, a);
       traceStep(r.refused ? undefined : a, ask);
       a = undefined;
@@ -293,8 +301,10 @@ async function advance(answer, queued = []) {
       screen.update(st, r.events);
       if (r.refused) break;
       const w = st.ask;
-      if (w && queued.length && ask && w.player === ask.player && w.kind === ask.kind && st.players[w.player].seat === "human") { a = queued.shift(); continue; }
+      const same = !!(w && answered && ask && w.player === ask.player && st.players[w.player].seat === "human");
+      if (same && queued.length && w.kind === (queued[0].kind ?? ask.kind)) { a = queued.shift().answer; continue; }
       queued = [];
+      if (same) { const auto = screen.autoAnswer(w); if (auto !== undefined) { a = auto; continue; } }
       if (!w || st.players[w.player].seat !== "bot") break;
       const beat = BEAT[w.kind] ?? 0;
       if (beat) await sleep((SPEEDS[prefs.speed] ?? SPEEDS.normal) * beat);

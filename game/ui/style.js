@@ -235,8 +235,14 @@ h2 .dim{letter-spacing:.04em;text-transform:none;font-weight:400}
 .ob-row.rail .ob-name{grid-area:name} .ob-row.rail .ob-ladder{grid-area:ladder} .ob-row.rail .ob-cost{grid-area:cost} .ob-row.rail .ob-you{grid-area:you}
 .ob-row.town{grid-template-columns:minmax(0,1fr) auto auto;grid-template-areas:"name pay1 pay2" "vp vp vp"}
 .ob-row.town .ob-name{grid-area:name} .ob-row.town .ob-vp{grid-area:vp} .ob-row.town .ob-pay:nth-of-type(3){grid-area:pay1} .ob-row.town .ob-pay:nth-of-type(4){grid-area:pay2}
-.ob-row.bld{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"name cost" "fx fx"}
-.ob-row.bld .ob-name{grid-area:name} .ob-row.bld .ob-cost{grid-area:cost} .ob-row.bld .ob-fx{grid-area:fx}
+.ob-row.bld{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"name cost" "fx fx" "again again"}
+.ob-row.bld .ob-name{grid-area:name} .ob-row.bld .ob-cost{grid-area:cost} .ob-row.bld .ob-fx{grid-area:fx} .ob-row.bld .ob-again{grid-area:again}
+/* a purchase previewed: its row says the next press on it buys */
+button.ob-row.live[aria-pressed=true]{background:#0d2028;outline:1px solid var(--accent);outline-offset:-1px}
+.ob-again{color:var(--accent);font-weight:600;font-size:var(--fs-s);margin-top:2px}
+.ob-again kbd,.again kbd{font:inherit;font-size:10px;color:var(--dim);border:1px solid var(--line);border-radius:2px;padding:0 4px;margin-left:6px}
+button .again{display:block;font-size:var(--fs-xs);color:var(--accent);font-weight:600}
+.preview .row .commit{flex:1;min-height:44px;font-size:var(--fs-m);justify-content:center;text-align:center}
 .ob-name{color:var(--text);font-weight:600;font-size:var(--fs-s)}
 .ob-cost{color:var(--text);font-weight:700;text-align:right}
 .ob-ladder{color:var(--dim);letter-spacing:.02em}
@@ -387,6 +393,26 @@ table.standings tr.just{animation:pt-just 2.2s cubic-bezier(.16,1,.3,1) 1}
 .ask .grp>b{font-size:var(--fs-s);color:var(--body);font-weight:700}
 .ask .grp[data-group=s] .row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}
 .ask .grp[data-group=s] button{white-space:nowrap;overflow:hidden;padding:4px 6px;font-size:12.5px}
+/* a sale is one press: the commodity's button sells all of it, the "…" beside it opens the smaller sales */
+.sellitem{display:flex;min-width:0}
+.sellitem>button:first-child{flex:1;min-width:0;min-height:44px;display:flex;flex-direction:column;justify-content:center;gap:0;line-height:1.25}
+.sellitem .si-top{display:flex;align-items:center;gap:6px}
+.sellitem .si-top b{color:var(--text);font-size:var(--fs-m)}
+.sellitem .si-sub{font-size:var(--fs-xs);color:var(--dim);overflow:hidden;text-overflow:ellipsis}
+.sellitem:has(.sell-more)>button:first-child{border-top-right-radius:0;border-bottom-right-radius:0}
+.ask .grp[data-group=s] .sell-more{flex:none;width:22px;padding:0;text-align:center;justify-content:center;border:1px solid var(--line);border-left:0;
+  border-top-left-radius:0;border-bottom-left-radius:0;color:var(--dim);background:var(--panel2)}
+.ask .grp[data-group=s] .sell-more[aria-expanded=true]{color:var(--accent);border-color:var(--accent)}
+.ask .grp[data-group=s] .row.sell-fewer{display:flex;flex-wrap:wrap;gap:4px;align-items:center;padding:6px;border:1px solid var(--line);background:var(--panel)}
+.ask .grp[data-group=s] .sell-fewer button{min-height:36px}
+/* a building that adds a question to a move: ticked beside the move, or answered no */
+.ask button.follow,.ask .grp button.follow{align-self:flex-start;display:inline-flex;align-items:center;gap:8px;min-height:30px;padding:2px 6px;background:transparent;border-color:transparent;
+  color:var(--body);font-size:var(--fs-s)}
+.ask button.follow:hover{border-color:var(--line)}
+.ask .follow .box{width:14px;height:14px;border:1px solid var(--lit);border-radius:2px;display:inline-flex;align-items:center;justify-content:center;
+  font-size:11px;line-height:1;color:var(--accent)}
+.ask button.follow[aria-pressed=true],.ask .grp button.follow[aria-pressed=true]{background:transparent;color:var(--text)}
+.ask .follow[aria-pressed=true] .box{border-color:var(--accent)}
 .ask .endwarn{margin:0;font-size:var(--fs-s);color:var(--warn)}
 .ask .q-row{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
 .ask .grp.jumps{flex-direction:row;flex-wrap:wrap;align-items:center;gap:4px}
@@ -457,7 +483,23 @@ table.tf td button{min-width:40px;min-height:28px;text-align:center;padding:2px 
 button.pp.live .pp-key{color:var(--accent)}
 button.pp{cursor:pointer}
 button.pp.live:hover,button.pp.live:focus-visible{border-color:var(--accent);background:var(--panel2)}
-button.pp[aria-pressed=true]{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent);background:var(--panel)}
+button.pp[aria-expanded=true]{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent);background:var(--panel)}
+/* A card that takes some of its commodities: its choices, beside it. Under
+ * the card in the hand row (placed by the screen), in the flow on the desk.
+ * Each choice produces in one press; the first is worth the most today. */
+.hand-strip{position:relative}
+.takepick{display:flex;flex-direction:column;gap:6px;padding:10px;background:var(--panel);border:1px solid var(--accent);border-radius:3px}
+.hand-strip .takepick{position:absolute;z-index:20;top:calc(100% - 2px);left:0;width:max-content;max-width:100%;box-shadow:0 10px 30px rgba(0,0,0,.6)}
+.takepick .tp-t{margin:0;font-size:var(--fs-s);color:var(--text);font-weight:700}
+.takepick .tp-t .dim{font-weight:400;margin-left:6px}
+.takepick .tp-row{display:flex;flex-wrap:wrap;gap:6px;align-items:stretch}
+.takepick .tp-row button{min-height:44px;display:inline-flex;align-items:center;gap:6px}
+.takepick .tp-row button.best{border-color:var(--accent)}
+.takepick .tp-row button.best .dim::after{content:" · most";color:var(--accent)}
+.takepick .combo{display:inline-flex;gap:2px}
+.takepick .tp-x{font-size:var(--fs-s);color:var(--dim)}
+.takepick kbd{font:inherit;font-size:10px;color:var(--dim);border:1px solid var(--line);border-radius:2px;padding:0 4px;margin-left:6px}
+@media (hover:none){.takepick kbd,.ob-again kbd{display:none}}
 /* A hand card's popup: a two-column list, one fact a line, the building
  * that changes a fact named beneath it. */
 .cardpop{position:fixed;z-index:25;width:min(340px,calc(100vw - 16px));background:var(--panel);border:1px solid var(--accent);border-radius:3px;

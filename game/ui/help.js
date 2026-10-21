@@ -32,10 +32,12 @@ export const HELP_TABS = [
   ["Keys", `
 <ul>
 <li>Hover over a card (or focus it) for what producing with it would do, buildings named</li>
-<li>Double-click a card to produce with it at once; one click previews it first</li>
-<li><b>1</b>–<b>5</b> — preview producing with that card; <b>Enter</b> on Produce commits, <b>Esc</b> puts it back</li>
+<li>Click a card to produce with it. A card that takes only some of its commodities shows its choices first, the most valuable today at the front: click one, or click the card again for the first; <b>Esc</b> puts it back</li>
+<li><b>1</b>–<b>5</b> — produce with that card, or show its choices</li>
+<li>Sell buttons sell all of a commodity in one press; <b>…</b> beside one sells fewer</li>
+<li>Freight Company's second sale, Construction Company's second purchase and the Trading Floor's purchase are asked after the move; untick one beside the move, or in its question, and the move ends without it</li>
 <li><b>S</b> — jump to Sell; <b>A</b>, <b>B</b>, <b>T</b> — jump to the railroads, buildings or town in the table, where those moves are made. A jump never commits; the arrow keys then walk the list</li>
-<li>Buying a building or a town paid in its own commodity is two presses: the first shows what it costs and brings, the second spends; <b>Esc</b> cancels</li>
+<li>Buying a building or a town paid in its own commodity is two presses on the same row or button (a double-click does both): the first shows what it costs and brings, the second spends; <b>Esc</b> cancels</li>
 <li><b>A</b> while selling — sell all</li>
 <li><b>Enter</b> — take the keyboard when it is passed to you (hot seat)</li>
 <li>Bidding: <b>Enter</b> bids the amount on the Bid button (the minimum, unless you change it); <b>↑</b> <b>↓</b> walk it $1, with <b>Shift</b> $5; <b>P</b> passes; <b>Esc</b> takes back an auction you have not opened yet</li>
