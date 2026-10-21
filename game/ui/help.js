@@ -35,6 +35,7 @@ export const HELP_TABS = [
 <li>Click a card to produce with it. A card that takes only some of its commodities shows its choices first, the most valuable today at the front: click one, or click the card again for the first; <b>Esc</b> puts it back</li>
 <li><b>1</b>–<b>5</b> — produce with that card, or show its choices</li>
 <li>Sell buttons sell all of a commodity in one press; <b>…</b> beside one sells fewer</li>
+<li>Freight Company's second sale, Construction Company's second purchase and the Trading Floor's purchase are asked only when you tick them beside the move; unticked, the move ends without the question</li>
 <li><b>S</b> — jump to Sell; <b>A</b>, <b>B</b>, <b>T</b> — jump to the railroads, buildings or town in the table, where those moves are made. A jump never commits; the arrow keys then walk the list</li>
 <li>Buying a building or a town paid in its own commodity is two presses on the same row or button (a double-click does both): the first shows what it costs and brings, the second spends; <b>Esc</b> cancels</li>
 <li><b>A</b> while selling — sell all</li>

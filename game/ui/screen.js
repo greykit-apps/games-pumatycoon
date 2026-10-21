@@ -514,7 +514,8 @@ export function mountScreen(host, hooks) {
       <div class="pv-row"><span class="dim">Costs</span> ${money(pv.cost)} <span class="dim">· leaves you</span> <b>${money(pv.left)}</b></div>
       <div class="pv-row"><span class="dim">Scores</span> ${pv.vp ? `<span class="vpc">+${pv.vp} VP</span>` : '<span class="dim">no more VP</span>'}${pv.storage[1] !== pv.storage[0] ? ` <span class="dim">· storage ${pv.storage[0]} → ${pv.storage[1]}</span>` : ""}</div>
       ${pv.ends ? warn("The last building: buying it ends the game after this round.") : ""}
-      <div class="row"><button class="primary commit" data-answer="${k}"${hint}>${pv.up ? "Upgrade" : "Buy"} for ${money(pv.cost)}</button><button class="ghost" data-unstage>Cancel<kbd>Esc</kbd></button></div></div>`;
+      <div class="row"><button class="primary commit" data-answer="${k}"${hint}>${pv.up ? "Upgrade" : "Buy"} for ${money(pv.cost)}</button><button class="ghost" data-unstage>Cancel<kbd>Esc</kbd></button></div>
+      ${w.kind === "action" ? followToggle(v, "construction") : ""}</div>`;
   }
 
   /* A move made in one press is the answers it takes, each named with the
@@ -616,7 +617,7 @@ export function mountScreen(host, hooks) {
           ? `<p class="notice">Storage ${tokens(p)}/${storageLimit(p)}: ${groups.sell.length ? "sell" : ""}${groups.sell.length && townOk ? " or " : ""}${townOk ? "build" : ""} first.</p>` : "";
         const inStrip = stripFor() === w.player;
         const produce = canProduce ? `<div class="grp" data-group="p"><b>Produce<kbd>1–${p.hand.length}</kbd> <span class="dim">${inStrip ? "click a card in your hand, under the market" : `click a card · hover it for what it does · limit ${handLimit(p)}`}</span></b>
-          ${inStrip ? "" : `${handCards(w.player)}${picking ? takePicker(w.player) : ""}`}</div>` : "";
+          ${inStrip ? "" : `${handCards(w.player)}${picking ? takePicker(w.player) : ""}`}${followToggle(w.player, "floor")}</div>` : "";
         const sellG = sellGroup(w.player, groups.sell, "action");
         const clk = endClock(st);
         // Auctions, buildings and the town are pressed in the table, where each
@@ -673,7 +674,7 @@ export function mountScreen(host, hooks) {
           return `<td><button data-tfpick="${id}" aria-pressed="${tfPick === id}" aria-label="${esc(st.players[from].name)}'s ${GOOD_NAME[gg]}: ${st.players[from].goods[gg]}">${st.players[from].goods[gg]}</button></td>`;
         };
         return `<div class="ask">${q("Trading Floor")}<p class="sub">Also buy any number of one commodity from one player, at today's price, before the card moves it?</p>
-          <div class="row">${btn(none, "No purchase", ' class="primary"')}${back()}</div>
+          <div class="row">${btn(none, "No purchase", ' class="primary"')}${back()}</div>${followToggle(w.player, "floor")}
           <table class="tf"><thead><tr><th></th>${cols.map(gg => `<th>${icon(gg, 16, GOOD_NAME[gg])}<span class="dim"> ${money(st.prices[gg])}</span></th>`).join("")}</tr></thead>
             <tbody>${sellers.map(from => `<tr><th scope="row">${esc(st.players[from].name)}</th>${cols.map(gg => cell(from, gg)).join("")}</tr>`).join("")}</tbody></table>
           ${qty.length ? `<div class="row"><span>${icon(pg, 16)} from ${esc(st.players[pf].name)}:</span>${qty.map(([o, k]) => btn(k, `${o.qty} <span class="dim">${money(o.qty * st.prices[pg])}</span>`, ` aria-label="Buy ${o.qty} ${GOOD_NAME[pg]} for ${money(o.qty * st.prices[pg])}"`)).join("")}</div>` : '<p class="sub dim">Pick a cell to choose how many.</p>'}</div>`;
@@ -703,7 +704,7 @@ export function mountScreen(host, hooks) {
 
       case "moreBuy":
         return `<div class="ask">${q("Construction Company: a second purchase?")}
-          <div class="row">${O.map((o, k) => (o.a === "done" ? btn(k, "Done", ' class="primary"') : o.a === "buy" ? stageBtn(k, `${esc(bldName(st.bldOffer[o.slot]))} ${money(face(st.bldOffer[o.slot], 0).cost)}`, hintAttr({ rows: [`bld-${o.slot}`] })) : stageBtn(k, `Upgrade ${upLabel(o.bld)}`, ` title="${esc(upgradeText(o.bld))}"`))).join("")}</div>${under(["buy", "upgrade"])}</div>`;
+          <div class="row">${O.map((o, k) => (o.a === "done" ? btn(k, "No, I'm done", ' class="primary"') : o.a === "buy" ? stageBtn(k, `${esc(bldName(st.bldOffer[o.slot]))} ${money(face(st.bldOffer[o.slot], 0).cost)}`, hintAttr({ rows: [`bld-${o.slot}`] })) : stageBtn(k, `Upgrade ${upLabel(o.bld)}`, ` title="${esc(upgradeText(o.bld))}"`))).join("")}</div>${under(["buy", "upgrade"])}${followToggle(w.player, "construction")}</div>`;
 
       case "payAny": {
         const chosen = Object.entries(w.chosen).flatMap(([gg, k]) => Array(k).fill(gg));
