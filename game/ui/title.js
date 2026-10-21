@@ -1000,7 +1000,7 @@ function gkToggles(title, { sound = null, music = null } = {}) {
 }
 /* @gk-intro-end */
 
-/* @gk-table-begin v0.1 -- greykit.games shared code (games-meta STANDARD.md §15),
+/* @gk-table-begin v0.2 -- greykit.games shared code (games-meta STANDARD.md §15),
  * the table: the board games' title. A guideline, not a rule: nothing checks
  * it, and a game may take it, change its copy, or leave it. The copy of record
  * is games-meta's canon/gk-table.js; a game that takes a newer version takes
@@ -1066,6 +1066,10 @@ const TABLE_CSS = `
 .gk-title.gkt .gkt-box{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin:14px 0 0;padding:0;list-style:none}
 .gk-title.gkt .gkt-box li{padding:3px 11px;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--t-dim);
   border:1px solid var(--t-line);border-radius:999px;background:color-mix(in srgb,var(--bg) 55%,transparent)}
+/* in the entrance the lid's pool of shadow comes up with the name's first
+   line, not before it: alone on the board it reads as a smudge */
+.gk-title.gkt.gki-intro .gkt-lid::before{opacity:0}
+.gk-title.gkt.gki-intro .gkt-lid:has(h1>span.gki-on)::before{opacity:1;transition:opacity 1.4s ease-in-out}
 /* in the entrance the small print comes with the line under the name */
 .gk-title.gki-intro .gkt-box{opacity:0}
 .gk-title.gki-intro.gki-menu .gkt-box{opacity:1;transition:opacity 1s ease-out}
