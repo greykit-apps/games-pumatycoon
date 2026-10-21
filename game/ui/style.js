@@ -91,6 +91,39 @@ h2 .dim{letter-spacing:.04em;text-transform:none;font-weight:400}
 [data-pumatycoon-game]{position:relative;z-index:1}
 /* the title screen is the whole window: no frame round it */
 [data-pumatycoon-game].on-title{display:block;padding:0}
+/* The title's hand as Price & Production cards (main.js, dressCards): red
+ * over blue, as the printed card and the hand in the game. The card's own
+ * face is the two colours, red to exactly halfway and blue below, edge to
+ * edge: no rim, no divider, nothing of the table's card face showing
+ * through. The table's own rules still place, fan, lift and deal each card,
+ * and the focus still shows in the border and the glow.
+ * Every card is the same size in every view, split exactly in half whatever
+ * it says: the words and icons are sized as fractions of the card's width
+ * (--pt-k: the table's --k-w, or a phone's own) so they always fit, and a
+ * half never grows. */
+[data-pumatycoon-game] .gk-title.gkt .gk-menu>button.pt-card,[data-pumatycoon-game] .gk-title.gkt .gk-menu>button.pt-card:hover{
+  display:grid;grid-template-rows:minmax(0,1fr) minmax(0,1fr);justify-content:stretch;align-items:stretch;gap:0;padding:0;--pt-k:var(--k-w);
+  background:linear-gradient(#2a1016 50%,#0f1d3a 50%);border-color:rgba(0,0,0,.45);box-shadow:0 10px 26px rgba(0,0,0,.5)}
+[data-pumatycoon-game] .gk-title.gkt .gk-menu>button.pt-card:focus{background:linear-gradient(#2a1016 50%,#0f1d3a 50%);
+  box-shadow:0 20px 44px rgba(0,0,0,.6),0 0 26px color-mix(in srgb,var(--t-focus) 30%,transparent)}
+.pt-card .pt-half{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:calc(var(--pt-k) * 0.0385);min-height:0;overflow:hidden;
+  padding:calc(var(--pt-k) * 0.0513) calc(var(--pt-k) * 0.15)}
+/* the key in each corner, sized with the card, in a column the words keep out of */
+[data-pumatycoon-game] .gk-title.gkt .gk-menu>button.pt-card>kbd{top:calc(var(--pt-k) * 0.06);left:calc(var(--pt-k) * 0.06);font-size:calc(var(--pt-k) * 0.096)}
+[data-pumatycoon-game] .gk-title.gkt .gk-menu>button.pt-card>.gkt-ix{bottom:calc(var(--pt-k) * 0.06);right:calc(var(--pt-k) * 0.06);font-size:calc(var(--pt-k) * 0.096)}
+/* each half's words sit against the middle, clear of the key in its corner */
+.pt-card .pt-prod{justify-content:flex-end}
+.pt-card .pt-price{justify-content:flex-start}
+[data-pumatycoon-game] .gk-title.gkt .gk-menu>button.pt-card .gk-lbl{font-size:calc(var(--pt-k) * 0.1218);line-height:1.12}
+[data-pumatycoon-game] .gk-title.gkt .gk-menu>button.pt-card .gk-meta{font-size:calc(var(--pt-k) * 0.0865);line-height:1.25;color:var(--body)}
+.pt-card .pt-icons{display:flex;flex-wrap:wrap;justify-content:center;gap:calc(var(--pt-k) * 0.0192)}
+.pt-card .pt-icons .ico{display:block;width:calc(var(--pt-k) * 0.1154);height:calc(var(--pt-k) * 0.1154)}
+/* a phone: two columns, every card the same height and the same split */
+@media (max-width:640px){
+  [data-pumatycoon-game] .gk-title.gkt .gk-menu>button.pt-card,[data-pumatycoon-game] .gk-title.gkt .gk-menu>button.pt-card:hover,
+  [data-pumatycoon-game] .gk-title.gkt .gk-menu>button.pt-card:focus{height:150px;min-height:0;padding:0;--pt-k:128px}
+}
+
 @media (min-width:901px){
   :root{--gut:clamp(0px,calc((100dvh - 740px) / 3),32px);--gutx:clamp(0px,calc((100vw - 1500px) / 4),64px)}
   [data-pumatycoon-game]{min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:var(--gut) var(--gutx)}
