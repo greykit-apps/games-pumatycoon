@@ -22,7 +22,8 @@ import { botAnswer } from "../engine/bots.js";
 import { mountSetup, quickStartOpts } from "./setup.js";
 import { mountScreen } from "./screen.js";
 import { HELP_TABS } from "./help.js";
-import { startIntro, mountTitle, bootReloadLine, gkIntegrate, gkTable } from "./title.js";
+import { startIntro, mountTitle, bootReloadLine, gkIntegrate, gkTable, gkBootSound, gktFlick, gktDeal, gktChit } from "./title.js";
+import * as sfx from "./sfx.js";
 import { tableScene } from "./tablescene.js";
 
 const SAVE_KEY = "pumatycoon_game_v1";
@@ -61,10 +62,30 @@ const host = document.querySelector("[data-pumatycoon-game]");
 injectCSS(document);
 document.body.insertAdjacentHTML("afterbegin", SPRITES + SCENE);
 /* everything is in the modules already: the boot has nothing to wait for but
- * itself. The integrated intro (games-meta STANDARD.md §14) as a silent game
- * takes it: no boot sound, and no hold, since there is no sound for a press
- * to let play -- the boot goes straight into the table. */
-const intro = startIntro({ lines: [bootReloadLine(), "opening the market"], bootSound: false });
+ * itself. The integrated intro (games-meta STANDARD.md §14): canon's boot with
+ * the meow -- none while sound is off -- then, where the browser is still
+ * holding sound back, the hold that lets it play. */
+const intro = startIntro({ lines: [bootReloadLine(), "opening the market"], audio: sfx.context, bootSound: sfx.isMuted() ? false : gkBootSound });
+
+/* Sound (games-meta STANDARD.md §8). The browser lets it play once the page
+ * has been touched, so every press and click wakes it. M switches it on and
+ * off anywhere but in a text box; the switch on the title and the button in
+ * the game's top bar follow. */
+for (const t of ["pointerdown", "keydown"]) window.addEventListener(t, () => sfx.unlock(), true);
+let titleSwitches = null;
+function soundChanged() {
+  for (const b of document.querySelectorAll("[data-sound]")) b.setAttribute("aria-pressed", String(!sfx.isMuted()));
+  if (titleSwitches) titleSwitches.refresh();
+}
+const SOUND_TOGGLES = { sound: { get: () => !sfx.isMuted(), set: on => { sfx.setMuted(!on); soundChanged(); } } };
+const menuTick = () => sfx.withAudio(gktFlick, { gain: 0.3 });
+document.addEventListener("keydown", e => {
+  const k = e.key.toLowerCase();
+  if (k === "m" && !e.metaKey && !e.ctrlKey && !e.altKey && !(e.target.matches && e.target.matches("input, select, textarea"))) {
+    sfx.toggleMute();
+    soundChanged();
+  }
+});
 
 const prefs = { speed: "normal", ...(store.get(PREFS_KEY) || {}) };
 let st = null;
@@ -137,16 +158,19 @@ function toTitle() {
     help: HELP_TABS,
     about: ABOUT,
     settings: {
-      html: () => "<h3>Bot speed</h3><div class='gk-row'>" + SPEED_NAMES.map(([v, l]) => "<button data-speed='" + v + "' aria-pressed='" + (prefs.speed === v) + "'>" + l + "</button>").join("") +
+      html: () => "<h3>Sound</h3><div class='gk-row'>" + [["on", "On", true], ["off", "Off", false]].map(([v, l, on]) => "<button data-soundset='" + v + "' aria-pressed='" + (sfx.isMuted() !== on) + "'>" + l + "</button>").join("") +
+        "</div><p class='gk-note'>Quiet sounds for the cards, the market and the auctions. <kbd>M</kbd> switches it anywhere.</p>" +
+        "<h3>Bot speed</h3><div class='gk-row'>" + SPEED_NAMES.map(([v, l]) => "<button data-speed='" + v + "' aria-pressed='" + (prefs.speed === v) + "'>" + l + "</button>").join("") +
         "</div><p class='gk-note'>How long the bots take over each move. Bot speed in the game's top bar changes it too.</p>" +
         "<h3>This browser</h3><div class='gk-row'><button data-act='forget'>Forget everything</button></div>" +
-        "<p class='gk-note'>Clears everything PumaTycoon keeps in this browser: the game in progress, your setup, bot speed, the board's view, and the tour.</p>",
+        "<p class='gk-note'>Clears everything PumaTycoon keeps in this browser: the game in progress, your setup, sound, bot speed, the board's view, and the tour.</p>",
       onClick: async (b, sheet) => {
         if (b.dataset.act === "forget") {
-          if (!await sheet.confirm("Forget everything PumaTycoon has saved in this browser: the game in progress, your setup, bot speed, the board's view, the tour? This cannot be undone.", "Forget everything")) return;
+          if (!await sheet.confirm("Forget everything PumaTycoon has saved in this browser: the game in progress, your setup, sound, bot speed, the board's view, the tour? This cannot be undone.", "Forget everything")) return;
           forgetEverything();
           return;
         }
+        if (b.dataset.soundset) { sfx.setMuted(b.dataset.soundset === "off"); soundChanged(); sheet.refresh(); return; }
         if (!b.dataset.speed) return;
         prefs.speed = b.dataset.speed;
         store.set(PREFS_KEY, prefs);
@@ -165,11 +189,15 @@ function toTitle() {
   /* The table (games-meta STANDARD.md §15): the name set down like a box's
    * lid, the menu dealt as a hand of cards -- PumaTycoon's box has a deck --
    * and the market charting behind. The first title's credit is laid out by
-   * the intro's finish(); every title after that does it here. Silent: no
-   * deal, chit or flick sounds. */
+   * the intro's finish(); every title after that does it here, with the
+   * Sound switch and the hand's sounds. */
   const t = host.querySelector(".gk-title");
-  if (introDone) gkIntegrate(t);
-  gkTable(t, { box: ["2\u20135 players", "bots or hot seat", "six commodities"], tilt: true });
+  if (introDone) titleSwitches = gkIntegrate(t, { toggles: SOUND_TOGGLES, tick: menuTick });
+  gkTable(t, {
+    box: ["2\u20135 players", "bots or hot seat", "six commodities"], tilt: true,
+    deal: () => sfx.withAudio(gktDeal, { gain: 0.35 }),
+    chit: () => sfx.withAudio(gktChit, { gain: 0.25 }),
+  });
   dressCards(t);
   return title;
 }
@@ -219,6 +247,7 @@ function start(opts) {
   store.set(SAVE_KEY, st);
   store.set(TRACE_KEY, trace);
   openScreen();
+  sfx.play("deal");
   if (opts.tour) screen.queueTour();
   advance();
 }
@@ -235,6 +264,7 @@ function openScreen() {
     // The same seats, in the same order, and the same rules; a new seed deals a new game.
     rematch: () => (trace && st && trace.seed === st.seed && trace.setup ? start({ players: trace.setup.players, options: trace.setup.options }) : toSetup()),
     debugDump: downloadDump,
+    soundChanged,
     speedName: () => prefs.speed,
     cycleSpeed: () => { prefs.speed = prefs.speed === "slow" ? "normal" : prefs.speed === "normal" ? "fast" : "slow"; store.set(PREFS_KEY, prefs); },
   });
@@ -287,6 +317,8 @@ await intro.finish({
   more: [saved ? `game in progress: round ${saved.round}` : "no game in progress"],
   title: host.querySelector(".gk-title"),
   name: "lines",
-  hold: "never",
-});
+  toggles: SOUND_TOGGLES,
+  tick: menuTick,
+  onContinue: () => sfx.unlock(),
+}).then(r => { titleSwitches = r.toggles; return r; });
 introDone = true;

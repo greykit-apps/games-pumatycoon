@@ -39,6 +39,7 @@ export const HELP_TABS = [
 <li><b>A</b> while selling — sell all</li>
 <li><b>Enter</b> — take the keyboard when it is passed to you (hot seat)</li>
 <li>Bidding: <b>Enter</b> bids the amount on the Bid button (the minimum, unless you change it); <b>↑</b> <b>↓</b> walk it $1, with <b>Shift</b> $5; <b>P</b> passes; <b>Esc</b> takes back an auction you have not opened yet</li>
+<li><b>M</b> — sound on and off, anywhere</li>
 <li><b>?</b> — this help; <b>Esc</b> closes it</li>
 <li>In the walkthrough: <b>Enter</b> or <b>→</b> next, <b>←</b> back, <b>Esc</b> to end it</li>
 </ul>`],
