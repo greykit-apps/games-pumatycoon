@@ -387,6 +387,23 @@ table.standings tr.just{animation:pt-just 2.2s cubic-bezier(.16,1,.3,1) 1}
 .ask .grp>b{font-size:var(--fs-s);color:var(--body);font-weight:700}
 .ask .grp[data-group=s] .row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}
 .ask .grp[data-group=s] button{white-space:nowrap;overflow:hidden;padding:4px 6px;font-size:12.5px}
+/* a sale is one press: the commodity's button sells all of it, the "…" beside it opens the smaller sales */
+.sellitem{display:flex;min-width:0}
+.sellitem>button:first-child{flex:1;min-width:0;min-height:44px}
+.sellitem:has(.sell-more)>button:first-child{border-top-right-radius:0;border-bottom-right-radius:0}
+.ask .grp[data-group=s] .sell-more{flex:none;width:26px;padding:0;text-align:center;justify-content:center;border:1px solid var(--line);border-left:0;
+  border-top-left-radius:0;border-bottom-left-radius:0;color:var(--dim);background:var(--panel2)}
+.ask .grp[data-group=s] .sell-more[aria-expanded=true]{color:var(--accent);border-color:var(--accent)}
+.ask .grp[data-group=s] .row.sell-fewer{display:flex;flex-wrap:wrap;gap:4px;align-items:center;padding:6px;border:1px solid var(--line);background:var(--panel)}
+.ask .grp[data-group=s] .sell-fewer button{min-height:36px}
+/* a building that adds a question to a move: ticked beside the move, or answered no */
+.ask button.follow,.ask .grp button.follow{align-self:flex-start;display:inline-flex;align-items:center;gap:8px;min-height:30px;padding:2px 6px;background:transparent;border-color:transparent;
+  color:var(--body);font-size:var(--fs-s)}
+.ask button.follow:hover{border-color:var(--line)}
+.ask .follow .box{width:14px;height:14px;border:1px solid var(--lit);border-radius:2px;display:inline-flex;align-items:center;justify-content:center;
+  font-size:11px;line-height:1;color:var(--accent)}
+.ask button.follow[aria-pressed=true],.ask .grp button.follow[aria-pressed=true]{background:transparent;color:var(--text)}
+.ask .follow[aria-pressed=true] .box{border-color:var(--accent)}
 .ask .endwarn{margin:0;font-size:var(--fs-s);color:var(--warn)}
 .ask .q-row{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
 .ask .grp.jumps{flex-direction:row;flex-wrap:wrap;align-items:center;gap:4px}

@@ -33,7 +33,7 @@ import { GOODS, TRACK } from "../data/commodities.js";
 import { SKIN } from "../data/skin.js";
 import { CARD, canon } from "../engine/machine.js";
 import {
-  RAIL, TOWN, lineOf, face, bType, tokens, storageLimit, handLimit, scoreOf, publicScore,
+  RAIL, TOWN, lineOf, face, bType, tokens, storageLimit, handLimit, scoreOf, publicScore, hasFx,
 } from "../engine/rules.js";
 import { icon } from "./art.js";
 import {
@@ -71,10 +71,12 @@ export function mountScreen(host, hooks) {
   let tourGiven = 0;
   let touring = false;
   let selected = null;        // the hand card being previewed before producing
-  let staged = null;
-  let tfPick = null;          // the Trading Floor cell ("from|good") whose quantities are showing          // canon() of the purchase being previewed before it is made
-  let recapOpen = false;
-  let ownOpen = null;         // "what you own": null follows the layout (open beside a hand row), else the player's choice      // the routine lines of "since your turn" are shown, not folded
+  let staged = null;          // canon() of the purchase being previewed before it is made
+  let sellOpen = null;        // the commodity whose smaller sales are showing
+  let committedAt = -Infinity; // when a press last made a move: the rest of a double-click is not another
+  let tfPick = null;          // the Trading Floor cell ("from|good") whose quantities are showing
+  let recapOpen = false;      // the routine lines of "since your turn" are shown, not folded
+  let ownOpen = null;         // "what you own": null follows the layout (open beside a hand row), else the player's choice
   let prevTurn = null;
   let lastSig = null;         // the question last drawn, to tell a new one from a redraw
   const openPlayers = new Set();
@@ -142,6 +144,23 @@ export function mountScreen(host, hooks) {
     view = { seed: st.seed, base: {} };
   }
   function saveView() { try { localStorage.setItem(VIEW_KEY, JSON.stringify(view)); } catch (e) { /* */ } }
+
+  /* Three buildings add a question to a move: Freight Company a second sale,
+   * Construction Company a second purchase, the Trading Floor a purchase
+   * before producing. Each is asked only when its owner has ticked it beside
+   * the move; unticked, the screen answers no (autoAnswer), so the move is
+   * still one press. Per player, kept with the game's view. */
+  const FOLLOW = {
+    freight: { fx: "extraSell", kind: "moreSell", no: { a: "done" }, label: "Freight Company: offer a second sale" },
+    construction: { fx: "extraBuy", kind: "moreBuy", no: { a: "done" }, label: "Construction Company: offer a second purchase" },
+    floor: { fx: "tradingFloor", kind: "tradingFloor", no: { none: true }, label: "Trading Floor: offer a purchase as I produce" },
+  };
+  const following = (i, k) => !!(view.follow && view.follow[i] && view.follow[i][k]);
+  function followToggle(i, k) {
+    if (!hasFx(st.players[i], FOLLOW[k].fx)) return "";
+    const on = following(i, k);
+    return `<button class="follow" data-follow="${k}" aria-pressed="${on}"><span class="box" aria-hidden="true">${on ? "✓" : ""}</span>${FOLLOW[k].label}</button>`;
+  }
 
   function settleViewer() {
     const hs = humans();
@@ -478,6 +497,45 @@ export function mountScreen(host, hooks) {
       <div class="row"><button class="primary" data-answer="${k}"${hint}>${pv.up ? "Upgrade" : "Buy"} for ${money(pv.cost)}</button><button class="ghost" data-unstage>Cancel<kbd>Esc</kbd></button></div></div>`;
   }
 
+  /* A move made in one press is the answers it takes, each named with the
+   * question it answers (main.js advance), carried on the button. */
+  const stepsAttr = steps => ` data-steps="${esc(JSON.stringify(steps))}"`;
+
+  /* Selling is one press: a commodity's button sells all of it, with the
+   * Export Company's $3 when you own it (it only ever pays more). Smaller
+   * sales are behind the "…" beside it. */
+  function sellAll(i, g) {
+    const exp = hasFx(st.players[i], "exportBump");
+    return { q: st.players[i].goods[g], exp };
+  }
+  const qtyAnswer = ({ q, exp }) => (exp ? { q, exp: true } : { q });
+  function sellItem(i, g, first) {
+    const n = st.players[i].goods[g];
+    const all = sellAll(i, g);
+    const pv = sellPreview(st, i, g, n, all.exp);
+    const more = n > 1 || all.exp;
+    const steps = [{ kind: first, answer: { a: "sell", good: g } }, { kind: "sellQty", answer: qtyAnswer(all) }];
+    return `<div class="sellitem"><button${stepsAttr(steps)} aria-label="Sell all ${n} ${GOOD_NAME[g]}${all.exp ? " with the Export Company's $3" : ""} for ${money(pv.proceeds)}"${hintAttr({ g: { [g]: pv.after } })}>${icon(g, 16)} ${n}×${money(pv.price)} <span class="dim">=</span> ${money(pv.proceeds)}</button>${more ? `<button class="ghost sell-more" data-sellmore="${g}" aria-expanded="${sellOpen === g}" aria-label="Sell fewer ${GOOD_NAME[g]}" title="Sell fewer">…</button>` : ""}</div>`;
+  }
+  /* The "…": every other sale of that commodity, each one press. */
+  function sellFewer(i, g, first) {
+    const n = st.players[i].goods[g];
+    const all = sellAll(i, g);
+    const opts = [];
+    for (let q = 1; q <= n; q++) for (const exp of all.exp ? [false, true] : [false]) if (q !== all.q || exp !== all.exp) opts.push({ q, exp });
+    return `<div class="row sell-fewer" role="group" aria-label="Sell fewer ${GOOD_NAME[g]}"><span class="dim">${icon(g, 16)} ${GOOD_NAME[g]}:</span>${opts.map(o => {
+      const pv = sellPreview(st, i, g, o.q, o.exp);
+      const steps = [{ kind: first, answer: { a: "sell", good: g } }, { kind: "sellQty", answer: qtyAnswer(o) }];
+      return `<button${stepsAttr(steps)}${o.exp ? ' title="Export Company: raise the price $3 first"' : ""} aria-label="Sell ${o.q}${o.exp ? " with the Export Company's $3" : ""} for ${money(pv.proceeds)}"${hintAttr({ g: { [g]: pv.after } })}>${o.q}${o.exp ? " +$3" : ""} → <b>${money(pv.proceeds)}</b> <span class="dim">then ${money(pv.after)}</span></button>`;
+    }).join("")}</div>`;
+  }
+  function sellGroup(i, goods, first) {
+    if (!goods.length) return "";
+    const open = goods.includes(sellOpen) ? sellFewer(i, sellOpen, first) : "";
+    return `<div class="grp" data-group="s"><b>Sell<kbd>S</kbd> <span class="dim">all of one, in one press${goods.some(g => st.players[i].goods[g] > 1) ? " · … for fewer" : ""}</span></b>
+      <div class="row">${goods.map(g => sellItem(i, g, first)).join("")}</div>${open}${followToggle(i, "freight")}</div>`;
+  }
+
   /* An upgrade names the tile you own and what it turns into. */
   const upLabel = id => `${esc(bldName(id, 0))} <span class="dim">→</span> ${esc(bType(id).sides[1].printed)} <span class="dim">${money(bType(id).sides[1].cost)}</span>`;
 
@@ -520,11 +578,8 @@ export function mountScreen(host, hooks) {
         const seenLines = new Set();
         O.forEach((o, k) => {
           if (o.a === "produce") { if (o.card === selected) produceK = k; }
-          else if (o.a === "sell") {
-            const n = p.goods[o.good];
-            const pv = sellPreview(st, w.player, o.good, n);
-            groups.sell.push(btn(k, `${icon(o.good, 16)} ${n}×${money(st.prices[o.good])} <span class="dim">= ${money(pv.proceeds)}</span>`, ` aria-label="Sell ${GOOD_NAME[o.good]}: ${n} at ${money(st.prices[o.good])}, ${money(pv.proceeds)}${n > 1 ? " for all" : ""}"${hintAttr({ g: { [o.good]: pv.after } })}`));
-          } else if (o.a === "auction") {
+          else if (o.a === "sell") groups.sell.push(o.good);
+          else if (o.a === "auction") {
             const r = st.railOffer[o.slot];
             if (seenLines.has(lineOf(r))) return;
             seenLines.add(lineOf(r));
@@ -547,7 +602,7 @@ export function mountScreen(host, hooks) {
         const inStrip = stripFor() === w.player;
         const produce = canProduce ? `<div class="grp" data-group="p"><b>Produce<kbd>1–${p.hand.length}</kbd> <span class="dim">${inStrip ? "pick a card from your hand, under the market" : `pick one to preview it · limit ${handLimit(p)}`}</span></b>
           ${inStrip ? "" : handCards(w.player)}${produceK >= 0 ? produceBlock(p, w, produceK, selected) : ""}</div>` : "";
-        const sellG = g("Sell", "s", groups.sell);
+        const sellG = sellGroup(w.player, groups.sell, "action");
         const clk = endClock(st);
         // Auctions, buildings and the town are pressed in the table, where each
         // row says what it is worth to you; the desk points there rather than
@@ -626,9 +681,12 @@ export function mountScreen(host, hooks) {
           <div class="row">${back()}</div></div>`;
       }
 
-      case "moreSell":
+      case "moreSell": {
+        const done = O.findIndex(o => o.a === "done");
         return `<div class="ask">${q("Freight Company: a second sale?")}
-          <div class="row">${O.map((o, k) => (o.a === "done" ? btn(k, "Done", ' class="primary"') : btn(k, `${icon(o.good, 16)} ${p.goods[o.good]} at ${money(st.prices[o.good])}`, hintAttr({ g: { [o.good]: sellPreview(st, w.player, o.good, p.goods[o.good]).after } })))).join("")}</div></div>`;
+          ${sellGroup(w.player, O.filter(o => o.a === "sell").map(o => o.good), "moreSell")}
+          <div class="row">${btn(done, "No, I'm done", ' class="primary"')}</div></div>`;
+      }
 
       case "moreBuy":
         return `<div class="ask">${q("Construction Company: a second purchase?")}
@@ -760,7 +818,7 @@ export function mountScreen(host, hooks) {
     if (!el || !el.dataset || !host.contains(el)) return null;
     const d = el.dataset;
     if (d.answer !== undefined && st.ask && st.ask.options) return `ans:${canon(st.ask.options[Number(d.answer)])}`;
-    for (const k of ["select", "stage", "tfpick", "jump", "player", "pick", "helptab", "bidat"]) if (d[k] !== undefined) return `${k}:${d[k]}`;
+    for (const k of ["steps", "sellmore", "follow", "select", "stage", "tfpick", "jump", "player", "pick", "helptab", "bidat"]) if (d[k] !== undefined) return `${k}:${d[k]}`;
     for (const k of ["help", "speed", "debug", "newgame", "bidgo", "bidpass", "bidback", "unselect", "pickgo", "openlog", "lift", "tourreplay", "helpclose", "closeresults", "unstage", "recap", "rematch"]) if (el.hasAttribute(`data-${k}`)) return k;
     if (el.matches("[data-bid]")) return "bid";
     if (el.matches("summary")) return `summary:${el.parentElement.className}`;
@@ -1026,7 +1084,17 @@ ${st.over && !resultsHidden ? resultsBox() : ""}${helpTab !== null ? helpBox() :
     const w = st.ask;
     if (!w || !w.options || idx < 0 || idx >= w.options.length) return;
     selected = null;
+    committedAt = performance.now();
     hooks.submit(w.options[idx]);
+  }
+
+  /* A move in one press: every answer it takes, each for its own question. */
+  function commit(steps) {
+    selected = null;
+    staged = null;
+    sellOpen = null;
+    committedAt = performance.now();
+    hooks.submitSteps(steps);
   }
 
   /* The first live row of the table for a jump: a railroad, a building, the town. */
@@ -1061,6 +1129,22 @@ ${st.over && !resultsHidden ? resultsBox() : ""}${helpTab !== null ? helpBox() :
   host.onclick = e => {
     const b = e.target.closest("button");
     if (!b) return;
+    // The rest of a double-click after a press that made a move lands on
+    // whatever the redraw put under the pointer: it is not another choice.
+    if (e.detail >= 2 && performance.now() - committedAt < 700) return;
+    if (b.dataset.steps) { let s; try { s = JSON.parse(b.dataset.steps); } catch (err) { return; } return commit(s); }
+    if (b.dataset.sellmore) {
+      sellOpen = sellOpen === b.dataset.sellmore ? null : b.dataset.sellmore;
+      render();
+      if (sellOpen) host.querySelector(".sell-fewer button")?.focus();
+      return;
+    }
+    if (b.dataset.follow) {
+      const i = st.ask.player;
+      ((view.follow ||= {})[i] ||= {})[b.dataset.follow] = !following(i, b.dataset.follow);
+      saveView();
+      return render();
+    }
     if (b.hasAttribute("data-help")) { helpTab = 0; return render(); }
     if (b.hasAttribute("data-helpclose")) { helpTab = null; return render(); }
     if (b.hasAttribute("data-tourreplay")) { helpTab = null; render(); return runTour(); }
@@ -1154,6 +1238,7 @@ ${st.over && !resultsHidden ? resultsBox() : ""}${helpTab !== null ? helpBox() :
       if (helpTab !== null) { helpTab = null; return render(); }
       if (selected) { selected = null; return render(); }
       if (staged) { staged = null; return render(); }
+      if (sellOpen) { const g = sellOpen; sellOpen = null; render(); host.querySelector(`[data-sellmore="${g}"]`)?.focus(); return; }
     }
     if (e.key === "?" && !inInput) { helpTab = helpTab === null ? 0 : null; return render(); }
     if (failure) return;   // after an engine error nothing answers until the game is reloaded
@@ -1229,10 +1314,16 @@ ${st.over && !resultsHidden ? resultsBox() : ""}${helpTab !== null ? helpBox() :
       lastHigh = high;
       if (!st.ask || st.ask.kind !== "action") selected = null;
       staged = null;
+      sellOpen = null;
       tfPick = null;
       render();
       announce(events);
       sfx.events(events, viewer);
+    },
+    /* The answer to a follow-up its owner has not ticked (FOLLOW), or undefined to ask it. */
+    autoAnswer(w) {
+      for (const [k, f] of Object.entries(FOLLOW)) if (w.kind === f.kind && !following(w.player, k)) return f.no;
+      return undefined;
     },
     help() { helpTab = 0; render(); },
     queueTour() { tourFor = new Set(humans()); },
