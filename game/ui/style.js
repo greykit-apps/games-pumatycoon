@@ -91,6 +91,15 @@ h2 .dim{letter-spacing:.04em;text-transform:none;font-weight:400}
 [data-pumatycoon-game]{position:relative;z-index:1}
 /* the title screen is the whole window: no frame round it */
 [data-pumatycoon-game].on-title{display:block;padding:0}
+/* In step with the quicker entrance (main.js, finish()'s timing): each line
+ * of the name settles faster than canon's .9s, and the cards and counters
+ * come down closer together than canon's 130ms. A card's face and its back
+ * share one delay, so both change together; each card's own deal keeps
+ * canon's .62s, which gktDeal's snap is timed to. */
+[data-pumatycoon-game] .gk-title.gkt.gki-intro h1>span.gki-on{animation-duration:.45s}
+[data-pumatycoon-game] .gk-title.gkt.gk-rise .gk-menu>.gk-pr,
+[data-pumatycoon-game] .gk-title.gkt.gk-rise .gk-menu>.gk-pr::after{animation-delay:calc(var(--i) * 100ms)}
+[data-pumatycoon-game] .gk-title.gkt.gk-rise .gk-menu .gk-util .gk-pr{animation-delay:calc(var(--i) * 100ms + 100ms)}
 /* The title's hand as Price & Production cards (main.js, dressCards): red
  * over blue, as the printed card and the hand in the game. The card's own
  * face is the two colours, red to exactly halfway and blue below, edge to
